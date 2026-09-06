@@ -119,6 +119,21 @@ export function AdminMedia() {
     }
   }
 
+  // 计算汇总统计
+  const stats = items.reduce(
+    (acc, m) => {
+      m.sources.forEach((s) => {
+        acc.total++;
+        if (s.crawl_status === "ok") acc.ok++;
+        else if (s.crawl_status === "warning") acc.warning++;
+        else if (s.crawl_status === "error") acc.error++;
+        else acc.untested++;
+      });
+      return acc;
+    },
+    { total: 0, ok: 0, warning: 0, error: 0, untested: 0 }
+  );
+
   return (
     <div className="space-y-5">
       <header>
@@ -127,6 +142,34 @@ export function AdminMedia() {
           媒体池可配置；电子报/官网地址、抓取开关、PoC 状态均在此维护。M2 阶段逐家做数据源 PoC。
         </p>
       </header>
+
+      {/* 汇总统计条 */}
+      <Card>
+        <CardContent className="pt-5">
+          <div className="grid grid-cols-5 gap-4 text-center">
+            <div>
+              <div className="text-2xl font-bold text-[var(--foreground)]">{stats.total}</div>
+              <div className="text-xs text-[var(--muted-foreground)] mt-1">总计</div>
+            </div>
+            <div>
+              <div className="text-2xl font-bold text-[#3f7d5c]">{stats.ok}</div>
+              <div className="text-xs text-[var(--muted-foreground)] mt-1">✅ 正常</div>
+            </div>
+            <div>
+              <div className="text-2xl font-bold text-[#b8860b]">{stats.warning}</div>
+              <div className="text-xs text-[var(--muted-foreground)] mt-1">⚠️ 警告</div>
+            </div>
+            <div>
+              <div className="text-2xl font-bold text-[#b3392f]">{stats.error}</div>
+              <div className="text-xs text-[var(--muted-foreground)] mt-1">❌ 失败</div>
+            </div>
+            <div>
+              <div className="text-2xl font-bold text-[#6b6257]">{stats.untested}</div>
+              <div className="text-xs text-[var(--muted-foreground)] mt-1">️ 待测</div>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
 
       <div className="flex items-center gap-3">
         <Select value={level} onValueChange={setLevel}>
