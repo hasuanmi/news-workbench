@@ -171,36 +171,6 @@ export const reviewDimension = pgTable(
   (table) => [index("review_dimension_priority_idx").on(table.priority)]
 );
 
-// ============ 文章（抓取） ============
-export const article = pgTable(
-  "article",
-  {
-    id: varchar("id", { length: 36 }).primaryKey().default(sql`gen_random_uuid()`),
-    media_id: varchar("media_id", { length: 36 })
-      .notNull()
-      .references(() => media.id, { onDelete: "cascade" }),
-    source_id: varchar("source_id", { length: 36 }).references(() => mediaSource.id),
-    title: varchar("title", { length: 512 }).notNull(),
-    publish_time: timestamp("publish_time", { withTimezone: true }),
-    url: text("url").notNull(),
-    content: text("content"),
-    word_count: integer("word_count").notNull().default(0),
-    section: varchar("section", { length: 128 }), // 版面/栏目
-    is_key_report: boolean("is_key_report").notNull().default(false), // 重点报道候选
-    crawl_time: timestamp("crawl_time", { withTimezone: true }).defaultNow().notNull(),
-    content_hash: varchar("content_hash", { length: 64 }).notNull(),
-    parse_status: varchar("parse_status", { length: 16 }).notNull().default("parsed"), // parsed | failed | pending
-    ai_card: jsonb("ai_card"), // 结构化卡片：topic/keywords/entities/angle/form/summary
-    created_at: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
-  },
-  (table) => [
-    uniqueIndex("article_hash_idx").on(table.content_hash),
-    index("article_media_idx").on(table.media_id),
-    index("article_publish_idx").on(table.publish_time),
-    index("article_key_report_idx").on(table.is_key_report),
-  ]
-);
-
 // ============ 新闻线索 ============
 export const newsClue = pgTable(
   "news_clue",
@@ -329,5 +299,26 @@ export const aiAuditLog = pgTable(
   (table) => [
     index("ai_audit_module_idx").on(table.module),
     index("ai_audit_ref_idx").on(table.ref_id),
+  ]
+);
+
+// ============ 文章（抓取入库） ============
+export const article = pgTable(
+  "article",
+  {
+    id: varchar("id", { length: 36 }).primaryKey().default(sql`gen_random_uuid()`),
+    media_source_id: varchar("media_source_id", { length: 36 }).notNull(),
+    title: varchar("title", { length: 500 }).notNull(),
+    url: text("url").notNull(),
+    published_at: timestamp("published_at", { withTimezone: true }),
+    content_hash: varchar("content_hash", { length: 64 }), // 用于去重
+    word_count: integer("word_count"),
+    content: text("content"), // 原文（可选，可能很长）
+    structured_card: jsonb("structured_card"), // AI 压缩后的结构化卡片
+    created_at: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
+  },
+  (table) => [
+    index("article_source_idx").on(table.media_source_id),
+    uniqueIndex("article_hash_idx").on(table.content_hash),
   ]
 );

@@ -37,6 +37,8 @@ interface Source {
   source_url: string | null;
   enabled: boolean;
   crawl_status: string;
+  failure_count: number;
+  error_message: string | null;
   last_crawl_at: string | null;
   last_error: string | null;
 }
@@ -58,9 +60,9 @@ const levelLabel: Record<string, string> = {
 
 const crawlStatusLabel: Record<string, { text: string; cls: string }> = {
   untested: { text: "待 PoC", cls: "bg-[#e8e2d8] text-[#6b6257]" },
-  active: { text: "正常", cls: "bg-[#e6f0ea] text-[#3f7d5c]" },
-  failed: { text: "失败", cls: "bg-[#f6e3e1] text-[#b3392f]" },
-  blocked: { text: "受限", cls: "bg-[#faf0da] text-[#b8860b]" },
+  ok: { text: "正常", cls: "bg-[#e6f0ea] text-[#3f7d5c]" },
+  warning: { text: "警告", cls: "bg-[#faf0da] text-[#b8860b]" },
+  error: { text: "失败", cls: "bg-[#f6e3e1] text-[#b3392f]" },
 };
 
 export function AdminMedia() {
@@ -223,6 +225,38 @@ function SourceConfigDialog({
   onSave: (sourceId: string, body: Record<string, unknown>) => void;
 }) {
   const [edits, setEdits] = useState<Record<string, { url: string; enabled: boolean; status: string }>>({});
+  const [testing, setTesting] = useState<string | null>(null);
+  const [testResult, setTestResult] = useState<Record<string, { success: boolean; message: string }>>({});
+
+  const testCrawl = async (sourceId: string) => {
+    setTesting(sourceId);
+    setTestResult({ ...testResult, [sourceId]: { success: false, message: "测试中..." } });
+    try {
+      const res = await fetch(`/api/admin/sources/${sourceId}/test`, { method: "POST" });
+      const data = await res.json();
+      if (res.ok) {
+        setTestResult({
+          ...testResult,
+          [sourceId]: {
+            success: true,
+            message: `成功抓取 ${data.articlesInserted} 篇（跳过 ${data.articlesSkipped} 篇重复）`,
+          },
+        });
+      } else {
+        setTestResult({
+          ...testResult,
+          [sourceId]: { success: false, message: data.error || "测试失败" },
+        });
+      }
+    } catch (err: any) {
+      setTestResult({
+        ...testResult,
+        [sourceId]: { success: false, message: err.message },
+      });
+    } finally {
+      setTesting(null);
+    }
+  };
 
   useEffect(() => {
     if (!media) return;
@@ -302,7 +336,20 @@ function SourceConfigDialog({
                       )}
                     </div>
                   </div>
-                  <div className="flex justify-end">
+                  <div className="flex justify-end gap-2">
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={() => testCrawl(s.id)}
+                      disabled={!edit.url || testing === s.id}
+                    >
+                      {testing === s.id ? (
+                        <Loader2 className="w-3 h-3 mr-1 animate-spin" />
+                      ) : (
+                        <ExternalLink className="w-3 h-3 mr-1" />
+                      )}
+                      {testing === s.id ? "测试中..." : "测试抓取"}
+                    </Button>
                     <Button
                       size="sm"
                       onClick={() =>
@@ -316,6 +363,17 @@ function SourceConfigDialog({
                       保存此数据源
                     </Button>
                   </div>
+                  {testResult[s.id] && (
+                    <div
+                      className={`text-xs p-2 rounded ${
+                        testResult[s.id].success
+                          ? "bg-[#e6f0ea] text-[#3f7d5c]"
+                          : "bg-[#f6e3e1] text-[#b3392f]"
+                      }`}
+                    >
+                      {testResult[s.id].message}
+                    </div>
+                  )}
                 </CardContent>
               </Card>
             );

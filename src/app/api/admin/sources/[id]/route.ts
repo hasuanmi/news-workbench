@@ -7,7 +7,7 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
   if ("error" in auth) return auth.error;
   const { id } = await params;
   const body = await req.json();
-  const allowed = ["source_url", "enabled", "crawl_status"] as const;
+  const allowed = ["source_url", "enabled", "crawl_status", "failure_count", "error_message"] as const;
   const update: Record<string, unknown> = {};
   for (const k of allowed) if (k in body) update[k] = body[k] === "" ? null : body[k];
 
