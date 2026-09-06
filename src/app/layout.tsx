@@ -1,5 +1,9 @@
 import type { Metadata } from "next";
 import "./globals.css";
+import { registerLLMConfig } from "@/lib/llm-config-register";
+
+// 注册 LLM 配置 getter（服务启动时执行一次）
+registerLLMConfig();
 
 export const metadata: Metadata = {
   title: {

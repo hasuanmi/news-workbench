@@ -1,6 +1,6 @@
 import { NextRequest } from "next/server";
-import { LLMClient, Config, HeaderUtils } from "coze-coding-dev-sdk";
 import { supabase } from "@/lib/db";
+import { unifiedStream } from "@/lib/llm-client";
 
 export const runtime = "nodejs";
 
@@ -51,23 +51,19 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
     "用 Markdown，控制在 400 字以内，务实、具体，不要空话套话。";
 
   const encoder = new TextEncoder();
-  const customHeaders = HeaderUtils.extractForwardHeaders(req.headers);
-  const client = new LLMClient(new Config(), customHeaders);
 
   const stream = new ReadableStream({
     async start(controller) {
       try {
-        const llmStream = client.stream(
-          [
-            { role: "system", content: systemPrompt },
-            { role: "user", content: userPrompt },
-          ],
-          { model: "doubao-seed-2-0-pro-260215", temperature: 0.7, thinking: "disabled" },
-        );
+        const messages = [
+          { role: "system" as const, content: systemPrompt },
+          { role: "user" as const, content: userPrompt },
+        ];
+        const llmStream = unifiedStream(messages, { temperature: 0.7 });
         for await (const chunk of llmStream) {
           if (chunk.content) {
             controller.enqueue(
-              encoder.encode(`data: ${JSON.stringify({ text: chunk.content.toString() })}\n\n`),
+              encoder.encode(`data: ${JSON.stringify({ text: chunk.content })}\n\n`),
             );
           }
         }
