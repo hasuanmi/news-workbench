@@ -76,6 +76,14 @@ assets/                       # 媒体列表.xlsx、2024年新闻日历.docx（�
 5. **Hydration**：动态内容（当前日期、登录态）必须在客户端 useEffect 后渲染，禁止在服务端渲染期用 Date.now()/Math.random()/window。
 6. **类型严格**：禁隐式 any / as any；API 入参显式校验；所有 catch 错误收窄后再返回。
 
+## 待办与已知问题
+
+1. **日历详情弹层修复**（优先级高）：
+   - **问题**：前台日历点击事件显示"未找到节点详情"
+   - **根因**：`/api/calendar/[id]` 使用了 PostgREST 嵌套关联查询 `.select("*, category:calendar_category(...)")`，但 Supabase 外键关联不可用，返回 500
+   - **修复方案**：改为二次查询（先查 event，再按 category_id 查 category，代码组装）
+   - **增强**：详情弹层展示 description（背景/描述）、tags、source_name、anniversary 等完整字段，预留 AI 总结入口（后续可接入 LLM 生成选题策划建议）
+
 ## 后续阶段（M2–M5）
 
 - M2 数据源 PoC：媒体电子报/官网抓取适配器，结果写 `media_source.crawl_status`（untested/ok/failed），抓不稳不进自动任务。电子报版面信号（整版/跨版/头版）可能拿不到，评报先按字数+AI 降级。

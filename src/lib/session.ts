@@ -20,6 +20,19 @@ function getSecret(): string {
   return process.env.SESSION_SECRET || "nwb-dev-internal-secret-change-me";
 }
 
+// Edge Runtime 兼容的 base64url 编解码（不使用 Buffer）
+function base64urlEncode(data: Uint8Array): string {
+  const binary = String.fromCharCode(...data);
+  const base64 = btoa(binary);
+  return base64.replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
+}
+
+function base64urlDecode(str: string): string {
+  const base64 = str.replace(/-/g, '+').replace(/_/g, '/');
+  const padded = base64 + '='.repeat((4 - base64.length % 4) % 4);
+  return atob(padded);
+}
+
 async function hmacSign(body: string): Promise<string> {
   const key = await crypto.subtle.importKey(
     "raw",
@@ -29,7 +42,7 @@ async function hmacSign(body: string): Promise<string> {
     ["sign"]
   );
   const sig = await crypto.subtle.sign("HMAC", key, new TextEncoder().encode(body));
-  return Buffer.from(sig).toString("base64url");
+  return base64urlEncode(new Uint8Array(sig));
 }
 
 export async function createSessionToken(user: {
@@ -45,7 +58,7 @@ export async function createSessionToken(user: {
     role: user.role as Role,
     exp: Date.now() + SESSION_TTL_MS,
   };
-  const body = Buffer.from(JSON.stringify(payload)).toString("base64url");
+  const body = base64urlEncode(new TextEncoder().encode(JSON.stringify(payload)));
   const sig = await hmacSign(body);
   return `${body}.${sig}`;
 }
@@ -58,7 +71,7 @@ export async function verifySessionToken(token: string | undefined | null): Prom
   const expected = await hmacSign(body);
   if (sig !== expected) return null;
   try {
-    const payload = JSON.parse(Buffer.from(body, "base64url").toString()) as SessionPayload;
+    const payload = JSON.parse(base64urlDecode(body)) as SessionPayload;
     if (!payload.sub || !payload.username) return null;
     if (payload.exp < Date.now()) return null;
     return payload;
