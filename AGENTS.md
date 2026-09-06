@@ -78,11 +78,12 @@ assets/                       # 媒体列表.xlsx、2024年新闻日历.docx（�
 
 ## 待办与已知问题
 
-1. **日历详情弹层修复**（优先级高）：
-   - **问题**：前台日历点击事件显示"未找到节点详情"
-   - **根因**：`/api/calendar/[id]` 使用了 PostgREST 嵌套关联查询 `.select("*, category:calendar_category(...)")`，但 Supabase 外键关联不可用，返回 500
-   - **修复方案**：改为二次查询（先查 event，再按 category_id 查 category，代码组装）
-   - **增强**：详情弹层展示 description（背景/描述）、tags、source_name、anniversary 等完整字段，预留 AI 总结入口（后续可接入 LLM 生成选题策划建议）
+- 暂无高优先级遗留。日历详情弹层已修复并增强（见下）。
+
+## 已完成增强
+
+- **日历详情弹层**：`/api/calendar/[id]` 已改为二次查询（外键关联不可用）；弹层展示 description/tags/source_name/周年/审核状态等完整字段；
+  `POST /api/calendar/[id]/summary` 通过 SSE 流式调用豆包大模型生成「AI 选题策划建议」（`coze-coding-dev-sdk` 的 `LLMClient.stream()`，nodejs runtime，SSE `data:` 分片 + `[DONE]`）。
 
 ## 后续阶段（M2–M5）
 
