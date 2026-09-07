@@ -1,14 +1,18 @@
 import { AppShell } from "@/components/app-shell";
-import { ModulePlaceholder } from "@/components/module-placeholder";
+import { LeadsBoard } from "@/components/leads/leads-board";
 
 export default function LeadsPage() {
   return (
     <AppShell>
-      <ModulePlaceholder
-        title="新闻线索"
-        phase="M3（数据源 PoC 之后）"
-        desc="媒体官网/电子报抓取 → AI 识别新栏目/新策划 → 每日 09:00 生成线索卡片；每周一 10:00 汇总媒体特色简报。前置依赖：M2 媒体数据源 PoC 与 WF03 抓取适配器。"
-      />
+      <div className="max-w-[1400px] mx-auto px-6 py-6">
+        <div className="mb-6">
+          <h1 className="text-2xl font-serif font-bold text-[#1f1b16]">新闻线索</h1>
+          <p className="text-sm text-[#6b6257] mt-1">
+            AI 从已入库文章中识别的新栏目、系列报道、专题、特色策划线索
+          </p>
+        </div>
+        <LeadsBoard />
+      </div>
     </AppShell>
   );
 }
