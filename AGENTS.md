@@ -48,7 +48,8 @@ src/
 │       ├── auth/             # login / logout / me
 │       ├── calendar/         # 前台日历查询 + categories
 │       ├── stats/            # 首页统计
-│       └── admin/            # calendar / categories / media / sources / config（全部 requireAdmin）
+│       ├── ingest/           # 【外部抓取服务接入】queue(拉队列) / articles(回推文章)，ingest token 鉴权
+│       └── admin/            # calendar / categories / media / sources / articles / ingest/mock / config / llm（全部 requireAdmin）
 ├── components/
 │   ├── ui/                   # shadcn/ui
 │   ├── app-shell.tsx         # 全局布局（侧边栏导航 + 登录态）
@@ -60,7 +61,12 @@ src/
 │   ├── session.ts            # 【Edge 安全】HMAC 会话签发/校验，只用 Web Crypto（禁 node:crypto）
 │   ├── password.ts           # scrypt 密码哈希（仅 Node 运行时）
 │   ├── require-admin.ts      # API 管理员鉴权
-│   └── calendar-engine.ts    # 日历规则引擎（纯函数，周年/窗口/置信度，含单测）
+│   ├── calendar-engine.ts    # 日历规则引擎（纯函数，周年/窗口/置信度，含单测）
+│   ├── ingest.ts             # 外部抓取接入层：token 校验、文章去重入库、数据源状态、task_log
+│   ├── mock-ingest.ts        # Mock 外部服务（仿真文章，仅联调，不发真实网络请求）
+│   ├── llm-client.ts         # 统一 AI 出口（自定义 OpenAI 兼容模型优先，失败回退豆包）
+│   ├── llm-adapter.ts        # OpenAI 兼容直连适配器（SSE）
+│   └── crawler/              # 【沙箱 PoC，主流程不依赖】直连媒体站点测试用
 ├── middleware.ts             # 登录态校验（Edge，只可引用 session.ts）
 └── hooks/use-current-user.ts # 前端当前用户
 scripts/                      # seed-config / seed-users / import-data
@@ -124,11 +130,22 @@ assets/                       # 媒体列表.xlsx、2024年新闻日历.docx（�
 - **日历详情弹层**：`/api/calendar/[id]` 已改为二次查询（外键关联不可用）；弹层展示 description/tags/source_name/周年/审核状态等完整字段；
   `POST /api/calendar/[id]/summary` 通过 SSE 流式调用豆包大模型生成「AI 选题策划建议」（`coze-coding-dev-sdk` 的 `LLMClient.stream()`，nodejs runtime，SSE `data:` 分片 + `[DONE]`）。
 
-## 后续阶段（M2–M5）
+## 抓取架构（M2 已定稿：抓取能力解耦）
 
-- M2 数据源 PoC：媒体电子报/官网抓取适配器，结果写 `media_source.crawl_status`（untested/ok/failed），抓不稳不进自动任务。电子报版面信号（整版/跨版/头版）可能拿不到，评报先按字数+AI 降级。
-- M3 新闻线索：WF03 抓取 → 去重（按 media+series 聚合，更新 first_seen_at）→ AI 识别卡片 → 每日列表 + 每周简报，AI 结果走 confidence 路由进 `news_clue` 审核队列。
-- M4 每日评报：文章先 AI 压成结构化卡片（不塞全文）→ embedding 粗聚 + AI 确认同题 → 六维比较（配置 `review.dimension.*`）→ SSE 流式生成约 1000 字评报。
+沙箱出口网络无法稳定访问外部媒体站点（反爬/超时），故抓取能力从主业务解耦：
+
+- **外部抓取服务**（独立部署）：只负责抓原始文章（标题/正文/发布时间/URL）。
+  - `GET /api/ingest/queue`：拉取启用中的数据源队列（`Authorization: Bearer <ingest_token>`）。
+  - `POST /api/ingest/articles`：批量回推文章与源级成败；主系统做去重入库（`article.content_hash` 唯一）、状态更新（`media_source.crawl_status` ok/warning/error、`fail_count`、`last_ingest_at`、`last_error`）、`task_log`（workflow=`ingest`）记录。
+  - 鉴权 token 为配置项 `ingest.api_token`（后台「系统配置」可轮换，默认 `newsdesk-ingest-2026`）。
+- **主系统**：媒体配置、任务编排、article 入库去重、状态记录、AI 线索识别/同题聚类/评报。单个源失败只标记状态，绝不影响主系统页面。
+- **Mock 联调**：`POST /api/admin/ingest/mock`（管理员）生成仿真文章走完整 ingest 链路；`GET /api/admin/articles` 查看已入库文章。`src/lib/mock-ingest.ts` 不发真实网络请求。
+- `src/lib/crawler/*` 为沙箱直连 PoC 代码，仅后台「沙箱直连测试」按钮使用，不在每日工作流中。
+
+## 后续阶段（M3–M5）
+
+- M3 新闻线索：基于 `article` 表 → 去重（按 media+series 聚合，更新 first_seen_at/last_seen_at）→ AI 识别卡片 → 每日列表 + 每周简报，AI 结果走 confidence 路由进 `news_clue` 审核队列。
+- M4 每日评报：文章先 AI 压成结构化卡片（不塞全文）→ embedding 粗聚 + AI 确认同题 → 六维比较（配置 `review.dimension.*`）→ SSE 流式生成约 1000 字评报。电子报版面信号（整版/跨版/头版）外部抓取可能拿不到，评报先按字数+AI 降级。
 - M5 反馈调优：收集漏报/误报，调阈值与 Prompt。
 
 设计文档见 `docs/superpowers/specs/2026-09-06-news-workbench-design.md`，设计语言见 `DESIGN.md`。

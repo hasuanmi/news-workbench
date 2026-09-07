@@ -67,15 +67,19 @@ export async function POST(
         .from("article")
         .upsert(
           {
-            media_source_id: source.id,
+            media_id: source.media_id,
+            source_id: source.id,
             title: art.title,
             url: art.url,
-            published_at: art.publishedAt || now,
+            publish_time: art.publishedAt || now,
+            crawl_time: now,
             content_hash: contentHash,
             word_count: art.wordCount,
             content: art.content,
+            parse_status: "parsed",
+            is_key_report: false,
           },
-          { onConflict: "content_hash" }
+          { onConflict: "content_hash", ignoreDuplicates: true }
         );
 
       if (insertError) {

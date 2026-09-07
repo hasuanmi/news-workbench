@@ -125,8 +125,9 @@ export const mediaSource = pgTable(
     source_type: varchar("source_type", { length: 16 }).notNull().default("website"), // website | epaper | other
     source_url: text("source_url"),
     crawl_method: varchar("crawl_method", { length: 16 }).notNull().default("manual"), // rss | html | epaper | manual
-    crawl_status: varchar("crawl_status", { length: 16 }).notNull().default("untested"), // untested | stable | partial | unavailable
+    crawl_status: varchar("crawl_status", { length: 16 }).notNull().default("untested"), // untested | ok | warning | error（外部抓取服务回报）
     last_success_at: timestamp("last_success_at", { withTimezone: true }),
+    last_ingest_at: timestamp("last_ingest_at", { withTimezone: true }), // 外部抓取服务最近一次成功推送时间
     last_error: text("last_error"),
     fail_count: integer("fail_count").notNull().default(0),
     enabled: boolean("enabled").notNull().default(true),
@@ -302,23 +303,31 @@ export const aiAuditLog = pgTable(
   ]
 );
 
-// ============ 文章（抓取入库） ============
+// ============ 文章（外部抓取服务回推入库） ============
+// 注意：本表列名以数据库实际为准（media_id/source_id/publish_time/ai_card 等）
 export const article = pgTable(
   "article",
   {
     id: varchar("id", { length: 36 }).primaryKey().default(sql`gen_random_uuid()`),
-    media_source_id: varchar("media_source_id", { length: 36 }).notNull(),
+    media_id: varchar("media_id", { length: 36 }).notNull(),
+    source_id: varchar("source_id", { length: 36 }).notNull(),
     title: varchar("title", { length: 500 }).notNull(),
     url: text("url").notNull(),
-    published_at: timestamp("published_at", { withTimezone: true }),
-    content_hash: varchar("content_hash", { length: 64 }), // 用于去重
+    publish_time: timestamp("publish_time", { withTimezone: true }),
+    crawl_time: timestamp("crawl_time", { withTimezone: true }),
+    content_hash: varchar("content_hash", { length: 64 }), // 去重唯一键
     word_count: integer("word_count"),
-    content: text("content"), // 原文（可选，可能很长）
-    structured_card: jsonb("structured_card"), // AI 压缩后的结构化卡片
+    section: varchar("section", { length: 64 }), // 版面（电子报，外部抓取可能拿不到）
+    is_key_report: boolean("is_key_report").notNull().default(false), // 重点稿标记
+    parse_status: varchar("parse_status", { length: 16 }).notNull().default("parsed"), // parsed | failed
+    content: text("content"), // 原文
+    ai_card: jsonb("ai_card"), // AI 压缩后的结构化卡片（M4 用）
     created_at: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
   },
   (table) => [
-    index("article_source_idx").on(table.media_source_id),
+    index("article_source_idx").on(table.source_id),
+    index("article_media_idx").on(table.media_id),
+    index("article_publish_idx").on(table.publish_time),
     uniqueIndex("article_hash_idx").on(table.content_hash),
   ]
 );

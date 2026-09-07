@@ -67,6 +67,7 @@ async function main() {
     { key: "cron.crawl", value: "0 8 * * *", description: "媒体文章抓取(每日08:00)" },
     { key: "review.media_names", value: ["广州日报", "南方日报", "南方都市报", "新快报", "羊城晚报", "信息时报"], description: "每日评报默认媒体名单" },
     { key: "crawl.request_interval_ms", value: 10000, description: "单数据源抓取最小间隔(毫秒)" },
+    { key: "ingest.api_token", value: "newsdesk-ingest-2026", description: "外部抓取服务接入令牌（/api/ingest/* 鉴权，可随时轮换）" },
   ];
   for (const cfg of configs) {
     const { error } = await client.from("app_config").upsert(cfg, { onConflict: "key" });

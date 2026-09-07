@@ -28,7 +28,7 @@ export async function GET(req: NextRequest) {
   const { data: sources } = await supabase()
     .schema("public")
     .from("media_source")
-    .select("id, media_id, source_type, source_url, enabled, crawl_status, last_success_at, last_error")
+    .select("id, media_id, source_type, source_url, enabled, crawl_status, last_success_at, last_ingest_at, last_error, fail_count")
     .in("media_id", mediaIds.length ? mediaIds : ["__none__"]);
 
   const sourceMap = new Map<string, typeof sources>();
@@ -48,6 +48,8 @@ export async function GET(req: NextRequest) {
       enabled: s.enabled,
       crawl_status: s.crawl_status,
       last_crawl_at: s.last_success_at,
+      last_ingest_at: s.last_ingest_at,
+      fail_count: s.fail_count,
       last_error: s.last_error,
     })),
   }));

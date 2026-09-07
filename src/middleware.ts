@@ -1,7 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
 import { verifySessionToken, SESSION_COOKIE } from "@/lib/session";
 
-const PUBLIC_PATHS = ["/login", "/api/auth/login"];
+// /api/ingest/* 由外部抓取服务用 ingest token 鉴权（不带登录 cookie），在此放行，
+// 具体鉴权逻辑在各 route 内通过 verifyIngestToken 完成
+const PUBLIC_PATHS = ["/login", "/api/auth/login", "/api/ingest"];
 
 export async function middleware(req: NextRequest) {
   const { pathname } = req.nextUrl;
