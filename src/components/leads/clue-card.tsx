@@ -70,7 +70,7 @@ export function ClueCard({ clue, onConfirm, onIgnore, onView }: ClueCardProps) {
         </div>
 
         {/* 标签 */}
-        {clue.tags.length > 0 && (
+        {Array.isArray(clue.tags) && clue.tags.length > 0 && (
           <div className="flex flex-wrap gap-1">
             {clue.tags.map((tag) => (
               <span key={tag} className="px-2 py-0.5 text-xs bg-[#faf7f2] text-[#6b6257] rounded border border-[#e8e2d8]">
