@@ -71,10 +71,28 @@ const CLUE_SYSTEM_PROMPT = `你是一位资深新闻编辑助手，负责从媒�
 
 如果 is_clue 为 false，clue_type/series_name/series_key/topic 填 null，tags 可为空数组。`;
 
-function buildCluePrompt(article: ArticleForClue): ChatMessage[] {
+function buildCluePrompt(article: ArticleForClue, options?: ClueAnalysisOptions): ChatMessage[] {
   const contentSnippet = article.content
     ? article.content.slice(0, 800)
     : "（无正文）";
+
+  // 构建动态条件
+  let userContext = "";
+  if (options?.clueTypes && options.clueTypes.length > 0 && options.clueTypes.length < 4) {
+    const typeLabels: Record<string, string> = {
+      new_column: "新栏目",
+      series: "系列报道",
+      special_topic: "专题",
+      feature_plan: "特色策划",
+    };
+    userContext += `\n本次重点关注类型：${options.clueTypes.map((t) => typeLabels[t] || t).join("、")}`;
+  }
+  if (options?.topics && options.topics.length > 0) {
+    userContext += `\n重点主题：${options.topics.join("、")}`;
+  }
+  if (options?.customRequirement) {
+    userContext += `\n自定义要求：${options.customRequirement}`;
+  }
 
   return [
     { role: "system", content: CLUE_SYSTEM_PROMPT },
@@ -84,6 +102,7 @@ function buildCluePrompt(article: ArticleForClue): ChatMessage[] {
 标题：${article.title}
 发布时间：${article.publish_time}
 正文摘要：${contentSnippet}
+${userContext}
 
 请判断这篇文章是否为新闻线索。`,
     },
@@ -92,10 +111,17 @@ function buildCluePrompt(article: ArticleForClue): ChatMessage[] {
 
 // ============ AI 调用与解析 ============
 
+export interface ClueAnalysisOptions {
+  clueTypes?: string[];
+  topics?: string[];
+  customRequirement?: string;
+}
+
 export async function analyzeArticle(
   article: ArticleForClue,
+  options?: ClueAnalysisOptions,
 ): Promise<ClueAnalysis> {
-  const messages = buildCluePrompt(article);
+  const messages = buildCluePrompt(article, options);
 
   let raw: string;
   try {
@@ -185,11 +211,9 @@ async function getConfidenceThresholds(): Promise<{ auto: number; review: number
 export async function saveClue(
   article: ArticleForClue,
   analysis: ClueAnalysis,
-): Promise<{ clueId: string; action: "created" | "updated" | "skipped" }> {
-  const thresholds = await getConfidenceThresholds();
-  const status = analysis.is_clue
-    ? routeByConfidence(analysis.confidence, thresholds)
-    : "rejected";
+): Promise<{ clueId: string; action: "created" | "updated" | "skipped"; clue?: any }> {
+  // V1: 所有线索都设为 pending，由用户手动确认
+  const status = analysis.is_clue ? "pending" : "rejected";
 
   const db = supabase();
 
@@ -222,7 +246,13 @@ export async function saveClue(
         })
         .eq("id", existing.id);
 
-      return { clueId: existing.id, action: "updated" };
+      const { data: updatedClue } = await db
+        .from("news_clue")
+        .select("*")
+        .eq("id", existing.id)
+        .single();
+
+      return { clueId: existing.id, action: "updated", clue: updatedClue };
     }
   }
 
@@ -245,7 +275,7 @@ export async function saveClue(
       first_found_at: article.publish_time,
       last_seen_at: article.publish_time,
     })
-    .select("id")
+    .select("*")
     .single();
 
   if (error) {
@@ -253,5 +283,5 @@ export async function saveClue(
     return { clueId: "", action: "skipped" };
   }
 
-  return { clueId: data.id, action: "created" };
+  return { clueId: data.id, action: "created", clue: data };
 }

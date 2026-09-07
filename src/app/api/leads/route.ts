@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { supabase } from "@/lib/db";
 
 /**
- * GET /api/leads — 前台线索列表（仅 auto_approved + approved）
+ * GET /api/leads — 前台线索列表（confirmed + pending）
  * 支持筛选：date / mediaId / type / tag / page / pageSize
  */
 export async function GET(req: NextRequest) {
@@ -19,7 +19,7 @@ export async function GET(req: NextRequest) {
   let query = db
     .from("news_clue")
     .select("*", { count: "exact" })
-    .in("review_status", ["auto_approved", "approved"])
+    .in("review_status", ["confirmed", "pending"])
     .order("first_found_at", { ascending: false });
 
   if (date) {

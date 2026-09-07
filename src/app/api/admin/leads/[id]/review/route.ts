@@ -4,10 +4,10 @@ import { supabase } from "@/lib/db";
 
 /**
  * POST /api/admin/leads/[id]/review — 审核线索
- * Body: { action: "approve" | "reject" | "modify", ... }
- *   approve: 通过
- *   reject: 驳回
- *   modify: 修改后通过（可传 clue_type / summary / tags 等）
+ * Body: { action: "confirm" | "ignore" | "modify", ... }
+ *   confirm: 确认（发布）
+ *   ignore: 忽略
+ *   modify: 修改后确认（可传 clue_type / summary / tags 等）
  */
 export async function POST(
   req: NextRequest,
@@ -20,8 +20,8 @@ export async function POST(
   const body = await req.json().catch(() => ({}));
   const action = body.action as string;
 
-  if (!["approve", "reject", "modify"].includes(action)) {
-    return NextResponse.json({ error: "无效的 action" }, { status: 400 });
+  if (!["confirm", "ignore", "modify"].includes(action)) {
+    return NextResponse.json({ error: "无效的 action，应为 confirm/ignore/modify" }, { status: 400 });
   }
 
   const db = supabase();
@@ -42,11 +42,11 @@ export async function POST(
   };
 
   switch (action) {
-    case "approve":
-      update.review_status = "approved";
+    case "confirm":
+      update.review_status = "confirmed";
       break;
-    case "reject":
-      update.review_status = "rejected";
+    case "ignore":
+      update.review_status = "ignored";
       break;
     case "modify":
       update.review_status = "approved";
