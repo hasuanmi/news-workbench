@@ -51,10 +51,24 @@ export async function GET(req: NextRequest) {
     mediaMap = new Map((mediaRows ?? []).map((m) => [m.id, m.media_name]));
   }
 
+  // 读取展示规则
+  const { data: configData } = await db
+    .from("app_config")
+    .select("value")
+    .eq("key", "clue.display_rules")
+    .single();
+
+  let displayRules = null;
+  if (configData?.value) {
+    displayRules = typeof configData.value === "string" ? JSON.parse(configData.value) : configData.value;
+  }
+
   const clues = (data ?? []).map((c) => ({
     ...c,
+    clue_name: c.series_name || c.clue_name || "",
     media_name: mediaMap.get(c.media_id) ?? "未知媒体",
     tags: typeof c.tags === "string" ? safeJsonParse(c.tags, []) : c.tags,
+    display_rules: displayRules,
   }));
 
   return NextResponse.json({

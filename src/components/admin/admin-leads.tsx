@@ -25,7 +25,7 @@ interface Clue {
   id: string;
   media_name: string;
   clue_type: string | null;
-  series_name: string | null;
+  clue_name: string | null;
   topic: string | null;
   summary: string;
   tags: string[];
@@ -195,7 +195,7 @@ export function AdminLeadsBoard() {
 
                     <div className="flex-1 min-w-0">
                       <div className="font-medium text-[#1f1b16] mb-1">
-                        {clue.series_name || clue.topic || clue.summary || "(无标题)"}
+                        {clue.clue_name || clue.topic || clue.summary || "(无标题)"}
                       </div>
                       <p className="text-sm text-[#6b6257] mb-2 line-clamp-2">
                         {clue.summary}

@@ -1,24 +1,56 @@
 "use client";
 
+import { useState } from "react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
-import { Check, Eye, X } from "lucide-react";
+import {
+  CheckCircle2,
+  XCircle,
+  ExternalLink,
+  ChevronDown,
+  ChevronUp,
+} from "lucide-react";
+
+type ClueType = "new_column" | "series" | "special_topic" | "feature_plan";
 
 export interface Clue {
   id: string;
-  media_name: string;
-  clue_type: string;
-  series_name: string;
+  clue_type: ClueType;
+  clue_name: string;
   summary: string;
-  tags: string[];
   reason: string;
-  confidence: number;
+  tags: string[];
   article_count: number;
+  confidence: number;
+  review_status: string;
   first_found_at: string;
   last_seen_at: string;
-  review_status: "pending" | "confirmed" | "ignored";
-  articles?: Array<{ title: string; url: string; published_at: string }>;
+  media_name: string;
+  articles?: {
+    id: string;
+    title: string;
+    url: string | null;
+    published_at: string;
+  }[];
+  display_rules?: {
+    fields: {
+      show_clue_type: boolean;
+      show_clue_name: boolean;
+      show_summary: boolean;
+      show_reason: boolean;
+      show_tags: boolean;
+      show_article_count: boolean;
+      show_first_found: boolean;
+      show_last_seen: boolean;
+      show_confidence: boolean;
+    };
+    sort_by: string;
+    group_by: string;
+    summary_max_length: number;
+    reason_max_length: number;
+    enable_actions: boolean;
+  } | null;
 }
 
 interface ClueCardProps {
@@ -28,97 +60,243 @@ interface ClueCardProps {
   onView?: (id: string) => void;
 }
 
-const CLUE_TYPE_LABELS: Record<string, string> = {
+const CLUE_TYPE_LABELS: Record<ClueType, string> = {
   new_column: "新栏目",
   series: "系列报道",
   special_topic: "专题",
   feature_plan: "特色策划",
 };
 
-const CLUE_TYPE_COLORS: Record<string, string> = {
-  new_column: "bg-blue-100 text-blue-800",
-  series: "bg-purple-100 text-purple-800",
-  special_topic: "bg-amber-100 text-amber-800",
-  feature_plan: "bg-green-100 text-green-800",
+const CLUE_TYPE_STYLES: Record<ClueType, string> = {
+  new_column: "bg-blue-50 text-blue-700 border-blue-200",
+  series: "bg-purple-50 text-purple-700 border-purple-200",
+  special_topic: "bg-amber-50 text-amber-700 border-amber-200",
+  feature_plan: "bg-emerald-50 text-emerald-700 border-emerald-200",
 };
 
+const STATUS_LABELS: Record<string, { label: string; style: string }> = {
+  pending: { label: "待确认", style: "bg-amber-50 text-amber-700 border-amber-200" },
+  confirmed: { label: "已确认", style: "bg-green-50 text-green-700 border-green-200" },
+  ignored: { label: "已忽略", style: "bg-gray-50 text-gray-500 border-gray-200" },
+};
+
+function truncateText(text: string, maxLength: number): string {
+  if (!text || text.length <= maxLength) return text;
+  return text.slice(0, maxLength) + "...";
+}
+
 export function ClueCard({ clue, onConfirm, onIgnore, onView }: ClueCardProps) {
+  const [expanded, setExpanded] = useState(false);
+  const status = STATUS_LABELS[clue.review_status] || STATUS_LABELS.pending;
+
+  // 使用 display_rules 或默认值
+  const rules = clue.display_rules || {
+    fields: {
+      show_clue_type: true,
+      show_clue_name: true,
+      show_summary: true,
+      show_reason: true,
+      show_tags: true,
+      show_article_count: true,
+      show_first_found: true,
+      show_last_seen: true,
+      show_confidence: true,
+    },
+    sort_by: "first_found_desc",
+    group_by: "none",
+    summary_max_length: 200,
+    reason_max_length: 150,
+    enable_actions: true,
+  };
+
+  const { fields, summary_max_length, reason_max_length, enable_actions } = rules;
+
   return (
-    <Card className="border border-[#e8e2d8] hover:border-[#b3392f]/30 transition-colors">
+    <Card className="border-border/60 shadow-sm hover:shadow-md transition-shadow">
       <CardHeader className="pb-3">
         <div className="flex items-start justify-between gap-3">
           <div className="flex-1 min-w-0">
-            <div className="flex items-center gap-2 mb-1">
-              <span className="text-sm font-medium text-[#1f1b16]">{clue.media_name}</span>
-              <Badge className={`text-xs ${CLUE_TYPE_COLORS[clue.clue_type] || "bg-gray-100 text-gray-800"}`}>
-                {CLUE_TYPE_LABELS[clue.clue_type] || clue.clue_type}
+            <div className="flex items-center gap-2 flex-wrap mb-1.5">
+              {/* 媒体名称 */}
+              <span className="text-sm font-medium text-foreground">
+                {clue.media_name}
+              </span>
+              {/* 线索类型 */}
+              {fields.show_clue_type && (
+                <Badge
+                  variant="outline"
+                  className={`text-xs ${CLUE_TYPE_STYLES[clue.clue_type]}`}
+                >
+                  {CLUE_TYPE_LABELS[clue.clue_type]}
+                </Badge>
+              )}
+              {/* 状态 */}
+              <Badge variant="outline" className={`text-xs ${status.style}`}>
+                {status.label}
               </Badge>
             </div>
-            <h3 className="text-base font-serif font-bold text-[#1f1b16] truncate">{clue.series_name}</h3>
+            {/* 线索名称 */}
+            {fields.show_clue_name && clue.clue_name && (
+              <h3 className="text-base font-semibold text-foreground leading-tight">
+                {clue.clue_name}
+              </h3>
+            )}
           </div>
-          <div className="text-right text-xs text-[#6b6257] whitespace-nowrap">
-            <div>追踪 {clue.article_count} 篇</div>
-            <div>置信度 {Math.round(clue.confidence * 100)}%</div>
-          </div>
+          {/* 置信度 */}
+          {fields.show_confidence && (
+            <div className="flex flex-col items-end gap-1 shrink-0">
+              <span className="text-xs text-muted-foreground">置信度</span>
+              <div className="flex items-center gap-1.5">
+                <div className="w-16 h-1.5 bg-muted rounded-full overflow-hidden">
+                  <div
+                    className={`h-full rounded-full ${
+                      clue.confidence >= 0.85
+                        ? "bg-green-500"
+                        : clue.confidence >= 0.6
+                          ? "bg-amber-500"
+                          : "bg-red-500"
+                    }`}
+                    style={{ width: `${clue.confidence * 100}%` }}
+                  />
+                </div>
+                <span className="text-xs font-medium text-foreground tabular-nums">
+                  {(clue.confidence * 100).toFixed(0)}%
+                </span>
+              </div>
+            </div>
+          )}
         </div>
       </CardHeader>
-      <CardContent className="space-y-3">
+
+      <CardContent className="pt-0 space-y-3">
         {/* AI 摘要 */}
-        <div>
-          <div className="text-xs text-[#6b6257] mb-1">AI 摘要</div>
-          <p className="text-sm text-[#1f1b16] leading-relaxed">{clue.summary}</p>
-        </div>
+        {fields.show_summary && clue.summary && (
+          <p className="text-sm text-muted-foreground leading-relaxed">
+            {truncateText(clue.summary, summary_max_length)}
+          </p>
+        )}
 
         {/* 标签 */}
-        {Array.isArray(clue.tags) && clue.tags.length > 0 && (
-          <div className="flex flex-wrap gap-1">
+        {fields.show_tags && Array.isArray(clue.tags) && clue.tags.length > 0 && (
+          <div className="flex flex-wrap gap-1.5">
             {clue.tags.map((tag) => (
-              <span key={tag} className="px-2 py-0.5 text-xs bg-[#faf7f2] text-[#6b6257] rounded border border-[#e8e2d8]">
+              <Badge
+                key={tag}
+                variant="secondary"
+                className="text-xs font-normal"
+              >
                 {tag}
-              </span>
+              </Badge>
             ))}
           </div>
         )}
 
-        {/* 为什么值得关注 */}
-        <div>
-          <div className="text-xs text-[#6b6257] mb-1">为什么值得关注</div>
-          <p className="text-sm text-[#1f1b16] leading-relaxed">{clue.reason}</p>
+        {/* 元信息行 */}
+        <div className="flex items-center gap-4 text-xs text-muted-foreground flex-wrap">
+          {fields.show_article_count && (
+            <span>已追踪 {clue.article_count} 篇</span>
+          )}
+          {fields.show_first_found && (
+            <span>
+              首次发现 {new Date(clue.first_found_at).toLocaleDateString("zh-CN")}
+            </span>
+          )}
+          {fields.show_last_seen && (
+            <span>
+              最近更新 {new Date(clue.last_seen_at).toLocaleDateString("zh-CN")}
+            </span>
+          )}
         </div>
 
-        {/* 时间信息 */}
-        <div className="flex gap-4 text-xs text-[#6b6257]">
-          <span>首次发现：{new Date(clue.first_found_at).toLocaleString("zh-CN")}</span>
-          <span>最近更新：{new Date(clue.last_seen_at).toLocaleString("zh-CN")}</span>
-        </div>
+        {/* 为什么值得关注 */}
+        {fields.show_reason && clue.reason && (
+          <div className="bg-muted/30 rounded-md px-3 py-2">
+            <p className="text-xs text-muted-foreground">
+              <span className="font-medium text-foreground/70">值得关注：</span>
+              {truncateText(clue.reason, reason_max_length)}
+            </p>
+          </div>
+        )}
+
+        {/* 展开/收起关联文章 */}
+        {clue.articles && clue.articles.length > 0 && (
+          <>
+            <button
+              onClick={() => setExpanded(!expanded)}
+              className="flex items-center gap-1 text-xs text-primary hover:underline"
+            >
+              {expanded ? (
+                <>
+                  <ChevronUp className="h-3 w-3" />
+                  收起关联文章
+                </>
+              ) : (
+                <>
+                  <ChevronDown className="h-3 w-3" />
+                  查看关联文章 ({clue.articles.length})
+                </>
+              )}
+            </button>
+
+            {expanded && (
+              <div className="space-y-2 border-t border-border/40 pt-3">
+                {clue.articles.map((article) => (
+                  <div
+                    key={article.id}
+                    className="flex items-start justify-between gap-2 text-sm"
+                  >
+                    <div className="min-w-0 flex-1">
+                      <p className="text-foreground/80 truncate">
+                        {article.title}
+                      </p>
+                      <p className="text-xs text-muted-foreground">
+                        {new Date(article.published_at).toLocaleDateString("zh-CN")}
+                      </p>
+                    </div>
+                    {article.url && (
+                      <a
+                        href={article.url}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="shrink-0 text-primary hover:underline"
+                      >
+                        <ExternalLink className="h-3.5 w-3.5" />
+                      </a>
+                    )}
+                  </div>
+                ))}
+              </div>
+            )}
+          </>
+        )}
 
         {/* 操作按钮 */}
-        <div className="flex gap-2 pt-2 border-t border-[#e8e2d8]">
-          <Button variant="outline" size="sm" onClick={() => onView?.(clue.id)}>
-            <Eye className="h-3.5 w-3.5 mr-1" />
-            查看
-          </Button>
-          {clue.review_status === "pending" && (
-            <>
-              <Button size="sm" onClick={() => onConfirm?.(clue.id)} className="bg-[#3f7d5c] hover:bg-[#2f5f46] text-white">
-                <Check className="h-3.5 w-3.5 mr-1" />
+        {enable_actions && clue.review_status === "pending" && (onConfirm || onIgnore) && (
+          <div className="flex items-center gap-2 pt-2 border-t border-border/40">
+            {onConfirm && (
+              <Button
+                size="sm"
+                variant="default"
+                className="h-7 text-xs"
+                onClick={() => onConfirm(clue.id)}
+              >
+                <CheckCircle2 className="h-3 w-3 mr-1" />
                 确认
               </Button>
-              <Button variant="outline" size="sm" onClick={() => onIgnore?.(clue.id)}>
-                <X className="h-3.5 w-3.5 mr-1" />
+            )}
+            {onIgnore && (
+              <Button
+                size="sm"
+                variant="outline"
+                className="h-7 text-xs"
+                onClick={() => onIgnore(clue.id)}
+              >
+                <XCircle className="h-3 w-3 mr-1" />
                 忽略
               </Button>
-            </>
-          )}
-          {clue.review_status === "confirmed" && (
-            <Badge className="bg-[#3f7d5c] text-white">已确认</Badge>
-          )}
-          {clue.review_status === "ignored" && (
-            <Badge variant="outline" className="text-[#6b6257]">
-              已忽略
-            </Badge>
-          )}
-        </div>
+            )}
+          </div>
+        )}
       </CardContent>
     </Card>
   );

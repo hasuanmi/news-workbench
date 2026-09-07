@@ -3,10 +3,23 @@
 import { useState } from "react";
 import { AppShell } from "@/components/app-shell";
 import { ReviewFilter, type ReviewFilter as ReviewFilterType } from "@/components/review/review-filter";
-import { ReviewResult, type ReviewResult as ReviewResultType } from "@/components/review/review-result";
+import { ReviewResult } from "@/components/review/review-result";
+import type { ReviewModule } from "@/lib/review-types";
+
+interface ReviewData {
+  modules: ReviewModule[];
+  finalSummary: string;
+  display_rules: {
+    show_comparison_table: boolean;
+    show_media_name: boolean;
+    show_article_title: boolean;
+    show_article_url: boolean;
+    show_evidence: boolean;
+  } | null;
+}
 
 export default function ReviewPage() {
-  const [result, setResult] = useState<ReviewResultType | null>(null);
+  const [result, setResult] = useState<ReviewData | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -29,9 +42,16 @@ export default function ReviewPage() {
           customRequirement: filter.customRequirement,
         }),
       });
-      if (!res.ok) throw new Error("生成失败");
+      if (!res.ok) {
+        const errData = await res.json().catch(() => ({}));
+        throw new Error(errData.error || "生成失败");
+      }
       const data = await res.json();
-      setResult(data.result);
+      setResult({
+        modules: data.modules || [],
+        finalSummary: data.finalSummary || "",
+        display_rules: data.display_rules || null,
+      });
     } catch (e) {
       setError(e instanceof Error ? e.message : "生成失败");
     } finally {
@@ -44,7 +64,7 @@ export default function ReviewPage() {
       <div className="max-w-[1400px] mx-auto px-6 py-6">
         <div className="mb-6">
           <h1 className="text-2xl font-serif font-bold text-[#1f1b16]">每日评报</h1>
-          <p className="text-sm text-[#6b6257] mt-1">选择条件后，AI 对当天媒体报道进行横向比较并生成评报</p>
+          <p className="text-sm text-[#6b6257] mt-1">选择条件后，AI 对当天媒体报道进行横向比较并生成结构化评报</p>
         </div>
 
         {/* 条件区 */}
@@ -56,7 +76,13 @@ export default function ReviewPage() {
         )}
 
         {/* 结果区 */}
-        {result && <ReviewResult result={result} />}
+        {result && (
+          <ReviewResult
+            modules={result.modules}
+            finalSummary={result.finalSummary}
+            displayRules={result.display_rules}
+          />
+        )}
 
         {/* 空状态 */}
         {!result && !loading && (

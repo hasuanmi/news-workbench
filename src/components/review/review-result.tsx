@@ -2,153 +2,255 @@
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-
-export interface ReviewResult {
-  todayHighlights: {
-    themes: string[];
-    media: string[];
-    summary: string;
-  };
-  topicComparison: Array<{
-    topic: string;
-    rows: Array<{ media: string; angle: string; feature: string }>;
-    aiSummary: string;
-  }>;
-  peerHighlights: Array<{
-    media: string;
-    title: string;
-    summary: string;
-    reason: string;
-    url?: string;
-  }>;
-  finalReview: string;
-}
+import { ExternalLink } from "lucide-react";
+import type { ReviewModule } from "@/lib/review-types";
 
 interface ReviewResultProps {
-  result: ReviewResult;
+  modules: ReviewModule[];
+  finalSummary: string;
+  displayRules?: {
+    show_comparison_table?: boolean;
+    show_media_name?: boolean;
+    show_article_title?: boolean;
+    show_article_url?: boolean;
+    show_evidence?: boolean;
+    peer_highlights_max?: number;
+    same_topic_max?: number;
+    summary_max_length?: number;
+    language_style?: string;
+  } | null;
 }
 
-export function ReviewResult({ result }: ReviewResultProps) {
+const MODULE_TITLES: Record<string, string> = {
+  today_focus: "今日重点",
+  same_topic: "同题观察",
+  peer_highlights: "同行亮点",
+  gz_daily: "广州日报观察",
+};
+
+const MODULE_ICONS: Record<string, string> = {
+  today_focus: "📌",
+  same_topic: "🔍",
+  peer_highlights: "💡",
+  gz_daily: "📰",
+};
+
+export function ReviewResult({ modules, finalSummary, displayRules }: ReviewResultProps) {
+  // 默认展示规则
+  const rules = {
+    show_comparison_table: displayRules?.show_comparison_table ?? true,
+    show_media_name: displayRules?.show_media_name ?? true,
+    show_article_title: displayRules?.show_article_title ?? true,
+    show_article_url: displayRules?.show_article_url ?? true,
+    show_evidence: displayRules?.show_evidence ?? true,
+    peer_highlights_max: displayRules?.peer_highlights_max ?? 5,
+    same_topic_max: displayRules?.same_topic_max ?? 5,
+    summary_max_length: displayRules?.summary_max_length ?? 200,
+    language_style: displayRules?.language_style ?? "专业、客观、简洁",
+  };
+
   return (
     <div className="space-y-6">
-      {/* 区块一：今日重点 */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="text-lg font-serif">今日重点</CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-3">
-          <div>
-            <div className="text-sm font-medium text-[#1f1b16] mb-1">共同关注主题</div>
-            <div className="flex flex-wrap gap-1">
-              {result.todayHighlights.themes.map((theme) => (
-                <Badge key={theme} variant="secondary">
-                  {theme}
-                </Badge>
-              ))}
-            </div>
-          </div>
-          <div>
-            <div className="text-sm font-medium text-[#1f1b16] mb-1">涉及媒体</div>
-            <div className="flex flex-wrap gap-1">
-              {result.todayHighlights.media.map((m) => (
-                <Badge key={m} variant="outline">
-                  {m}
-                </Badge>
-              ))}
-            </div>
-          </div>
-          <div>
-            <div className="text-sm font-medium text-[#1f1b16] mb-1">主要报道情况</div>
-            <p className="text-sm text-[#1f1b16] leading-relaxed">{result.todayHighlights.summary}</p>
-          </div>
-        </CardContent>
-      </Card>
+      {modules.map((module) => (
+        <ModuleSection
+          key={module.type}
+          module={module}
+          rules={rules}
+        />
+      ))}
 
-      {/* 区块二：同题观察 */}
-      {result.topicComparison.length > 0 && (
+      {/* 最终评报 */}
+      {finalSummary && (
         <Card>
           <CardHeader>
-            <CardTitle className="text-lg font-serif">同题观察</CardTitle>
+            <CardTitle className="text-lg flex items-center gap-2">
+              <span>📝</span>
+              最终评报
+            </CardTitle>
           </CardHeader>
-          <CardContent className="space-y-4">
-            {result.topicComparison.map((tc) => (
-              <div key={tc.topic} className="border-b border-[#e8e2d8] pb-4 last:border-0">
-                <h4 className="font-medium text-[#1f1b16] mb-2">主题：{tc.topic}</h4>
-                <div className="overflow-x-auto">
-                  <table className="w-full text-sm">
-                    <thead>
-                      <tr className="border-b border-[#e8e2d8]">
-                        <th className="text-left py-2 px-2 text-[#6b6257]">媒体</th>
-                        <th className="text-left py-2 px-2 text-[#6b6257]">主要角度</th>
-                        <th className="text-left py-2 px-2 text-[#6b6257]">特点</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {tc.rows.map((row, i) => (
-                        <tr key={i} className="border-b border-[#e8e2d8]/50">
-                          <td className="py-2 px-2 font-medium">{row.media}</td>
-                          <td className="py-2 px-2">{row.angle}</td>
-                          <td className="py-2 px-2">{row.feature}</td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
-                <div className="mt-2 text-sm text-[#6b6257]">
-                  <span className="font-medium">AI 差异分析：</span>
-                  {tc.aiSummary}
-                </div>
-              </div>
-            ))}
+          <CardContent>
+            <div className="prose prose-sm max-w-none dark:prose-invert">
+              {finalSummary.split("\n").map((para, i) =>
+                para.trim() ? (
+                  <p key={i} className="text-foreground/90 leading-relaxed mb-3">
+                    {para}
+                  </p>
+                ) : null
+              )}
+            </div>
           </CardContent>
         </Card>
       )}
+    </div>
+  );
+}
 
-      {/* 区块三：同行亮点 */}
-      {result.peerHighlights.length > 0 && (
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-lg font-serif">同行亮点</CardTitle>
-            <p className="text-sm text-[#6b6257]">其他媒体重点报道、但广州日报没有重点覆盖的内容</p>
-          </CardHeader>
-          <CardContent className="space-y-3">
-            {result.peerHighlights.map((h, i) => (
-              <div key={i} className="p-3 bg-[#faf7f2] rounded border border-[#e8e2d8]">
-                <div className="flex items-center gap-2 mb-1">
-                  <Badge variant="outline">{h.media}</Badge>
-                  <span className="font-medium text-[#1f1b16]">{h.title}</span>
+function ModuleSection({
+  module,
+  rules,
+}: {
+  module: ReviewModule;
+  rules: {
+    show_comparison_table: boolean;
+    show_media_name: boolean;
+    show_article_title: boolean;
+    show_article_url: boolean;
+    show_evidence: boolean;
+    peer_highlights_max: number;
+    same_topic_max: number;
+    summary_max_length: number;
+    language_style: string;
+  };
+}) {
+  const title = MODULE_TITLES[module.type] || module.type;
+  const icon = MODULE_ICONS[module.type] || "📋";
+
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle className="text-lg flex items-center gap-2">
+          <span>{icon}</span>
+          {title}
+        </CardTitle>
+      </CardHeader>
+      <CardContent className="space-y-4">
+        {/* 模块摘要 */}
+        {module.summary && (
+          <p className="text-sm text-muted-foreground">{module.summary}</p>
+        )}
+
+        {/* 同题观察：对比表 */}
+        {module.type === "same_topic" && rules.show_comparison_table && module.topics && (
+          <div className="space-y-4">
+            {module.topics.slice(0, rules.same_topic_max).map((topic, idx) => (
+              <div key={idx} className="space-y-2">
+                <h4 className="font-medium text-foreground flex items-center gap-2">
+                  <Badge variant="outline">{topic.theme}</Badge>
+                </h4>
+                {topic.comparison && topic.comparison.length > 0 && (
+                  <div className="border border-border/40 rounded-md overflow-hidden">
+                    <table className="w-full text-sm">
+                      <thead className="bg-muted/50">
+                        <tr>
+                          {rules.show_media_name && <th className="text-left px-3 py-2 font-medium">媒体</th>}
+                          <th className="text-left px-3 py-2 font-medium">主要角度</th>
+                          <th className="text-left px-3 py-2 font-medium">特点</th>
+                          {rules.show_article_title && <th className="text-left px-3 py-2 font-medium">标题</th>}
+                          {rules.show_article_url && <th className="px-3 py-2 w-8"></th>}
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {topic.comparison.map((row, rowIdx) => (
+                          <tr key={rowIdx} className="border-t border-border/30">
+                            {rules.show_media_name && (
+                              <td className="px-3 py-2 text-foreground/80">{row.media}</td>
+                            )}
+                            <td className="px-3 py-2 text-foreground/80">{row.angle}</td>
+                            <td className="px-3 py-2 text-muted-foreground">{row.highlight}</td>
+                            {rules.show_article_title && (
+                              <td className="px-3 py-2 text-foreground/70 text-xs">{row.title}</td>
+                            )}
+                            {rules.show_article_url && (
+                              <td className="px-3 py-2">
+                                {row.url && (
+                                  <a href={row.url} target="_blank" rel="noopener noreferrer">
+                                    <ExternalLink className="h-3.5 w-3.5 text-primary" />
+                                  </a>
+                                )}
+                              </td>
+                            )}
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                )}
+                {topic.analysis && (
+                  <p className="text-xs text-muted-foreground mt-1">{topic.analysis}</p>
+                )}
+              </div>
+            ))}
+          </div>
+        )}
+
+        {/* 同行亮点列表 */}
+        {module.type === "peer_highlights" && module.items && (
+          <div className="space-y-3">
+            {module.items.slice(0, rules.peer_highlights_max).map((item, idx) => (
+              <div key={idx} className="border border-border/40 rounded-md p-3 space-y-1.5">
+                <div className="flex items-start justify-between gap-2">
+                  <div className="flex-1 min-w-0">
+                    {rules.show_media_name && (
+                      <Badge variant="outline" className="text-xs mb-1">
+                        {item.media}
+                      </Badge>
+                    )}
+                    {rules.show_article_title && item.title && (
+                      <h5 className="font-medium text-sm text-foreground">
+                        {item.title}
+                      </h5>
+                    )}
+                  </div>
+                  {rules.show_article_url && item.url && (
+                    <a href={item.url} target="_blank" rel="noopener noreferrer" className="shrink-0">
+                      <ExternalLink className="h-3.5 w-3.5 text-primary" />
+                    </a>
+                  )}
                 </div>
-                <p className="text-sm text-[#1f1b16] mb-1">{h.summary}</p>
-                <p className="text-xs text-[#6b6257]">
-                  <span className="font-medium">为什么值得关注：</span>
-                  {h.reason}
-                </p>
-                {h.url && (
-                  <a href={h.url} target="_blank" rel="noopener" className="text-xs text-[#b3392f] hover:underline mt-1 inline-block">
-                    查看原文 →
+                {item.summary && (
+                  <p className="text-xs text-muted-foreground">{item.summary}</p>
+                )}
+                {rules.show_evidence && item.why_noteworthy && (
+                  <p className="text-xs text-foreground/70">
+                    <span className="font-medium">值得关注：</span>
+                    {item.why_noteworthy}
+                  </p>
+                )}
+              </div>
+            ))}
+          </div>
+        )}
+
+        {/* 今日重点 / 广州日报观察 */}
+        {(module.type === "today_focus" || module.type === "gz_daily") && module.items && (
+          <div className="space-y-3">
+            {module.items.map((item, idx) => (
+              <div key={idx} className="border border-border/40 rounded-md p-3 space-y-1.5">
+                {rules.show_media_name && item.media && (
+                  <Badge variant="outline" className="text-xs">
+                    {item.media}
+                  </Badge>
+                )}
+                {rules.show_article_title && item.title && (
+                  <h5 className="font-medium text-sm text-foreground">
+                    {item.title}
+                  </h5>
+                )}
+                {item.summary && (
+                  <p className="text-xs text-muted-foreground">{item.summary}</p>
+                )}
+                {rules.show_evidence && item.why_noteworthy && (
+                  <p className="text-xs text-foreground/70">
+                    <span className="font-medium">值得关注：</span>
+                    {item.why_noteworthy}
+                  </p>
+                )}
+                {rules.show_article_url && item.url && (
+                  <a
+                    href={item.url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-flex items-center gap-1 text-xs text-primary hover:underline"
+                  >
+                    <ExternalLink className="h-3 w-3" />
+                    原文链接
                   </a>
                 )}
               </div>
             ))}
-          </CardContent>
-        </Card>
-      )}
-
-      {/* 区块四：最终评报 */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="text-lg font-serif">最终评报</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="prose prose-sm max-w-none">
-            {result.finalReview.split("\n").map((para, i) => (
-              <p key={i} className="text-sm text-[#1f1b16] leading-relaxed mb-2">
-                {para}
-              </p>
-            ))}
           </div>
-        </CardContent>
-      </Card>
-    </div>
+        )}
+      </CardContent>
+    </Card>
   );
 }

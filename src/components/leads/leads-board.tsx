@@ -17,7 +17,7 @@ interface Clue {
   id: string;
   media_name: string;
   clue_type: string | null;
-  series_name: string | null;
+  clue_name: string | null;
   topic: string | null;
   summary: string;
   tags: string[];
@@ -126,7 +126,7 @@ export function LeadsBoard() {
                     {/* 标题行 */}
                     <div className="flex items-center gap-2 mb-1">
                       <span className="font-medium text-[#1f1b16]">
-                        {clue.series_name || clue.topic || clue.summary}
+                        {clue.clue_name || clue.topic || clue.summary}
                       </span>
                       <span className="text-xs text-[#6b6257] shrink-0">
                         {clue.media_name}

@@ -1,38 +1,52 @@
 import { NextRequest, NextResponse } from "next/server";
 import { supabase } from "@/lib/db";
 import { requireAdmin } from "@/lib/require-admin";
-import { invalidateConfigCache } from "@/lib/config";
 
-export async function GET(req: NextRequest) {
-  const auth = await requireAdmin(req);
+export async function GET(request: NextRequest) {
+  const auth = await requireAdmin(request);
   if ("error" in auth) return auth.error;
+
+  const { searchParams } = new URL(request.url);
+  const key = searchParams.get("key");
+
+  if (!key) {
+    return NextResponse.json({ error: "缺少 key 参数" }, { status: 400 });
+  }
+
   const { data, error } = await supabase()
-    .schema("public")
     .from("app_config")
-    .select("*")
-    .order("key", { ascending: true });
-  if (error) return NextResponse.json({ error: error.message }, { status: 500 });
-  return NextResponse.json({ items: data });
+    .select("key, value, description")
+    .eq("key", key)
+    .single();
+
+  if (error) {
+    return NextResponse.json({ error: "配置不存在" }, { status: 404 });
+  }
+
+  return NextResponse.json({ success: true, key: data.key, value: data.value, description: data.description });
 }
 
-export async function PATCH(req: NextRequest) {
-  const auth = await requireAdmin(req);
+export async function POST(request: NextRequest) {
+  const auth = await requireAdmin(request);
   if ("error" in auth) return auth.error;
-  const body = await req.json();
-  const updates: { key: string; value: string }[] = body.updates ?? [];
-  if (!Array.isArray(updates) || updates.length === 0) {
-    return NextResponse.json({ error: "无更新项" }, { status: 400 });
+
+  const body = await request.json();
+  const { key, value, description } = body;
+
+  if (!key || value === undefined) {
+    return NextResponse.json({ error: "缺少 key 或 value" }, { status: 400 });
   }
 
-  const db = supabase();
-  for (const u of updates) {
-    const { error } = await db
-      .schema("public")
-      .from("app_config")
-      .update({ value: String(u.value), updated_at: new Date().toISOString() })
-      .eq("key", u.key);
-    if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+  const { error } = await supabase()
+    .from("app_config")
+    .upsert(
+      { key, value: typeof value === "string" ? value : JSON.stringify(value), description: description || "" },
+      { onConflict: "key" }
+    );
+
+  if (error) {
+    return NextResponse.json({ error: "保存失败" }, { status: 500 });
   }
-  invalidateConfigCache();
+
   return NextResponse.json({ success: true });
 }
