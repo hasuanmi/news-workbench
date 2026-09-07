@@ -30,7 +30,12 @@ export default function LeadsPage() {
       });
       if (!res.ok) throw new Error("识别失败");
       const data = await res.json();
-      setClues(data.clues || []);
+      // 去重：确保线索 id 唯一
+      const uniqueClues = (data.clues || []).filter(
+        (clue: Clue, index: number, self: Clue[]) =>
+          index === self.findIndex((c) => c.id === clue.id)
+      );
+      setClues(uniqueClues);
     } catch (e) {
       setError(e instanceof Error ? e.message : "识别失败");
     } finally {
