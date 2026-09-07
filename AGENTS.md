@@ -14,7 +14,7 @@
 
 ## 项目概览
 
-面向广州日报编辑的内部 AI 新闻辅助工作台，按 PRD V1.0 分三阶段交付：**新闻日历**（已完成 M0+M1）→ **新闻线索**（已完成 M3）→ **每日评报**（M4，占位）。工作流内置在 Next.js 后端（API Routes + 后续 cron 调度），核心原则是**配置驱动**：媒体名单、日历分类、重要等级、阈值、线索类型、评报维度、cron 时间全部入库，业务规则变化只改配置不改主流程。
+面向广州日报编辑的内部 AI 新闻辅助工作台，按 PRD V1.0 分三阶段交付：**新闻日历**（已完成 M0+M1）→ **新闻线索**（已完成 M3）→ **每日评报**（已完成 M4）。工作流内置在 Next.js 后端（API Routes + 后续 cron 调度），核心原则是**配置驱动 + 前台临时条件**：媒体名单、日历分类、展示/生成规则入库（`app_config`），具体"这次怎么筛、怎么评"由用户在前台条件区临时选择（类似知网高级检索），临时条件不回写后台默认规则。
 
 - **Framework**: Next.js 16 (App Router) · React 19 · TypeScript 5 (strict)
 - **UI**: shadcn/ui（`src/components/ui/`）+ Tailwind CSS 4
@@ -55,19 +55,24 @@ src/
 │   ├── login/                # 登录页
 │   ├── calendar/             # 新闻日历（前台，编辑可见）
 │   ├── leads/                # 新闻线索（前台：线索卡片 + 每周简报）
-│   ├── review/               # 每日评报（M4 占位页）
-│   ├── admin/                # 后台：calendar / categories / media / leads / config
+│   ├── review/               # 每日评报（前台：条件区 + SSE 流式结果 + 历史评报）
+│   ├── admin/                # 后台：calendar / categories / media / leads / review / config
 │   └── api/
 │       ├── auth/             # login / logout / me
 │       ├── calendar/         # 前台日历查询 + categories
+│       ├── medias/           # 媒体下拉（scope=review 返回 monitor_review 媒体）
+│       ├── leads/            # 前台线索 + weekly（历史简报）
+│       ├── review/           # 【M4】历史评报列表 / [id] 详情
 │       ├── stats/            # 首页统计
 │       ├── ingest/           # 【外部抓取服务接入】queue(拉队列) / articles(回推文章)，ingest token 鉴权
-│       └── admin/            # calendar / categories / media / sources / articles / ingest/mock / config / llm（全部 requireAdmin）
+│       └── admin/            # calendar / categories / media / sources / articles / ingest/mock / config / llm / leads / review（全部 requireAdmin）
 ├── components/
 │   ├── ui/                   # shadcn/ui
 │   ├── app-shell.tsx         # 全局布局（侧边栏导航 + 登录态）
 │   ├── calendar/             # 日历看板、事件详情弹层
-│   └── admin/                # 后台各管理页客户端组件
+│   ├── leads/                # 线索卡片、线索看板（前台条件区）
+│   ├── review/               # 评报条件区(review-filter)、结构化结果(review-result)
+│   └── admin/                # 后台各管理页客户端组件（含线索/评报展示规则配置）
 ├── lib/
 │   ├── db.ts                 # Supabase 客户端
 │   ├── config.ts             # app_config 读取（getAppConfig 内存缓存）
@@ -75,6 +80,11 @@ src/
 │   ├── password.ts           # scrypt 密码哈希（仅 Node 运行时）
 │   ├── require-admin.ts      # API 管理员鉴权
 │   ├── calendar-engine.ts    # 日历规则引擎（纯函数，周年/窗口/置信度，含单测）
+│   ├── clue-engine.ts        # M3 线索识别（结构化 JSON + 置信度路由 + clue_name）
+│   ├── clue-pipeline.ts      # M3 批量识别流水线（扫未处理文章→合并→入库）
+│   ├── review-engine.ts      # 【M4】评报：规则筛稿→AI 结构化四区块→SSE 流式总结→落库 daily_review
+│   ├── review-types.ts       # 评报结构化类型（ReviewModule/DisplayRules/GenerationRules）
+│   ├── weekly-briefing.ts    # M3 每周简报（SSE + Markdown 四段拆分）
 │   ├── ingest.ts             # 外部抓取接入层：token 校验、文章去重入库、数据源状态、task_log
 │   ├── mock-ingest.ts        # Mock 外部服务（仿真文章，仅联调，不发真实网络请求）
 │   ├── llm-client.ts         # 统一 AI 出口（自定义 OpenAI 兼容模型优先，失败回退豆包）
@@ -164,10 +174,22 @@ assets/                       # 媒体列表.xlsx、2024年新闻日历.docx（�
 - **页面**：前台 `/leads`（卡片列表，置信度进度条/标签/追踪篇数）、`/leads/weekly`；后台 `/admin/leads`（识别触发按钮 + 待审队列 + 审核弹窗）。**入口已挂到「系统管理 → 新闻线索管理」卡片**。
 - `article` 表增加 `clue_processed` 标记列。Mock 文章可直接触发识别验证。
 
-## 后续阶段（M4–M5）
+## 已完成：M4 每日评报
 
-- M4 每日评报：文章先 AI 压成结构化卡片（不塞全文）→ embedding 粗聚 + AI 确认同题 → 六维比较（配置 `review.dimension.*`）→ SSE 流式生成约 1000 字评报。电子报版面信号（整版/跨版/头版）外部抓取可能拿不到，评报先按字数+AI 降级。
+- **交互模式（前台条件优先）**：`/review` 顶部条件区（日期/对比媒体/最低字数/版面信号/评报维度/关注主题/同行遗漏扫描/自定义要求），用户每次临时选择，不回写后台。默认媒体 = `media.monitor_review=true` 的媒体（`GET /api/medias?scope=review` 动态加载，不硬编码媒体名）。
+- **引擎** `src/lib/review-engine.ts`：
+  - `fetchReviewArticles` 规则层筛稿（日期/媒体/字数/去重/已启用源），返回文章 + `gzMediaNames`（媒体名含「广州日报」即广州日报系，用于同行遗漏扫描）。
+  - `analyzeStructure` 非流式调用 AI 输出结构化四区块 JSON：today_focus 今日重点 / same_topic 同题观察(含对比表 rows) / peer_highlights 同行亮点 / gz_daily 广州日报观察。模块开关、数量、摘要长度、语言风格读 `review.generation_rules`。
+  - `streamFinalReview` 基于结构化结果 SSE 流式生成 ≤ 字数上限的自然语言总结（今日重点→同题差异→同行亮点→广州可借鉴）。
+  - `saveDailyReview` 落库 `daily_review`（sections JSONB + final_summary），按 report_date upsert，version+1。
+- **接口**：`POST /api/admin/review/generate`（SSE，事件 fetching/analyzing/structure/final*/saved/warning/error）、`GET /api/review`（历史列表+summary_preview）、`GET /api/review/[id]`（详情，sections 还原成 modules 数组 + 合并当前 display_rules）。
+- **展示规则驱动**：`review.display_rules`（show_media_name/show_article_title/show_article_url/show_evidence/show_comparison_table + modules 开关）控制 `review-result.tsx` 动态渲染；后台 `/admin/review` 分「生成规则」「展示规则」两块配置。
+- **版面信号降级**：整版/跨版/头版等外部抓取可能缺失，缺失时按字数 + AI 判断降级，不致任务失败。
+
+## 后续阶段（M5）
+
 - M5 反馈调优：收集漏报/误报，调阈值与 Prompt。
-- cron 定时：线索每日 9 点自动识别、每周自动简报（当前为管理员手动触发，接定时调度即可）。
+- cron 定时：线索每日 9 点自动识别、每周自动简报、评报每日定时生成（当前均为管理员手动触发，接定时调度即可）。
+- 真实数据：等外部抓取服务部署后，用真实文章回归完整链路（当前 article 多为 Mock 短稿，评报验证时需放宽 minWordCount）。
 
 设计文档见 `docs/superpowers/specs/2026-09-06-news-workbench-design.md`，设计语言见 `DESIGN.md`。

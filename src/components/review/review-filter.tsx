@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
@@ -24,14 +24,13 @@ interface ReviewFilterProps {
   loading?: boolean;
 }
 
-const DEFAULT_MEDIA = [
-  { id: "gzrb", name: "广州日报" },
-  { id: "nfzb", name: "南方日报" },
-  { id: "nfdsb", name: "南方都市报" },
-  { id: "xkb", name: "新快报" },
-  { id: "ycwb", name: "羊城晚报" },
-  { id: "xxsb", name: "信息时报" },
-];
+interface MediaOption {
+  id: string;
+  media_name: string;
+  media_level: string;
+}
+
+const DEFAULT_DIMENSIONS = ["topic", "timeliness", "angle", "depth", "presentation"];
 
 const HIGHLIGHT_FLAGS = [
   { value: "front_page", label: "头版重点" },
@@ -56,28 +55,55 @@ const DIMENSIONS = [
 
 const PRESET_TOPICS = ["十五运", "AI", "城市治理", "民生", "广交会"];
 
-export function ReviewFilter({ onGenerate, loading }: ReviewFilterProps) {
-  const [filter, setFilter] = useState<ReviewFilter>({
+function makeDefaultFilter(mediaIds: string[]): ReviewFilter {
+  return {
     date: new Date(),
-    mediaIds: DEFAULT_MEDIA.map((m) => m.id),
+    mediaIds,
     minWordCount: 2000,
     highlightFlags: [],
-    dimensions: ["topic", "timeliness", "angle", "depth", "presentation"],
+    dimensions: [...DEFAULT_DIMENSIONS],
     topics: [],
     scanMissing: true,
-  });
+  };
+}
+
+export function ReviewFilter({ onGenerate, loading }: ReviewFilterProps) {
+  const [medias, setMedias] = useState<MediaOption[]>([]);
+  const [filter, setFilter] = useState<ReviewFilter>(() => makeDefaultFilter([]));
   const [topicInput, setTopicInput] = useState("");
 
+  useEffect(() => {
+    let cancelled = false;
+    fetch("/api/medias?scope=review")
+      .then((r) => r.json())
+      .then((data) => {
+        if (cancelled) return;
+        const list: MediaOption[] = data.medias ?? [];
+        setMedias(list);
+        // 默认勾选全部评报监测媒体；为空则回退全部启用媒体
+        if (list.length === 0) {
+          fetch("/api/medias")
+            .then((r2) => r2.json())
+            .then((d2) => {
+              if (!cancelled) {
+                const all: MediaOption[] = d2.medias ?? [];
+                setMedias(all);
+                setFilter(makeDefaultFilter(all.map((m) => m.id)));
+              }
+            })
+            .catch(() => {});
+        } else {
+          setFilter(makeDefaultFilter(list.map((m) => m.id)));
+        }
+      })
+      .catch(() => {});
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
   const handleReset = () => {
-    setFilter({
-      date: new Date(),
-      mediaIds: DEFAULT_MEDIA.map((m) => m.id),
-      minWordCount: 2000,
-      highlightFlags: [],
-      dimensions: ["topic", "timeliness", "angle", "depth", "presentation"],
-      topics: [],
-      scanMissing: true,
-    });
+    setFilter(makeDefaultFilter(medias.map((m) => m.id)));
     setTopicInput("");
   };
 
@@ -137,13 +163,18 @@ export function ReviewFilter({ onGenerate, loading }: ReviewFilterProps) {
 
         {/* 对比媒体 */}
         <div>
-          <label className="text-sm font-medium text-[#1f1b16] mb-2 block">对比媒体（多选）</label>
+          <label className="text-sm font-medium text-[#1f1b16] mb-2 block">
+            对比媒体（多选，默认取后台开启「评报监测」的媒体）
+          </label>
           <div className="flex flex-wrap gap-2">
-            {DEFAULT_MEDIA.map((m) => (
+            {medias.map((m) => (
               <Button key={m.id} variant={filter.mediaIds.includes(m.id) ? "default" : "outline"} size="sm" onClick={() => toggleMedia(m.id)}>
-                {m.name}
+                {m.media_name}
               </Button>
             ))}
+            {medias.length === 0 && (
+              <span className="text-xs text-[#6b6257]">暂无媒体，请先在「媒体与数据源」中配置</span>
+            )}
           </div>
         </div>
 

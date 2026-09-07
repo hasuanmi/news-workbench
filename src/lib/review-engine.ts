@@ -1,0 +1,464 @@
+/**
+ * 每日评报引擎（M4）
+ *
+ * 流程：
+ *   1. 规则层筛选文章（日期 / 媒体 / 字数 / 去重 / 启用源）
+ *   2. AI 结构化分析（非流式）：今日重点、同题聚类对比、同行亮点
+ *   3. AI 流式生成最终评报（SSE 打字机）
+ *   4. 落库 daily_review（sections + final_summary）
+ *
+ * 生成规则 / 展示规则从 app_config 读取（review.generation_rules / review.display_rules），
+ * 前台临时条件只影响本次分析，不改默认规则。
+ */
+
+import { supabase } from "@/lib/db";
+import { unifiedInvoke, unifiedStream } from "@/lib/llm-client";
+import type { ChatMessage } from "@/lib/llm-adapter";
+import type { ReviewModule } from "@/lib/review-types";
+
+// ============ 类型 ============
+
+export interface ReviewConditions {
+  date: string; // ISO
+  mediaIds: string[]; // 空数组 = monitor_review 启用的媒体
+  minWordCount: number;
+  highlightFlags: string[];
+  dimensions: string[];
+  topics: string[];
+  scanMissing: boolean;
+  customRequirement?: string;
+}
+
+export interface GenerationRules {
+  max_word_count: number;
+  modules: { today_focus: boolean; same_topic: boolean; peer_highlights: boolean; gz_daily: boolean };
+  same_topic_max: number;
+  peer_highlights_max: number;
+  summary_max_length: number;
+  language_style: string;
+}
+
+export interface DisplayRules {
+  show_comparison_table: boolean;
+  show_media_name: boolean;
+  show_article_title: boolean;
+  show_article_url: boolean;
+  show_evidence: boolean;
+}
+
+export const DEFAULT_GEN_RULES: GenerationRules = {
+  max_word_count: 1000,
+  modules: { today_focus: true, same_topic: true, peer_highlights: true, gz_daily: false },
+  same_topic_max: 5,
+  peer_highlights_max: 5,
+  summary_max_length: 200,
+  language_style: "专业、客观、简洁，符合报纸评报口吻",
+};
+
+export const DEFAULT_DISPLAY_RULES: DisplayRules = {
+  show_comparison_table: true,
+  show_media_name: true,
+  show_article_title: true,
+  show_article_url: true,
+  show_evidence: true,
+};
+
+export const DIMENSION_LABELS: Record<string, string> = {
+  topic: "选题",
+  timeliness: "时效性",
+  angle: "报道角度",
+  depth: "内容深度",
+  richness: "信息丰富度",
+  presentation: "表现形式",
+  local: "广州本地性",
+  exclusive: "独家性",
+  headline: "标题质量",
+  service: "服务性",
+};
+
+export interface ReviewArticle {
+  id: string;
+  media_id: string;
+  media_name: string;
+  title: string;
+  url: string;
+  publish_time: string;
+  word_count: number;
+  section: string | null;
+  is_key_report: boolean;
+  snippet: string;
+}
+
+// ============ 配置读取 ============
+
+async function getConfig<T>(key: string, fallback: T): Promise<T> {
+  const { data } = await supabase()
+    .from("app_config")
+    .select("value")
+    .eq("key", key)
+    .single();
+  if (!data?.value) return fallback;
+  try {
+    return typeof data.value === "string" ? JSON.parse(data.value) : (data.value as T);
+  } catch {
+    return fallback;
+  }
+}
+
+export async function getReviewRules(): Promise<{ gen: GenerationRules; display: DisplayRules }> {
+  const gen = await getConfig<GenerationRules>("review.generation_rules", DEFAULT_GEN_RULES);
+  const display = await getConfig<DisplayRules>("review.display_rules", DEFAULT_DISPLAY_RULES);
+  return { gen, display };
+}
+
+// ============ 规则层：筛选文章 ============
+
+export async function fetchReviewArticles(conditions: ReviewConditions): Promise<{
+  dateStr: string;
+  articles: ReviewArticle[];
+  gzMediaNames: string[];
+}> {
+  const db = supabase();
+  const dateStr = new Date(conditions.date).toISOString().split("T")[0];
+  const start = `${dateStr}T00:00:00`;
+  const end = `${dateStr}T23:59:59`;
+
+  // 目标媒体：显式传入优先；为空则取 monitor_review 启用媒体
+  let mediaIds = conditions.mediaIds.filter(Boolean);
+  let mediaMap = new Map<string, string>();
+  if (mediaIds.length === 0) {
+    const { data: mediaRows } = await db
+      .from("media")
+      .select("id, media_name")
+      .eq("monitor_review", true)
+      .eq("enabled", true);
+    mediaIds = (mediaRows ?? []).map((m) => m.id);
+    mediaMap = new Map((mediaRows ?? []).map((m) => [m.id, m.media_name]));
+  } else {
+    const { data: mediaRows } = await db
+      .from("media")
+      .select("id, media_name")
+      .in("id", mediaIds);
+    mediaMap = new Map((mediaRows ?? []).map((m) => [m.id, m.media_name]));
+  }
+
+  if (mediaIds.length === 0) {
+    throw new Error("未找到参与评报的媒体，请在「媒体与数据源」中设置评报监测媒体");
+  }
+
+  // 广州日报系媒体名称（用于同行遗漏扫描）
+  const gzMediaNames = [...mediaMap.values()].filter((n) => n.includes("广州日报"));
+
+  let query = db
+    .from("article")
+    .select("*")
+    .in("media_id", mediaIds)
+    .gte("publish_time", start)
+    .lte("publish_time", end)
+    .order("publish_time", { ascending: false });
+
+  const { data: rows, error } = await query;
+  if (error) throw new Error(`查询文章失败: ${error.message}`);
+
+  // 规则层过滤：字数阈值（Mock 短文自动放宽到 100 字，保证可联调）
+  const threshold = conditions.minWordCount;
+  let filtered = (rows ?? []).filter((a) => (a.word_count ?? 0) >= threshold);
+  if (filtered.length === 0 && (rows ?? []).length > 0) {
+    const maxWc = Math.max(...(rows ?? []).map((a) => a.word_count ?? 0));
+    if (maxWc < threshold) {
+      // 数据整体不达阈值（如 Mock 短文）：放宽取字数 >=100 的，避免任务直接失败
+      filtered = (rows ?? []).filter((a) => (a.word_count ?? 0) >= 100);
+    }
+  }
+
+  // content_hash 去重已由唯一索引保证；这里按标题+媒体再去一次重
+  const seen = new Set<string>();
+  const articles: ReviewArticle[] = [];
+  for (const a of filtered) {
+    const key = `${a.media_id}:${a.title}`;
+    if (seen.has(key)) continue;
+    seen.add(key);
+    articles.push({
+      id: a.id,
+      media_id: a.media_id,
+      media_name: mediaMap.get(a.media_id) ?? "未知媒体",
+      title: a.title,
+      url: a.url,
+      publish_time: a.publish_time,
+      word_count: a.word_count ?? 0,
+      section: a.section,
+      is_key_report: a.is_key_report,
+      snippet: (a.content ?? "").replace(/\s+/g, " ").slice(0, 220),
+    });
+  }
+
+  return { dateStr, articles, gzMediaNames };
+}
+
+// ============ AI 结构化分析（非流式） ============
+
+interface StructuredAnalysis {
+  modules: ReviewModule[];
+}
+
+function buildAnalysisMessages(
+  dateStr: string,
+  articles: ReviewArticle[],
+  conditions: ReviewConditions,
+  rules: GenerationRules,
+  gzMediaNames: string[],
+): ChatMessage[] {
+  const articleLines = articles
+    .map(
+      (a, i) =>
+        `[${i + 1}] 媒体：${a.media_name}｜标题：${a.title}｜字数：${a.word_count}${a.section ? `｜版面：${a.section}` : ""}｜摘要：${a.snippet}｜链接：${a.url}`,
+    )
+    .join("\n");
+
+  const enabledModules: string[] = [];
+  if (rules.modules.today_focus) enabledModules.push("today_focus 今日重点");
+  if (rules.modules.same_topic) enabledModules.push("same_topic 同题观察");
+  if (rules.modules.peer_highlights) enabledModules.push("peer_highlights 同行亮点");
+  if (rules.modules.gz_daily) enabledModules.push("gz_daily 广州日报观察");
+
+  const system = `你是资深新闻评报专家，负责横向对比多家媒体同一天的报道。基于给定文章数据做结构化分析，严格输出 JSON（不要 markdown 代码块、不要多余文字）。
+
+JSON 结构：
+{
+  "today_focus": {
+    "summary": "当天共同关注主题与主要报道情况概述（100字内）",
+    "items": [ { "media": "媒体名", "title": "报道/主题标题", "summary": "一句话说明", "url": "原文链接" } ]
+  },
+  "same_topic": [
+    {
+      "theme": "共同主题名称",
+      "comparison": [ { "media": "媒体名", "angle": "主要报道角度", "highlight": "特点", "title": "代表文章标题", "url": "链接" } ],
+      "analysis": "各媒体差异总结（50字内）"
+    }
+  ],
+  "peer_highlights": [
+    { "media": "媒体名", "title": "文章标题", "summary": "AI摘要（50字内）", "why_noteworthy": "为什么值得广州日报关注（30字内）", "url": "链接" }
+  ],
+  "gz_daily": {
+    "summary": "广州日报当天报道特点与可改进点概述",
+    "items": [ { "media": "广州日报", "title": "标题", "summary": "说明", "url": "链接" } ]
+  }
+}
+
+规则：
+- 只输出需要的模块；某模块无内容则对应值为 null 或空数组
+- 同题观察最多 ${rules.same_topic_max} 个主题，每个主题对比 ${2} 家以上媒体
+- 同行亮点最多 ${rules.peer_highlights_max} 条
+- peer_highlights 只放：${gzMediaNames.length > 0 ? gzMediaNames.join("、") : "广州日报"} 没有重点覆盖、但其他媒体做了重点的报道
+- 所有内容必须基于给定文章，禁止编造链接和标题`;
+
+  const user = `评报日期：${dateStr}
+参与媒体：${[...new Set(articles.map((a) => a.media_name))].join("、")}
+共 ${articles.length} 篇符合条件文章：
+
+${articleLines}
+
+分析要求：
+- 启用模块：${enabledModules.join("；")}
+- 评报维度：${conditions.dimensions.map((d) => DIMENSION_LABELS[d] || d).join("、") || "默认维度"}
+${conditions.topics.length > 0 ? `- 重点关注主题：${conditions.topics.join("、")}` : ""}
+${conditions.scanMissing ? `- 同行遗漏扫描：开启（找出其他媒体重点报道但广州日报未重点覆盖的内容）` : ""}
+${conditions.customRequirement ? `- 本次自定义要求：${conditions.customRequirement}` : ""}
+${conditions.highlightFlags.length > 0 ? `- 版面信号参考（数据中可能缺失，缺失则忽略）：${conditions.highlightFlags.join("、")}` : ""}
+
+请输出结构化 JSON。`;
+
+  return [
+    { role: "system", content: system },
+    { role: "user", content: user },
+  ];
+}
+
+function safeParseJson(raw: string): any {
+  const match = raw.match(/\{[\s\S]*\}/);
+  if (!match) throw new Error("AI 返回无法解析为 JSON");
+  let s = match[0].replace(/[\x00-\x08\x0B\x0C\x0E-\x1F]/g, "");
+  try {
+    return JSON.parse(s);
+  } catch {
+    // 二次尝试：转义未转义引号
+    s = s.replace(/(?<!\\)"/g, '\\"').replace(/\\"/g, '"');
+    return JSON.parse(s);
+  }
+}
+
+export async function analyzeStructure(
+  dateStr: string,
+  articles: ReviewArticle[],
+  conditions: ReviewConditions,
+  rules: GenerationRules,
+  gzMediaNames: string[],
+): Promise<StructuredAnalysis> {
+  const messages = buildAnalysisMessages(dateStr, articles, conditions, rules, gzMediaNames);
+  const raw = await unifiedInvoke(messages, { temperature: 0.3 });
+  const parsed = safeParseJson(raw);
+
+  const modules: ReviewModule[] = [];
+
+  if (rules.modules.today_focus && parsed.today_focus) {
+    modules.push({
+      type: "today_focus",
+      summary: parsed.today_focus.summary ?? "",
+      items: (parsed.today_focus.items ?? []).map((it: any) => ({
+        media: it.media,
+        title: it.title,
+        summary: it.summary,
+        url: it.url,
+      })),
+    });
+  }
+
+  if (rules.modules.same_topic && Array.isArray(parsed.same_topic)) {
+    modules.push({
+      type: "same_topic",
+      topics: parsed.same_topic.slice(0, rules.same_topic_max).map((t: any) => ({
+        theme: t.theme,
+        comparison: (t.comparison ?? []).map((r: any) => ({
+          media: r.media,
+          angle: r.angle,
+          highlight: r.highlight,
+          title: r.title,
+          url: r.url,
+        })),
+        analysis: t.analysis,
+      })),
+    });
+  }
+
+  if (rules.modules.peer_highlights && Array.isArray(parsed.peer_highlights)) {
+    modules.push({
+      type: "peer_highlights",
+      items: parsed.peer_highlights.slice(0, rules.peer_highlights_max).map((p: any) => ({
+        media: p.media,
+        title: p.title,
+        summary: p.summary,
+        url: p.url,
+        why_noteworthy: p.why_noteworthy,
+      })),
+    });
+  }
+
+  if (rules.modules.gz_daily && parsed.gz_daily) {
+    modules.push({
+      type: "gz_daily",
+      summary: parsed.gz_daily.summary ?? "",
+      items: (parsed.gz_daily.items ?? []).map((it: any) => ({
+        media: it.media,
+        title: it.title,
+        summary: it.summary,
+        url: it.url,
+      })),
+    });
+  }
+
+  return { modules };
+}
+
+// ============ AI 流式生成最终评报 ============
+
+function buildFinalMessages(
+  dateStr: string,
+  modules: ReviewModule[],
+  conditions: ReviewConditions,
+  rules: GenerationRules,
+): ChatMessage[] {
+  const structureText = JSON.stringify(modules, null, 1);
+
+  const system = `你是资深报纸评报主笔，基于已完成的结构化分析，撰写当天的最终评报。
+用中文、连贯的自然语言（不要列表、不要 JSON、不要标题符号堆砌），分段输出。
+内容包含四部分：今日共同重点、同题报道差异、同行亮点（其他媒体有而广州日报没有重点覆盖的）、广州日报可借鉴之处。
+语言风格：${rules.language_style}。
+总字数控制在 ${rules.max_word_count} 字以内。只输出评报正文。`;
+
+  const user = `评报日期：${dateStr}
+评报维度：${conditions.dimensions.map((d) => DIMENSION_LABELS[d] || d).join("、") || "默认维度"}
+${conditions.topics.length > 0 ? `重点主题：${conditions.topics.join("、")}` : ""}
+${conditions.customRequirement ? `本次要求：${conditions.customRequirement}` : ""}
+
+结构化分析结果：
+${structureText}
+
+请撰写最终评报。`;
+
+  return [
+    { role: "system", content: system },
+    { role: "user", content: user },
+  ];
+}
+
+export async function* streamFinalReview(
+  dateStr: string,
+  modules: ReviewModule[],
+  conditions: ReviewConditions,
+  rules: GenerationRules,
+): AsyncGenerator<string> {
+  const messages = buildFinalMessages(dateStr, modules, conditions, rules);
+  for await (const chunk of unifiedStream(messages, { temperature: 0.4 })) {
+    if (chunk.content) yield chunk.content;
+  }
+}
+
+// ============ 落库 ============
+
+export async function saveDailyReview(params: {
+  dateStr: string;
+  modules: ReviewModule[];
+  finalSummary: string;
+  conditions: ReviewConditions;
+}): Promise<string> {
+  const db = supabase();
+  const sections = {
+    today_focus: params.modules.find((m) => m.type === "today_focus") ?? null,
+    same_topic: params.modules.find((m) => m.type === "same_topic") ?? null,
+    peer_highlights: params.modules.find((m) => m.type === "peer_highlights") ?? null,
+    gz_daily: params.modules.find((m) => m.type === "gz_daily") ?? null,
+    conditions: {
+      minWordCount: params.conditions.minWordCount,
+      dimensions: params.conditions.dimensions,
+      topics: params.conditions.topics,
+      scanMissing: params.conditions.scanMissing,
+      customRequirement: params.conditions.customRequirement ?? "",
+    },
+  };
+
+  // 同一天重复生成：upsert（report_date 唯一），version +1
+  const { data: existing } = await db
+    .from("daily_review")
+    .select("id, version")
+    .eq("report_date", params.dateStr)
+    .maybeSingle();
+
+  if (existing) {
+    const { error } = await db
+      .from("daily_review")
+      .update({
+        sections: JSON.stringify(sections),
+        final_summary: params.finalSummary,
+        review_status: "pending",
+        version: (existing.version ?? 1) + 1,
+        updated_at: new Date().toISOString(),
+      })
+      .eq("id", existing.id);
+    if (error) throw new Error(`更新评报失败: ${error.message}`);
+    return existing.id;
+  }
+
+  const { data, error } = await db
+    .from("daily_review")
+    .insert({
+      report_date: params.dateStr,
+      sections: JSON.stringify(sections),
+      final_summary: params.finalSummary,
+      review_status: "pending",
+      version: 1,
+    })
+    .select("id")
+    .single();
+  if (error) throw new Error(`保存评报失败: ${error.message}`);
+  return data.id;
+}
