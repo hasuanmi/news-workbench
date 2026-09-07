@@ -6,8 +6,8 @@ import { CalendarDays, Database, Settings, Newspaper, Radio } from "lucide-react
 const sections = [
   { href: "/admin/calendar", title: "日历节点管理", desc: "节点增删改、停用、分类调整、动态节点审核", icon: CalendarDays },
   { href: "/admin/categories", title: "日历分类管理", desc: "维护八大分类，新增/改名/停用分类", icon: Settings },
-  { href: "/admin/media", title: "媒体与数据源", desc: "媒体池、电子报/官网地址、启用状态、PoC 状态", icon: Newspaper },
-  { href: "/admin/review", title: "线索审核", desc: "AI 发现线索的人工审核（M3 启用工作流后生效）", icon: Radio },
+  { href: "/admin/media", title: "媒体与数据源", desc: "媒体池、电子报/官网地址、启用状态、抓取接入与 Mock 推送", icon: Newspaper },
+  { href: "/admin/leads", title: "新闻线索管理", desc: "AI 线索识别触发、待审队列人工确认、线索发布/驳回", icon: Radio },
   { href: "/admin/config", title: "系统配置", desc: "提醒窗口、置信度阈值、字数阈值、定时任务时间", icon: Database },
 ];
 

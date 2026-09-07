@@ -14,7 +14,7 @@
 
 ## 项目概览
 
-面向广州日报编辑的内部 AI 新闻辅助工作台，按 PRD V1.0 分三阶段交付：**新闻日历**（已完成 M0+M1）→ **新闻线索**（M3，占位）→ **每日评报**（M4，占位）。工作流内置在 Next.js 后端（API Routes + 后续 cron 调度），核心原则是**配置驱动**：媒体名单、日历分类、重要等级、阈值、线索类型、评报维度、cron 时间全部入库，业务规则变化只改配置不改主流程。
+面向广州日报编辑的内部 AI 新闻辅助工作台，按 PRD V1.0 分三阶段交付：**新闻日历**（已完成 M0+M1）→ **新闻线索**（已完成 M3）→ **每日评报**（M4，占位）。工作流内置在 Next.js 后端（API Routes + 后续 cron 调度），核心原则是**配置驱动**：媒体名单、日历分类、重要等级、阈值、线索类型、评报维度、cron 时间全部入库，业务规则变化只改配置不改主流程。
 
 - **Framework**: Next.js 16 (App Router) · React 19 · TypeScript 5 (strict)
 - **UI**: shadcn/ui（`src/components/ui/`）+ Tailwind CSS 4
@@ -54,8 +54,9 @@ src/
 │   ├── page.tsx              # 首页（工作台聚合）
 │   ├── login/                # 登录页
 │   ├── calendar/             # 新闻日历（前台，编辑可见）
-│   ├── leads/ review/        # 新闻线索 / 每日评报（M3/M4 占位页）
-│   ├── admin/                # 后台：calendar / categories / media / config / review
+│   ├── leads/                # 新闻线索（前台：线索卡片 + 每周简报）
+│   ├── review/               # 每日评报（M4 占位页）
+│   ├── admin/                # 后台：calendar / categories / media / leads / config
 │   └── api/
 │       ├── auth/             # login / logout / me
 │       ├── calendar/         # 前台日历查询 + categories
@@ -154,10 +155,19 @@ assets/                       # 媒体列表.xlsx、2024年新闻日历.docx（�
 - **Mock 联调**：`POST /api/admin/ingest/mock`（管理员）生成仿真文章走完整 ingest 链路；`GET /api/admin/articles` 查看已入库文章。`src/lib/mock-ingest.ts` 不发真实网络请求。
 - `src/lib/crawler/*` 为沙箱直连 PoC 代码，仅后台「沙箱直连测试」按钮使用，不在每日工作流中。
 
-## 后续阶段（M3–M5）
+## 已完成：M3 新闻线索
 
-- M3 新闻线索：基于 `article` 表 → 去重（按 media+series 聚合，更新 first_seen_at/last_seen_at）→ AI 识别卡片 → 每日列表 + 每周简报，AI 结果走 confidence 路由进 `news_clue` 审核队列。
+- **识别引擎** `src/lib/clue-engine.ts`：AI 从文章标题+正文识别四类线索（new_column 新栏目 / series 系列报道 / special_topic 专题 / feature_plan 特色策划），输出结构化 JSON（series_name/topic/tags/summary/confidence/reason）。阈值 `ai.confidence_auto`(0.85) / `ai.confidence_review`(0.6) 路由：≥0.85 auto_approved、0.6~0.85 pending_review、<0.6 rejected。
+- **流水线** `src/lib/clue-pipeline.ts`：扫 `article.clue_processed=false` 的文章 → 逐篇 AI 识别 → 同 media+series_key 合并（article_count 累加、更新 last_seen_at）→ 写 `news_clue` → 标记文章已处理 → 写 `task_log`(workflow=`clue_identify`)。入口 `POST /api/admin/leads/identify`（管理员触发，后续接 cron 每日 9 点）。
+- **接口**：`GET /api/leads`（前台，仅 auto_approved/approved，支持 date/type/media 筛选分页）、`GET /api/admin/leads`（后台全量+stats）、`POST /api/admin/leads/[id]/review`（审核 approve/reject/可改字段）。
+- **每周简报** `src/lib/weekly-briefing.ts`：汇总近 7 天已发布线索 → AI 流式输出 Markdown 四段简报（新栏目/重点系列/关注专题/特色策划 + 总览）→ `parseMarkdownBriefing` 按二级标题拆分存 `weekly_brief` 表。`POST /api/admin/leads/weekly`（SSE 流式）、`GET /api/leads/weekly`（历史列表）。
+- **页面**：前台 `/leads`（卡片列表，置信度进度条/标签/追踪篇数）、`/leads/weekly`；后台 `/admin/leads`（识别触发按钮 + 待审队列 + 审核弹窗）。**入口已挂到「系统管理 → 新闻线索管理」卡片**。
+- `article` 表增加 `clue_processed` 标记列。Mock 文章可直接触发识别验证。
+
+## 后续阶段（M4–M5）
+
 - M4 每日评报：文章先 AI 压成结构化卡片（不塞全文）→ embedding 粗聚 + AI 确认同题 → 六维比较（配置 `review.dimension.*`）→ SSE 流式生成约 1000 字评报。电子报版面信号（整版/跨版/头版）外部抓取可能拿不到，评报先按字数+AI 降级。
 - M5 反馈调优：收集漏报/误报，调阈值与 Prompt。
+- cron 定时：线索每日 9 点自动识别、每周自动简报（当前为管理员手动触发，接定时调度即可）。
 
 设计文档见 `docs/superpowers/specs/2026-09-06-news-workbench-design.md`，设计语言见 `DESIGN.md`。
