@@ -277,9 +277,44 @@ Content-Type: application/json
 
 后台「系统配置」页面修改 `ingest.api_token`，或修改 `.env` 中的 `INGEST_API_TOKEN` 后重启服务。外部抓取服务需同步更新 token。
 
+## 定时任务（自动调度）
+
+线索识别、每周简报、每日评报设计为**无状态、幂等**，由外部定时器按 cron 时间调用 HTTP 接口触发（不在进程内跑 setInterval，避免多实例重复执行）。
+
+### 任务与接口
+
+| 任务 | job 名 | 默认时间 | 说明 |
+| --- | --- | --- | --- |
+| 新闻线索 AI 识别 | `clue_identify` | 每天 09:00 | 扫描未处理文章并识别线索 |
+| 每周线索简报 | `weekly_briefing` | 每周一 10:00 | 汇总近 7 天线索生成简报 |
+| 每日评报 | `daily_review` | 每天 10:30 | 生成当天结构化评报 |
+
+调用方式（需 `CRON_SECRET`）：
+
+```bash
+curl -X POST https://your-domain.com/api/cron/clue_identify \
+  -H "Authorization: Bearer $CRON_SECRET"
+```
+
+开关与 cron 时间可在后台「系统管理 → 定时任务」页面配置；停用的任务被外部调用时会安全跳过。也可在该页面点「立即执行」手动触发（不受开关限制），运行结果写入 `task_log` 并在页面展示。
+
+### 配置 crontab（独立服务器）
+
+```cron
+# 每天 09:00 线索识别
+0 9 * * *  curl -fsS -X POST https://your-domain.com/api/cron/clue_identify   -H "Authorization: Bearer $CRON_SECRET"
+# 每周一 10:00 每周简报
+0 10 * * 1 curl -fsS -X POST https://your-domain.com/api/cron/weekly_briefing -H "Authorization: Bearer $CRON_SECRET"
+# 每天 10:30 每日评报
+30 10 * * * curl -fsS -X POST https://your-domain.com/api/cron/daily_review    -H "Authorization: Bearer $CRON_SECRET"
+```
+
+> 也可使用 Vercel Cron、云函数定时触发器、GitHub Actions schedule 等任意能发 HTTP 请求的定时器。评报 / 简报为 AI 长任务，单次可能耗时数十秒，请把超时设到 300s 以上。
+
 ## 安全建议
 
 1. **SESSION_SECRET**：使用 `openssl rand -hex 32` 生成，至少 32 字符
+2. **CRON_SECRET**：使用 `openssl rand -hex 24` 生成，用于外部定时器鉴权
 2. **SUPABASE_SERVICE_ROLE_KEY**：仅服务端使用，切勿暴露到前端代码或日志
 3. **INGEST_API_TOKEN**：定期轮换，外部抓取服务同步更新
 4. **HTTPS**：生产环境必须启用 HTTPS，避免中间人攻击

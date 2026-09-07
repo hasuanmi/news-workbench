@@ -65,7 +65,7 @@ src/
 │       ├── review/           # 【M4】历史评报列表 / [id] 详情
 │       ├── stats/            # 首页统计
 │       ├── ingest/           # 【外部抓取服务接入】queue(拉队列) / articles(回推文章)，ingest token 鉴权
-│       └── admin/            # calendar / categories / media / sources / articles / ingest/mock / config / llm / leads / review（全部 requireAdmin）
+│       └── admin/            # calendar / categories / media / sources / articles / ingest/mock / config / llm / leads / review / scheduler（全部 requireAdmin）
 ├── components/
 │   ├── ui/                   # shadcn/ui
 │   ├── app-shell.tsx         # 全局布局（侧边栏导航 + 登录态）
@@ -186,10 +186,17 @@ assets/                       # 媒体列表.xlsx、2024年新闻日历.docx（�
 - **展示规则驱动**：`review.display_rules`（show_media_name/show_article_title/show_article_url/show_evidence/show_comparison_table + modules 开关）控制 `review-result.tsx` 动态渲染；后台 `/admin/review` 分「生成规则」「展示规则」两块配置。
 - **版面信号降级**：整版/跨版/头版等外部抓取可能缺失，缺失时按字数 + AI 判断降级，不致任务失败。
 
+## 已完成：M5 定时调度（cron）
+
+- **调度器** `src/lib/scheduler.ts`：无状态、幂等，三个任务 `clue_identify`（每日 9 点线索识别）/ `weekly_briefing`（每周一 10 点简报）/ `daily_review`（每日 10:30 评报）。复用现有 headless 引擎（runCluePipeline / generateWeeklyBriefing / fetchReviewArticles+analyzeStructure+streamFinalReview+saveDailyReview），每次写 `task_log`，进程内 Set + task_log 防重入。
+- **触发方式**：`POST /api/cron/{job}`（外部 crontab / Vercel Cron / 云函数，用 `Authorization: Bearer <CRON_SECRET>` 鉴权，也接受 admin cookie）；后台「系统管理 → 定时任务」（`/admin/scheduler`）可配置开关与 cron 表达式、查看运行日志、点「立即执行」手动触发（`POST /api/admin/scheduler/run`，manual 不受开关限制）。
+- **配置**：`app_config` key `scheduler.jobs`（jobs 名 → {enabled, cron}）；`CRON_SECRET`（兼容 `CRON_TOKEN`）为环境变量，未配置时外部调用 401、后台手动触发仍可用。
+- **不在进程内跑 setInterval**（多实例会重复触发）；由外部定时器按时调用。crontab 示例见 `DEPLOY.md`「定时任务」。
+- middleware 已放行 `/api/cron`（route 内自鉴权）。
+
 ## 后续阶段（M5）
 
-- M5 反馈调优：收集漏报/误报，调阈值与 Prompt。
-- cron 定时：线索每日 9 点自动识别、每周自动简报、评报每日定时生成（当前均为管理员手动触发，接定时调度即可）。
+- M5 反馈调优：收集漏报/误报，调阈值与 Prompt（`ai_audit_log` 表已就绪）。
 - 真实数据：等外部抓取服务部署后，用真实文章回归完整链路（当前 article 多为 Mock 短稿，评报验证时需放宽 minWordCount）。
 
 设计文档见 `docs/superpowers/specs/2026-09-06-news-workbench-design.md`，设计语言见 `DESIGN.md`。

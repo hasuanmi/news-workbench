@@ -3,7 +3,8 @@ import { verifySessionToken, SESSION_COOKIE } from "@/lib/session";
 
 // /api/ingest/* 由外部抓取服务用 ingest token 鉴权（不带登录 cookie），在此放行，
 // 具体鉴权逻辑在各 route 内通过 verifyIngestToken 完成
-const PUBLIC_PATHS = ["/login", "/api/auth/login", "/api/ingest", "/api/leads"];
+// /api/cron/* 由外部定时器用 CRON_SECRET 鉴权（也可带管理员 cookie），在 route 内鉴权
+const PUBLIC_PATHS = ["/login", "/api/auth/login", "/api/ingest", "/api/cron", "/api/leads"];
 
 export async function middleware(req: NextRequest) {
   const { pathname } = req.nextUrl;
