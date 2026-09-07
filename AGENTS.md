@@ -1,5 +1,17 @@
 # AGENTS.md — AI 新闻辅助工作台
 
+## 独立部署
+
+项目不依赖扣子专属运行时，可在标准 Node.js 环境独立部署。所有敏感配置通过环境变量注入：
+
+- **数据库**：`SUPABASE_URL` / `SUPABASE_ANON_KEY` / `SUPABASE_SERVICE_ROLE_KEY`（兼容 `COZE_` 前缀）
+- **会话密钥**：`SESSION_SECRET`
+- **AI 模型**：`DEFAULT_LLM_BASE_URL` / `DEFAULT_LLM_API_KEY` / `DEFAULT_LLM_MODEL`（或通过后台「接入大模型」页面配置）
+- **抓取令牌**：`INGEST_API_TOKEN`（或 `app_config` 表 `ingest.api_token`）
+- **端口/域名**：`PORT` / `NEXT_PUBLIC_SITE_URL`
+
+详见 `.env.example` 和 `DEPLOY.md`。
+
 ## 项目概览
 
 面向广州日报编辑的内部 AI 新闻辅助工作台，按 PRD V1.0 分三阶段交付：**新闻日历**（已完成 M0+M1）→ **新闻线索**（M3，占位）→ **每日评报**（M4，占位）。工作流内置在 Next.js 后端（API Routes + 后续 cron 调度），核心原则是**配置驱动**：媒体名单、日历分类、重要等级、阈值、线索类型、评报维度、cron 时间全部入库，业务规则变化只改配置不改主流程。
