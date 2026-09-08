@@ -11,6 +11,7 @@ interface Stats {
   pendingNodes: number;
   mediaCount: number;
   todayLeads: number;
+  reviewCount: number;
   isAdmin: boolean;
 }
 
@@ -44,11 +45,10 @@ export function DashboardHome() {
     {
       href: "/review",
       title: "每日评报",
-      value: "待建设",
-      suffix: "",
+      value: stats?.reviewCount ?? "—",
+      suffix: "期",
       icon: FileText,
-      desc: "M4 阶段上线：同题聚类、六维比较、自动评报",
-      muted: true,
+      desc: "按媒体横向比较与同行遗漏分析生成的评报",
     },
   ];
 
@@ -101,9 +101,9 @@ export function DashboardHome() {
                   <c.icon className="w-4 h-4 text-[var(--muted-foreground)]" />
                 </CardHeader>
                 <CardContent>
-                  <div className={`text-3xl font-bold font-serif ${c.muted ? "text-lg text-[var(--muted-foreground)]" : ""}`}>
+                  <div className="text-3xl font-bold font-serif">
                     {c.value}
-                    {!c.muted && <span className="text-sm font-normal text-[var(--muted-foreground)] ml-1">{c.suffix}</span>}
+                    <span className="text-sm font-normal text-[var(--muted-foreground)] ml-1">{c.suffix}</span>
                   </div>
                   <p className="text-xs text-[var(--muted-foreground)] mt-2">{c.desc}</p>
                 </CardContent>

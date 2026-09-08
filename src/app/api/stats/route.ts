@@ -40,6 +40,7 @@ export async function GET(req: NextRequest) {
     { count: pendingNodes },
     { count: mediaCount },
     { count: todayLeads },
+    { count: reviewCount },
   ] = await Promise.all([
     isAdmin
       ? db.schema("public").from("news_clue").select("id", { count: "exact", head: true }).eq("review_status", "pending")
@@ -49,6 +50,7 @@ export async function GET(req: NextRequest) {
       : Promise.resolve({ count: 0 }),
     db.schema("public").from("media").select("id", { count: "exact", head: true }).eq("enabled", true),
     db.schema("public").from("news_clue").select("id", { count: "exact", head: true }).eq("source_type", "media_monitor"),
+    db.schema("public").from("daily_review").select("id", { count: "exact", head: true }),
   ]);
 
   return NextResponse.json({
@@ -57,6 +59,7 @@ export async function GET(req: NextRequest) {
     pendingNodes: pendingNodes ?? 0,
     mediaCount: mediaCount ?? 0,
     todayLeads: todayLeads ?? 0,
+    reviewCount: reviewCount ?? 0,
     isAdmin,
   });
 }
