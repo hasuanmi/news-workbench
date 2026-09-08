@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { AppShell } from "@/components/app-shell";
 import { LeadsFilter, type LeadsFilter as LeadsFilterType } from "@/components/leads/leads-filter";
 import { ClueCard, type Clue } from "@/components/leads/clue-card";
@@ -8,8 +8,28 @@ import { ClueCard, type Clue } from "@/components/leads/clue-card";
 export default function LeadsPage() {
   const [clues, setClues] = useState<Clue[]>([]);
   const [loading, setLoading] = useState(false);
+  const [loadingList, setLoadingList] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [info, setInfo] = useState<string | null>(null);
+
+  // 页面挂载时加载已存在的线索（已确认/待确认）
+  const loadClues = useCallback(async () => {
+    setLoadingList(true);
+    try {
+      const res = await fetch("/api/leads?timeRange=all&pageSize=50");
+      if (!res.ok) throw new Error("加载线索失败");
+      const data = await res.json();
+      setClues(data.clues || []);
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "加载线索失败");
+    } finally {
+      setLoadingList(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    loadClues();
+  }, [loadClues]);
 
   const handleIdentify = async (filter: LeadsFilterType) => {
     setLoading(true);
