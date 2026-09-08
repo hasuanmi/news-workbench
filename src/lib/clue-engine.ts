@@ -144,6 +144,40 @@ export async function analyzeArticle(
   return parseClueResponse(raw);
 }
 
+// 线索类型别名归一化：AI 可能返回不同措辞，统一映射到合法类型
+const CLUE_TYPE_ALIASES: Record<string, string> = {
+  new_column: "new_column",
+  column: "new_column",
+  newcolumn: "new_column",
+  新栏目: "new_column",
+  栏目: "new_column",
+  series: "series",
+  series_report: "series",
+  continuous: "series",
+  系列: "series",
+  系列报道: "series",
+  special_topic: "special_topic",
+  special: "special_topic",
+  topic: "special_topic",
+  theme: "special_topic",
+  专题: "special_topic",
+  feature_plan: "feature_plan",
+  feature: "feature_plan",
+  plan: "feature_plan",
+  特色策划: "feature_plan",
+  策划: "feature_plan",
+};
+
+function normalizeClueType(raw: unknown): "new_column" | "series" | "special_topic" | "feature_plan" | null {
+  if (typeof raw !== "string" || !raw.trim()) return null;
+  const key = raw.trim().toLowerCase();
+  const mapped = CLUE_TYPE_ALIASES[key] ?? CLUE_TYPE_ALIASES[key.replace(/[\s_-]+/g, "")];
+  if (mapped && ["new_column", "series", "special_topic", "feature_plan"].includes(mapped)) {
+    return mapped as "new_column" | "series" | "special_topic" | "feature_plan";
+  }
+  return null;
+}
+
 function parseClueResponse(raw: string): ClueAnalysis {
   // 提取 JSON（AI 可能包裹在 ```json ... ``` 中）
   const jsonMatch = raw.match(/\{[\s\S]*\}/);
@@ -153,13 +187,12 @@ function parseClueResponse(raw: string): ClueAnalysis {
 
   try {
     const parsed = JSON.parse(jsonMatch[0]);
+    const isClue = Boolean(parsed.is_clue);
+    const clueType = normalizeClueType(parsed.clue_type);
     return {
-      is_clue: Boolean(parsed.is_clue),
-      clue_type: parsed.is_clue
-        ? (["new_column", "series", "special_topic", "feature_plan"].includes(parsed.clue_type)
-          ? parsed.clue_type
-          : null)
-        : null,
+      is_clue: isClue,
+      // 是线索但 type 归不出合法值时，兜底为特色策划，杜绝非空约束报错
+      clue_type: isClue ? (clueType ?? "feature_plan") : null,
       series_name: parsed.series_name || null,
       series_key: parsed.series_key || null,
       topic: parsed.topic || null,
@@ -256,13 +289,19 @@ export async function saveClue(
     }
   }
 
-  // 新建线索
+  // 非线索文章不写入 news_clue（保留 rejected 由上层计数），避免 null 约束错误
+  if (!analysis.is_clue) {
+    return { clueId: "", action: "skipped" };
+  }
+
+  // 新建线索（is_clue 必为 true，兜底非法类型）
+  const finalType = analysis.clue_type ?? "feature_plan";
   const { data, error } = await db
     .from("news_clue")
     .insert({
       article_id: article.id,
       media_id: article.media_id,
-      clue_type: analysis.clue_type,
+      clue_type: finalType,
       series_name: analysis.series_name,
       series_key: analysis.series_key || `${article.media_id}:${article.id}`,
       topic: analysis.topic,

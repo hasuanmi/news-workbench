@@ -48,6 +48,7 @@ export async function runCluePipeline(filter?: PipelineFilter): Promise<Pipeline
   let query = db
     .from("article")
     .select("id, title, content, media_id, publish_time")
+    .eq("clue_processed", false)
     .order("publish_time", { ascending: false })
     .limit(100);
 

@@ -9,10 +9,12 @@ export default function LeadsPage() {
   const [clues, setClues] = useState<Clue[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [info, setInfo] = useState<string | null>(null);
 
   const handleIdentify = async (filter: LeadsFilterType) => {
     setLoading(true);
     setError(null);
+    setInfo(null);
     try {
       const res = await fetch("/api/admin/leads/identify", {
         method: "POST",
@@ -36,6 +38,14 @@ export default function LeadsPage() {
           index === self.findIndex((c) => c.id === clue.id)
       );
       setClues(uniqueClues);
+      // AI 声明保留语义：识别完成但本次无新线索时给出明确提示
+      const processed = data.stats?.processed ?? data.processed;
+      const found = data.stats?.cluesFound ?? data.cluesFound;
+      if (processed !== undefined && uniqueClues.length === 0) {
+        setInfo(`本次扫描 ${processed} 篇${found !== undefined ? `，未发现新线索` : ""}。可在条件区调整时间范围/主题后重试。`);
+      } else if (uniqueClues.length === 0) {
+        setInfo("本次未识别到新线索，可调整条件后重试。");
+      }
     } catch (e) {
       setError(e instanceof Error ? e.message : "识别失败");
     } finally {
@@ -82,6 +92,11 @@ export default function LeadsPage() {
         {/* 错误提示 */}
         {error && (
           <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-md text-sm text-red-800">{error}</div>
+        )}
+
+        {/* 提示信息 */}
+        {info && (
+          <div className="mb-4 p-3 bg-amber-50 border border-amber-200 rounded-md text-sm text-amber-800">{info}</div>
         )}
 
         {/* 结果区 */}
