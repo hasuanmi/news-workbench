@@ -1,0 +1,13 @@
+# 核心依赖（纯 HTTP 抓取，安装即可用，无需浏览器）
+fastapi==0.115.6
+uvicorn[standard]==0.34.0
+httpx==0.28.1
+beautifulsoup4==4.13.3
+lxml>=5.3
+pydantic-settings==2.7.1
+loguru==0.7.3
+tenacity==9.0.0
+apscheduler==3.11.0
+pyyaml==6.0.2
+
+# 可选：JS 渲染站点（如羊城晚报等约 20 家）需要，见 requirements-playwright.txt

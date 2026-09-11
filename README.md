@@ -10,7 +10,7 @@
 | 新闻线索 | 🔜 待开发 | 基于文章去重聚合 → AI 识别线索卡片 → 每日列表 + 每周简报 |
 | 每日评报 | 🔜 待开发 | 同城媒体同题比较 → SSE 流式生成约 1000 字评报 |
 | 自定义大模型 | ✅ 已交付 | 粘贴 Python API 示例自动识别配置，支持任意 OpenAI 兼容模型 |
-| 外部抓取接入 | ✅ 已交付 | 标准 API 对接外部抓取服务，Mock 联调已通 |
+| 外部抓取接入 | ✅ 已交付 | 内置抓取服务 `scraper/`（Python，独立进程），已与主系统打通并验证 |
 
 ## 技术栈
 
@@ -88,6 +88,53 @@ pnpm start
 # 默认监听 3000 端口，可通过 PORT 环境变量修改
 ```
 
+## 内置抓取服务（scraper/）
+
+抓取服务已随本仓库一并提供，位于 [`scraper/`](scraper/)，负责**确定性采集**：抓列表 → 抓详情 → 抽字段 → 去重 → 通过 `GET /api/ingest/queue` / `POST /api/ingest/articles` 与主系统对接。
+
+它和主系统是**两个进程、两套运行时**（Next.js / Python），但属于**同一个仓库、同一个项目**，不需要再单独去找另一个仓库。
+
+### 启动（纯 HTTP，无需 Playwright）
+
+```bash
+# Windows：双击 scraper/start.bat
+# Linux / macOS：
+bash scraper/start.sh
+```
+
+或手动：
+
+```bash
+cd scraper
+python -m venv venv
+./venv/bin/pip install -r requirements.txt   # Windows: venv\Scripts\pip install -r requirements.txt
+python -m app.main                            # 监听 8000
+```
+
+验证：`curl http://127.0.0.1:8000/api/health` → `{"status":"ok"}`；自检 `python verify_ootb.py`。
+
+### 让它自动给主系统供数
+
+在 `scraper/.env` 中配置后启动常驻 worker：
+
+```ini
+INGEST_ENABLED=true
+MAIN_API_BASE=http://localhost:3000
+INGEST_API_TOKEN=newsdesk-ingest-2026
+```
+
+```bash
+python -m app.ingest_worker           # 常驻轮询
+python -m app.ingest_worker --once    # 只跑一轮（调试）
+```
+
+> 约 20 家 JS 渲染站点（含羊城晚报）需要 Playwright，纯 HTTP 模式下会自动跳过，不影响其余媒体。
+> 需要时：`pip install -r requirements-playwright.txt && playwright install chromium`，
+> 或 `docker build --build-arg WITH_PLAYWRIGHT=true`。
+> 详细说明见 [scraper/README.md](scraper/README.md)。
+
+---
+
 ## 独立部署
 
 项目不依赖任何扣子专属运行时，可在标准 Node.js 环境中运行。详见 [DEPLOY.md](DEPLOY.md)。
@@ -97,7 +144,7 @@ pnpm start
 1. **数据库**：准备 Supabase 项目或自建 PostgreSQL 15+，执行 schema 初始化
 2. **环境变量**：按 `.env.example` 配置，至少需要 `SUPABASE_URL` / `SUPABASE_ANON_KEY` / `SUPABASE_SERVICE_ROLE_KEY` / `SESSION_SECRET`
 3. **AI 模型**：通过后台「接入大模型」页面配置，或在 `.env` 中设置 `DEFAULT_LLM_*` 三个变量
-4. **外部抓取服务**：独立部署抓取服务，通过 `GET /api/ingest/queue` 拉队列、`POST /api/ingest/articles` 回推文章，鉴权 token 为 `INGEST_API_TOKEN`
+4. **抓取服务**：使用本仓库内置的 `scraper/`（Python），按上文「内置抓取服务」启动即可；它对 `GET /api/ingest/queue` 拉队列、`POST /api/ingest/articles` 回推文章，鉴权 token 为 `INGEST_API_TOKEN`
 5. **反向代理**：Nginx / Caddy 等，配置 HTTPS、WebSocket 代理
 
 ### Docker 部署（参考）
@@ -154,6 +201,12 @@ src/
 └── storage/database/       # drizzle schema + Supabase 客户端工厂
 scripts/                    # seed-config / seed-users / import-data
 assets/                     # 媒体列表.xlsx、新闻日历.docx（导入源文件）
+scraper/                    # 内置抓取服务（Python / FastAPI，独立进程）
+├── app/                    # 抓取器与 API（core/ 抓取编排、scrapers/ 各媒体解析）
+├── config/sources.yaml     # 媒体入口 URL、业务归属、抓取方式
+├── start.sh / start.bat    # 一键启动（建 venv → 装依赖 → 启服务）
+└── README.md               # 抓取服务说明、字段映射、对接方式
+sql/                        # 增量 SQL 迁移（如 article 表丰富字段）
 ```
 
 ## 核心设计原则
