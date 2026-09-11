@@ -322,6 +322,21 @@ export const article = pgTable(
     parse_status: varchar("parse_status", { length: 16 }).notNull().default("parsed"), // parsed | failed
     content: text("content"), // 原文
     ai_card: jsonb("ai_card"), // AI 压缩后的结构化卡片（M4 用）
+    // ===== 外部抓取服务回传的丰富元数据（ingest 扩展）=====
+    column_name: varchar("column_name", { length: 255 }), // 栏目名
+    edition_no: varchar("edition_no", { length: 32 }), // 版面号
+    edition_name: varchar("edition_name", { length: 64 }), // 版名
+    is_front_page: boolean("is_front_page").notNull().default(false), // 是否头版
+    is_full_page: boolean("is_full_page").notNull().default(false), // 是否整版
+    is_cross_page: boolean("is_cross_page").notNull().default(false), // 是否跨版
+    series_name: varchar("series_name", { length: 255 }), // 系列名
+    special_name: varchar("special_name", { length: 255 }), // 专题名
+    special_url: text("special_url"), // 专题页链接
+    images: jsonb("images"), // 图片/图示元数据列表
+    source_type: varchar("source_type", { length: 16 }), // website | epaper | other
+    scrape_method: varchar("scrape_method", { length: 16 }), // html | playwright | rss | manual
+    first_seen_at: timestamp("first_seen_at", { withTimezone: true }), // 首次发现时间
+    business: jsonb("business"), // 业务标记（每日评报/新闻线索）
     created_at: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
   },
   (table) => [

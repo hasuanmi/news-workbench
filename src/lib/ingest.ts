@@ -25,6 +25,21 @@ export interface IngestArticle {
   publishedAt?: string | null;
   content?: string | null;
   wordCount?: number | null;
+  // ===== 丰富元数据（可选，外部抓取服务可回传）=====
+  columnName?: string | null; // 栏目名
+  editionNo?: string | null; // 版面号
+  editionName?: string | null; // 版名
+  isFrontPage?: boolean | null; // 是否头版
+  isFullPage?: boolean | null; // 是否整版
+  isCrossPage?: boolean | null; // 是否跨版
+  seriesName?: string | null; // 系列名
+  specialName?: string | null; // 专题名
+  specialUrl?: string | null; // 专题页链接
+  images?: unknown | null; // 图片/图示元数据列表
+  sourceType?: string | null; // website | epaper | other
+  scrapeMethod?: string | null; // html | playwright | rss | manual
+  firstSeenAt?: string | null; // 首次发现时间（ISO）
+  business?: unknown | null; // 业务标记（每日评报/新闻线索）
 }
 
 export interface IngestResult {
@@ -134,6 +149,21 @@ export async function ingestArticles(
         content: art.content ?? null,
         parse_status: "parsed",
         is_key_report: false,
+        // ===== 丰富元数据（外部抓取服务回传）=====
+        column_name: art.columnName ?? null,
+        edition_no: art.editionNo ?? null,
+        edition_name: art.editionName ?? null,
+        is_front_page: art.isFrontPage ?? false,
+        is_full_page: art.isFullPage ?? false,
+        is_cross_page: art.isCrossPage ?? false,
+        series_name: art.seriesName ?? null,
+        special_name: art.specialName ?? null,
+        special_url: art.specialUrl ?? null,
+        images: (art.images as unknown) ?? null,
+        source_type: art.sourceType ?? null,
+        scrape_method: art.scrapeMethod ?? null,
+        first_seen_at: art.firstSeenAt ?? null,
+        business: (art.business as unknown) ?? null,
       });
 
     if (error) {
