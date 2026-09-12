@@ -107,7 +107,18 @@ async function importMedia(client: ReturnType<typeof getSupabaseClient>) {
 
     const { data: mediaRow, error: mErr } = await client
       .from("media")
-      .upsert({ media_name: name, media_level: level, region, notes: notes || null, enabled: true }, { onConflict: "media_name" })
+      .upsert(
+        {
+          media_name: name,
+          media_level: level,
+          region,
+          notes: notes || null,
+          enabled: true,
+          // 新闻线索的媒体池就是整份清单，导入即纳入线索监控（可在后台单独关闭）
+          monitor_clue: true,
+        },
+        { onConflict: "media_name" },
+      )
       .select("id")
       .single();
     if (mErr || !mediaRow) throw new Error(`媒体写入失败 ${name}: ${mErr?.message}`);
