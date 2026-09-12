@@ -170,3 +170,6 @@ sql_generated/
 # 例外：导入源文件必须随仓库分发，否则 scripts/import-data.ts 无法运行
 !assets/*.xlsx
 !assets/*.docx
+
+# 上传的历史日历文件不进仓库
+assets/history/
