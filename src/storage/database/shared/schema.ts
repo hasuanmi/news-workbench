@@ -79,6 +79,13 @@ export const calendarEvent = pgTable(
     enabled: boolean("enabled").notNull().default(false),
     needs_review: boolean("needs_review").notNull().default(false), // 导入时低置信标记
     tags: jsonb("tags"),
+    // ===== 新闻日历重构：时间待定表达 + 候选溯源 =====
+    // confirmed=日期确定 | month_known=只知月份 | unknown=时间待定
+    date_status: varchar("date_status", { length: 16 }).notNull().default("confirmed"),
+    event_month: integer("event_month"), // month_known 时的月份（1-12）
+    source_candidate_id: varchar("source_candidate_id", { length: 36 }), // 溯源到哪个候选节点
+    confirmed_at: timestamp("confirmed_at", { withTimezone: true }),
+    confirmed_by: varchar("confirmed_by", { length: 36 }),
     created_by: varchar("created_by", { length: 36 }),
     created_at: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
     updated_at: timestamp("updated_at", { withTimezone: true }),
@@ -90,6 +97,7 @@ export const calendarEvent = pgTable(
     index("calendar_event_type_idx").on(table.event_type),
     index("calendar_event_region_idx").on(table.region),
     index("calendar_event_enabled_idx").on(table.enabled),
+    index("calendar_event_date_status_idx").on(table.date_status),
   ]
 );
 
@@ -346,5 +354,99 @@ export const article = pgTable(
     index("article_media_idx").on(table.media_id),
     index("article_publish_idx").on(table.publish_time),
     uniqueIndex("article_hash_idx").on(table.content_hash),
+  ]
+);
+
+// ============================================================================
+// 新闻日历重构：历史日历（资料库） → 候选节点（待审） → 正式日历（可用）
+// 设计要点：
+//   1. AI 生成的任何节点一律先进候选池，绝不直写 calendar_event
+//   2. 时间未定用 date_status 表达（confirmed / month_known / unknown），
+//      绝不把待定节点虚构成某月 1 日
+//   3. 历史年份、目标年份全部动态配置，不写死
+// ============================================================================
+
+/** 历史日历原始文件（保留原件，换解析规则可重跑） */
+export const calendarHistoryFile = pgTable(
+  "calendar_history_file",
+  {
+    id: varchar("id", { length: 36 }).primaryKey().default(sql`gen_random_uuid()`),
+    file_name: varchar("file_name", { length: 255 }).notNull(),
+    file_type: varchar("file_type", { length: 16 }).notNull(), // docx | xlsx | csv
+    file_size: integer("file_size"),
+    storage_path: text("storage_path"),
+    year: integer("year").notNull(), // 所属历史年份（动态，不写死）
+    parse_status: varchar("parse_status", { length: 16 }).notNull().default("uploaded"), // uploaded | parsed | confirmed | failed
+    node_count: integer("node_count").default(0),
+    uploaded_by: varchar("uploaded_by", { length: 36 }),
+    created_at: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
+  },
+  (table) => [
+    index("calendar_hist_file_year_idx").on(table.year),
+    index("calendar_hist_file_status_idx").on(table.parse_status),
+  ]
+);
+
+/** 解析后的历史节点（候选生成的素材来源） */
+export const calendarHistoryNode = pgTable(
+  "calendar_history_node",
+  {
+    id: varchar("id", { length: 36 }).primaryKey().default(sql`gen_random_uuid()`),
+    file_id: varchar("file_id", { length: 36 }).references(() => calendarHistoryFile.id),
+    year: integer("year").notNull(),
+    node_name: varchar("node_name", { length: 255 }).notNull(),
+    event_date: date("event_date", { mode: "string" }), // date_status=confirmed 时有值
+    candidate_month: integer("candidate_month"), // month_known 时有值（1-12）
+    date_status: varchar("date_status", { length: 16 }).notNull().default("confirmed"),
+    category_id: varchar("category_id", { length: 36 }).references(() => calendarCategory.id),
+    region: varchar("region", { length: 16 }).default("national"),
+    importance: varchar("importance", { length: 4 }).default("B"), // S | A | B
+    description: text("description"),
+    source_detail: varchar("source_detail", { length: 255 }),
+    raw_text: text("raw_text"), // 原始行文本，可回溯
+    enabled: boolean("enabled").notNull().default(true),
+    created_at: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
+  },
+  (table) => [
+    index("calendar_hist_node_file_idx").on(table.file_id),
+    index("calendar_hist_node_year_idx").on(table.year),
+    index("calendar_hist_node_date_idx").on(table.event_date),
+  ]
+);
+
+/** 候选节点池（三个入口汇聚，人工审核后才进正式日历） */
+export const calendarCandidate = pgTable(
+  "calendar_candidate",
+  {
+    id: varchar("id", { length: 36 }).primaryKey().default(sql`gen_random_uuid()`),
+    node_name: varchar("node_name", { length: 255 }).notNull(),
+    target_year: integer("target_year").notNull(), // 目标年度（动态）
+    candidate_date: date("candidate_date", { mode: "string" }),
+    candidate_month: integer("candidate_month"),
+    date_status: varchar("date_status", { length: 16 }).notNull().default("confirmed"),
+    category_id: varchar("category_id", { length: 36 }).references(() => calendarCategory.id),
+    region: varchar("region", { length: 16 }).default("national"),
+    importance: varchar("importance", { length: 4 }).default("B"),
+    // historical_migration | ai_supplement | pasted_text | manual
+    source_type: varchar("source_type", { length: 32 }).notNull().default("manual"),
+    source_detail: text("source_detail"),
+    raw_text: text("raw_text"), // 粘贴识别时保存全文
+    source_url: text("source_url"),
+    ai_reason: text("ai_reason"), // AI 推荐理由
+    dedup_status: varchar("dedup_status", { length: 16 }).notNull().default("new"), // new | merged | duplicate
+    merged_into_id: varchar("merged_into_id", { length: 36 }),
+    merged_sources: jsonb("merged_sources"), // 合并前的所有来源，如 ["historical_migration","ai_supplement"]
+    review_status: varchar("review_status", { length: 16 }).notNull().default("pending"), // pending | confirmed | rejected | merged
+    rejection_reason: varchar("rejection_reason", { length: 64 }), // 见不采纳原因枚举
+    reviewed_at: timestamp("reviewed_at", { withTimezone: true }),
+    reviewed_by: varchar("reviewed_by", { length: 36 }),
+    created_at: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
+    updated_at: timestamp("updated_at", { withTimezone: true }),
+  },
+  (table) => [
+    index("calendar_cand_year_idx").on(table.target_year),
+    index("calendar_cand_review_idx").on(table.review_status),
+    index("calendar_cand_source_idx").on(table.source_type),
+    index("calendar_cand_dedup_idx").on(table.dedup_status),
   ]
 );
