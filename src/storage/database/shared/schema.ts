@@ -319,6 +319,8 @@ export const article = pgTable(
     word_count: integer("word_count"),
     section: varchar("section", { length: 64 }), // 版面（电子报，外部抓取可能拿不到）
     is_key_report: boolean("is_key_report").notNull().default(false), // 重点稿标记
+    // 线索流水线标记：clue-pipeline.ts 用 clue_processed=false 筛选未处理文章
+    clue_processed: boolean("clue_processed").notNull().default(false),
     parse_status: varchar("parse_status", { length: 16 }).notNull().default("parsed"), // parsed | failed
     content: text("content"), // 原文
     ai_card: jsonb("ai_card"), // AI 压缩后的结构化卡片（M4 用）
