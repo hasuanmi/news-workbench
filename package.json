@@ -11,7 +11,11 @@
     "lint:style": "stylelint \"src/**/*.css\"",
     "start": "bash ./scripts/start.sh",
     "ts-check": "tsc -p tsconfig.json",
-    "validate": "pnpm dlx concurrently --group --names lint-tsc,lint-build,lint-style \"pnpm ts-check\" \"pnpm lint:build\" \"pnpm lint:style\""
+    "validate": "pnpm dlx concurrently --group --names lint-tsc,lint-build,lint-style \"pnpm ts-check\" \"pnpm lint:build\" \"pnpm lint:style\"",
+    "dev:local": "tsx --conditions=react-server src/server.ts",
+    "seed:config": "tsx --conditions=react-server scripts/seed-config.ts",
+    "seed:users": "tsx --conditions=react-server scripts/seed-users.ts",
+    "import:data": "tsx --conditions=react-server scripts/import-data.ts"
   },
   "dependencies": {
     "@aws-sdk/client-s3": "^3.958.0",
@@ -66,6 +70,7 @@
     "react-hook-form": "^7.70.0",
     "react-resizable-panels": "^4.2.0",
     "recharts": "2.15.4",
+    "server-only": "^0.0.1",
     "sharp": "0.35.3",
     "sonner": "^2.0.7",
     "tailwind-merge": "^2.6.0",

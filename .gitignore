@@ -163,3 +163,6 @@ Desktop.ini
 # Misc
 .coze-logs
 .codegraph/
+
+# drizzle 临时生成目录
+sql_generated/

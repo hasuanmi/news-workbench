@@ -3,7 +3,8 @@ set -Eeuo pipefail
 
 
 PORT="${DEPLOY_RUN_PORT:-${PORT:-5000}}"
-COZE_WORKSPACE_PATH="${COZE_WORKSPACE_PATH:-$(pwd)}"
+_PWD_WIN="$(pwd -W 2>/dev/null || pwd)"
+COZE_WORKSPACE_PATH="${COZE_WORKSPACE_PATH:-${_PWD_WIN}}"
 DEPLOY_RUN_PORT="${DEPLOY_RUN_PORT:-${PORT}}"
 
 
