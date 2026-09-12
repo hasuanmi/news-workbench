@@ -166,3 +166,7 @@ Desktop.ini
 
 # drizzle 临时生成目录
 sql_generated/
+
+# 例外：导入源文件必须随仓库分发，否则 scripts/import-data.ts 无法运行
+!assets/*.xlsx
+!assets/*.docx
