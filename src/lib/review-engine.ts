@@ -434,17 +434,27 @@ export async function saveDailyReview(params: {
     .maybeSingle();
 
   if (existing) {
+    const newVersion = (existing.version ?? 1) + 1;
     const { error } = await db
       .from("daily_review")
       .update({
         sections: JSON.stringify(sections),
         final_summary: params.finalSummary,
         review_status: "pending",
-        version: (existing.version ?? 1) + 1,
+        version: newVersion,
         updated_at: new Date().toISOString(),
       })
       .eq("id", existing.id);
     if (error) throw new Error(`更新评报失败: ${error.message}`);
+    // 记录本次重新生成的原始版本快照
+    await writeRevisionQuiet({
+      reviewId: existing.id,
+      version: newVersion,
+      sections,
+      finalSummary: params.finalSummary,
+      source: "generate",
+      changeNote: "重新生成",
+    });
     return existing.id;
   }
 
@@ -460,5 +470,200 @@ export async function saveDailyReview(params: {
     .select("id")
     .single();
   if (error) throw new Error(`保存评报失败: ${error.message}`);
+  // 首次生成的原始版本快照
+  await writeRevisionQuiet({
+    reviewId: data.id,
+    version: 1,
+    sections,
+    finalSummary: params.finalSummary,
+    source: "generate",
+    changeNote: "首次生成",
+  });
   return data.id;
+}
+
+/** 快照写入失败不应阻断评报主流程（仅记录日志） */
+async function writeRevisionQuiet(params: {
+  reviewId: string;
+  version: number;
+  sections: unknown;
+  finalSummary: string;
+  source: RevisionSource;
+  changeNote?: string;
+}): Promise<void> {
+  try {
+    await writeRevision({ ...params, createdBy: undefined });
+  } catch (e) {
+    console.error("写入评报版本快照失败（不影响主流程）:", e);
+  }
+}
+
+// ============================================================================
+// 版本快照 + 「更新到当前评报」+ 恢复（WF04-F 协作修改落库）
+// ============================================================================
+
+type RevisionSource = "generate" | "followup" | "restore";
+
+/** 把一份评报当前内容写入版本快照表 */
+async function writeRevision(params: {
+  reviewId: string;
+  version: number;
+  sections: unknown;
+  finalSummary: string;
+  source: RevisionSource;
+  changeNote?: string;
+  createdBy?: string;
+}): Promise<void> {
+  const { error } = await supabase().from("daily_review_revision").insert({
+    review_id: params.reviewId,
+    version: params.version,
+    sections: JSON.stringify(params.sections),
+    final_summary: params.finalSummary,
+    source: params.source,
+    change_note: params.changeNote ?? null,
+    created_by: params.createdBy ?? null,
+  });
+  if (error) throw new Error(`写入评报版本快照失败: ${error.message}`);
+}
+
+/**
+ * 用协作修改结果更新当前评报。
+ * - 仅允许整体替换最终评报，或替换单个区块（保持其它区块与 conditions 不变）。
+ * - 更新前先把当前内容存一份快照（source=followup，附改动说明），保留原始版本。
+ * - daily_review.version +1。
+ */
+export async function applyFollowupRevision(params: {
+  reviewId: string;
+  /** 要替换的目标区块；不填表示替换最终评报 */
+  targetModule?: ReviewModule["type"] | "final_summary";
+  finalSummary?: string;
+  moduleContent?: { summary?: string }; // 区块级修改目前更新区块摘要；同题/条目保持
+  changeNote?: string;
+  createdBy?: string;
+}): Promise<{ id: string; version: number }> {
+  const dba = supabase();
+  const { data: cur, error: readErr } = await dba
+    .from("daily_review")
+    .select("id, version, sections, final_summary")
+    .eq("id", params.reviewId)
+    .single();
+  if (readErr || !cur) throw new Error("评报不存在或已被删除");
+
+  // 1. 先存当前版本快照（保留原始版本，可恢复）
+  await writeRevision({
+    reviewId: cur.id,
+    version: cur.version ?? 1,
+    sections: cur.sections,
+    finalSummary: cur.final_summary ?? "",
+    source: "followup",
+    changeNote: params.changeNote,
+    createdBy: params.createdBy,
+  });
+
+  // 2. 在当前 sections 基础上做定点替换
+  let sections: Record<string, unknown> = {};
+  try {
+    sections =
+      typeof cur.sections === "string" ? JSON.parse(cur.sections) : cur.sections ?? {};
+  } catch {
+    sections = {};
+  }
+
+  let nextSummary = cur.final_summary ?? "";
+  if (params.targetModule === "final_summary" || !params.targetModule) {
+    if (typeof params.finalSummary === "string" && params.finalSummary.trim()) {
+      nextSummary = params.finalSummary;
+    }
+  } else if (params.targetModule && params.moduleContent) {
+    const mod = (sections[params.targetModule] as ReviewModule | null) ?? null;
+    if (mod) {
+      sections[params.targetModule] = {
+        ...mod,
+        ...(params.moduleContent.summary !== undefined
+          ? { summary: params.moduleContent.summary }
+          : {}),
+      };
+    }
+  }
+
+  const nextVersion = (cur.version ?? 1) + 1;
+  const { error: updErr } = await dba
+    .from("daily_review")
+    .update({
+      sections: JSON.stringify(sections),
+      final_summary: nextSummary,
+      version: nextVersion,
+      updated_at: new Date().toISOString(),
+    })
+    .eq("id", cur.id);
+  if (updErr) throw new Error(`更新评报失败: ${updErr.message}`);
+
+  return { id: cur.id, version: nextVersion };
+}
+
+/** 列出某份评报的版本快照（含当前版本，倒序） */
+export async function listReviewRevisions(reviewId: string) {
+  const dba = supabase();
+  const { data, error } = await dba
+    .from("daily_review_revision")
+    .select("id, version, source, change_note, created_at, created_by")
+    .eq("review_id", reviewId)
+    .order("version", { ascending: false })
+    .order("created_at", { ascending: false });
+  if (error) throw new Error(`读取版本列表失败: ${error.message}`);
+  return data ?? [];
+}
+
+/**
+ * 恢复到某个历史版本快照：
+ * - 恢复前先把当前内容存一份快照（source=restore），确保恢复也可撤销；
+ * - 用目标快照内容覆盖 daily_review，version 继续 +1（不复用旧版本号，避免歧义）。
+ */
+export async function restoreReviewRevision(params: {
+  reviewId: string;
+  revisionId: string;
+  createdBy?: string;
+}): Promise<{ id: string; version: number }> {
+  const dba = supabase();
+
+  const { data: target, error: revErr } = await dba
+    .from("daily_review_revision")
+    .select("id, version, sections, final_summary")
+    .eq("id", params.revisionId)
+    .eq("review_id", params.reviewId)
+    .single();
+  if (revErr || !target) throw new Error("目标版本不存在");
+
+  const { data: cur, error: readErr } = await dba
+    .from("daily_review")
+    .select("id, version, sections, final_summary")
+    .eq("id", params.reviewId)
+    .single();
+  if (readErr || !cur) throw new Error("评报不存在或已被删除");
+
+  // 恢复前快照当前内容（可撤销本次恢复）
+  await writeRevision({
+    reviewId: cur.id,
+    version: cur.version ?? 1,
+    sections: cur.sections,
+    finalSummary: cur.final_summary ?? "",
+    source: "restore",
+    changeNote: `恢复前自动备份（随后恢复到 v${target.version}）`,
+    createdBy: params.createdBy,
+  });
+
+  const nextVersion = (cur.version ?? 1) + 1;
+  const { error: updErr } = await dba
+    .from("daily_review")
+    .update({
+      sections:
+        typeof target.sections === "string" ? target.sections : JSON.stringify(target.sections ?? {}),
+      final_summary: target.final_summary ?? "",
+      version: nextVersion,
+      updated_at: new Date().toISOString(),
+    })
+    .eq("id", cur.id);
+  if (updErr) throw new Error(`恢复评报失败: ${updErr.message}`);
+
+  return { id: cur.id, version: nextVersion };
 }

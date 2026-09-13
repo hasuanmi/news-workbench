@@ -10,9 +10,27 @@ export async function POST(req: NextRequest) {
 
   const body = await req.json().catch(() => ({}));
 
+  // 默认时间窗口从配置 clue.identify_rules 读取（不硬编码 24h）
+  const { data: ruleRow } = await supabase()
+    .from("app_config")
+    .select("value")
+    .eq("key", "clue.identify_rules")
+    .maybeSingle();
+  let defaultTimeRange: "24h" | "3d" | "7d" = "24h";
+  if (ruleRow?.value) {
+    try {
+      const parsed = typeof ruleRow.value === "string" ? JSON.parse(ruleRow.value) : ruleRow.value;
+      if (parsed?.default_time_range === "24h" || parsed.default_time_range === "3d" || parsed.default_time_range === "7d") {
+        defaultTimeRange = parsed.default_time_range;
+      }
+    } catch {
+      /* 用默认 */
+    }
+  }
+
   // 动态条件
   const filter = {
-    timeRange: body.timeRange || "24h",
+    timeRange: body.timeRange || defaultTimeRange,
     customStart: body.customStart,
     customEnd: body.customEnd,
     mediaScope: body.mediaScope || "all",

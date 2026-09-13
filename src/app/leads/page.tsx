@@ -5,18 +5,22 @@ import { AppShell } from "@/components/app-shell";
 import { LeadsFilter, type LeadsFilter as LeadsFilterType } from "@/components/leads/leads-filter";
 import { ClueCard, type Clue } from "@/components/leads/clue-card";
 
+type Scope = "active" | "history";
+
 export default function LeadsPage() {
   const [clues, setClues] = useState<Clue[]>([]);
   const [loading, setLoading] = useState(false);
   const [loadingList, setLoadingList] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [info, setInfo] = useState<string | null>(null);
+  const [scope, setScope] = useState<Scope>("active");
 
-  // 页面挂载时加载已存在的线索（已确认/待确认）
-  const loadClues = useCallback(async () => {
+  // 页面挂载时加载窗口内的今日待确认 + 已确认线索
+  const loadClues = useCallback(async (sc: Scope) => {
     setLoadingList(true);
+    setError(null);
     try {
-      const res = await fetch("/api/leads?timeRange=all&pageSize=50");
+      const res = await fetch(`/api/leads?scope=${sc}&pageSize=50`);
       if (!res.ok) throw new Error("加载线索失败");
       const data = await res.json();
       setClues(data.clues || []);
@@ -28,13 +32,14 @@ export default function LeadsPage() {
   }, []);
 
   useEffect(() => {
-    loadClues();
-  }, [loadClues]);
+    loadClues(scope);
+  }, [scope, loadClues]);
 
   const handleIdentify = async (filter: LeadsFilterType) => {
     setLoading(true);
     setError(null);
     setInfo(null);
+    setScope("active");
     try {
       const res = await fetch("/api/admin/leads/identify", {
         method: "POST",
@@ -52,19 +57,12 @@ export default function LeadsPage() {
       });
       if (!res.ok) throw new Error("识别失败");
       const data = await res.json();
-      // 去重：确保线索 id 唯一
-      const uniqueClues = (data.clues || []).filter(
-        (clue: Clue, index: number, self: Clue[]) =>
-          index === self.findIndex((c) => c.id === clue.id)
-      );
-      setClues(uniqueClues);
-      // AI 声明保留语义：识别完成但本次无新线索时给出明确提示
+      // 识别后重新拉取窗口内列表（保证依据/新鲜度一致），而不是直接用返回的去重结果
+      await loadClues("active");
       const processed = data.stats?.processed ?? data.processed;
       const found = data.stats?.cluesFound ?? data.cluesFound;
-      if (processed !== undefined && uniqueClues.length === 0) {
-        setInfo(`本次扫描 ${processed} 篇${found !== undefined ? `，未发现新线索` : ""}。可在条件区调整时间范围/主题后重试。`);
-      } else if (uniqueClues.length === 0) {
-        setInfo("本次未识别到新线索，可调整条件后重试。");
+      if (processed !== undefined) {
+        setInfo(`本次扫描 ${processed} 篇，识别出线索 ${found ?? 0} 条。已按新鲜度窗口收敛到今日待确认。`);
       }
     } catch (e) {
       setError(e instanceof Error ? e.message : "识别失败");
@@ -73,13 +71,17 @@ export default function LeadsPage() {
     }
   };
 
+  const refreshAfterReview = (id: string, status: string) => {
+    setClues((prev) => prev.map((c) => (c.id === id ? { ...c, review_status: status } : c)));
+  };
+
   const handleConfirm = async (id: string) => {
     await fetch(`/api/admin/leads/${id}/review`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ action: "confirm" }),
     });
-    setClues((prev) => prev.map((c) => (c.id === id ? { ...c, review_status: "confirmed" } : c)));
+    refreshAfterReview(id, "confirmed");
   };
 
   const handleIgnore = async (id: string) => {
@@ -88,13 +90,11 @@ export default function LeadsPage() {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ action: "ignore" }),
     });
-    setClues((prev) => prev.map((c) => (c.id === id ? { ...c, review_status: "ignored" } : c)));
+    refreshAfterReview(id, "ignored");
   };
 
-  const handleView = (id: string) => {
-    // TODO: 打开线索详情弹窗
-    console.log("View clue:", id);
-  };
+  const pendingCount = clues.filter((c) => c.review_status === "pending").length;
+  const confirmedCount = clues.filter((c) => c.review_status === "confirmed").length;
 
   return (
     <AppShell>
@@ -102,12 +102,38 @@ export default function LeadsPage() {
         <div className="mb-6">
           <h1 className="text-2xl font-serif font-bold text-[#1f1b16]">新闻线索</h1>
           <p className="text-sm text-[#6b6257] mt-1">
-            从已入库文章中识别值得关注的新栏目、系列报道、专题、特色策划
+            从时间窗口内的新文章中识别新栏目、系列报道、专题、特色策划；每条线索附原文依据供核验
           </p>
         </div>
 
         {/* 条件区 */}
         <LeadsFilter onIdentify={handleIdentify} loading={loading} />
+
+        {/* 视图切换：今日待确认 / 历史线索库 */}
+        <div className="flex items-center gap-2 mb-4">
+          {[
+            { key: "active" as Scope, label: "今日待确认" },
+            { key: "history" as Scope, label: "历史线索库" },
+          ].map((tab) => (
+            <button
+              key={tab.key}
+              onClick={() => setScope(tab.key)}
+              className={`rounded-md px-3 py-1.5 text-sm font-medium transition-colors ${
+                scope === tab.key
+                  ? "bg-[#b3392f] text-white"
+                  : "bg-white text-[#6b6257] border border-[#e8e2d8] hover:bg-[#faf7f2]"
+              }`}
+            >
+              {tab.label}
+            </button>
+          ))}
+          <button
+            onClick={() => loadClues(scope)}
+            className="ml-auto text-xs text-[#6b6257] hover:text-[#b3392f]"
+          >
+            刷新
+          </button>
+        </div>
 
         {/* 错误提示 */}
         {error && (
@@ -120,15 +146,17 @@ export default function LeadsPage() {
         )}
 
         {/* 结果区 */}
-        {clues.length > 0 && (
+        {loadingList ? (
+          <p className="text-sm text-[#6b6257] py-8 text-center">加载中…</p>
+        ) : clues.length > 0 ? (
           <div>
             <div className="flex items-center justify-between mb-4">
               <h2 className="text-lg font-serif font-bold text-[#1f1b16]">
-                识别结果（{clues.length} 条）
+                {scope === "active" ? "今日待确认" : "历史线索库"}（{clues.length} 条）
               </h2>
               <div className="text-sm text-[#6b6257]">
-                已确认 {clues.filter((c) => c.review_status === "confirmed").length} 条 · 待处理{" "}
-                {clues.filter((c) => c.review_status === "pending").length} 条
+                {scope === "active" && <>待确认 {pendingCount} 条 · </>}
+                已确认 {confirmedCount} 条
               </div>
             </div>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -136,19 +164,19 @@ export default function LeadsPage() {
                 <ClueCard
                   key={clue.id}
                   clue={clue}
-                  onConfirm={handleConfirm}
-                  onIgnore={handleIgnore}
-                  onView={handleView}
+                  onConfirm={scope === "active" ? handleConfirm : undefined}
+                  onIgnore={scope === "active" ? handleIgnore : undefined}
                 />
               ))}
             </div>
           </div>
-        )}
-
-        {/* 空状态 */}
-        {clues.length === 0 && !loading && (
+        ) : (
           <div className="text-center py-12 text-[#6b6257]">
-            <p className="text-sm">设置条件后点击「开始识别」，AI 将分析文章并生成线索卡片</p>
+            <p className="text-sm">
+              {scope === "active"
+                ? "时间窗口内暂无待确认线索。可在条件区选择 24 小时 / 3 天 / 7 天后点击「开始识别」。"
+                : "历史线索库暂无已确认线索。"}
+            </p>
           </div>
         )}
       </div>

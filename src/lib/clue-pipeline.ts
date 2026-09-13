@@ -34,14 +34,42 @@ export interface PipelineResult {
 export async function runCluePipeline(filter?: PipelineFilter): Promise<PipelineResult> {
   const db = supabase();
 
+  // 未显式传时间范围时（如定时任务），从配置 clue.identify_rules.default_time_range 读默认窗口，
+  // 保证历史系列不会因为库里存在旧文章而反复进入今日待确认。
+  let effectiveFilter = filter;
+  if (!filter || filter.timeRange === undefined) {
+    let defaultRange: PipelineFilter["timeRange"] = "24h";
+    try {
+      const { data: ruleRow } = await db
+        .from("app_config")
+        .select("value")
+        .eq("key", "clue.identify_rules")
+        .maybeSingle();
+      if (ruleRow?.value) {
+        const parsed =
+          typeof ruleRow.value === "string" ? JSON.parse(ruleRow.value) : ruleRow.value;
+        if (
+          parsed?.default_time_range === "24h" ||
+          parsed.default_time_range === "3d" ||
+          parsed.default_time_range === "7d"
+        ) {
+          defaultRange = parsed.default_time_range;
+        }
+      }
+    } catch {
+      /* 用默认 */
+    }
+    effectiveFilter = { ...(filter ?? {}), timeRange: defaultRange };
+  }
+
   // 1. 根据时间范围计算起始日期
   const now = new Date();
   let startDate: Date | undefined;
-  if (filter?.timeRange === "24h") startDate = new Date(now.getTime() - 24 * 60 * 60 * 1000);
-  else if (filter?.timeRange === "3d") startDate = new Date(now.getTime() - 3 * 24 * 60 * 60 * 1000);
-  else if (filter?.timeRange === "7d") startDate = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
-  else if (filter?.timeRange === "custom" && filter.customStart) {
-    startDate = new Date(filter.customStart);
+  if (effectiveFilter?.timeRange === "24h") startDate = new Date(now.getTime() - 24 * 60 * 60 * 1000);
+  else if (effectiveFilter?.timeRange === "3d") startDate = new Date(now.getTime() - 3 * 24 * 60 * 60 * 1000);
+  else if (effectiveFilter?.timeRange === "7d") startDate = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
+  else if (effectiveFilter?.timeRange === "custom" && effectiveFilter.customStart) {
+    startDate = new Date(effectiveFilter.customStart);
   }
 
   // 2. 取文章（根据条件筛选）
@@ -55,22 +83,22 @@ export async function runCluePipeline(filter?: PipelineFilter): Promise<Pipeline
   if (startDate) {
     query = query.gte("publish_time", startDate.toISOString());
   }
-  if (filter?.customEnd) {
-    query = query.lte("publish_time", new Date(filter.customEnd).toISOString());
+  if (effectiveFilter?.customEnd) {
+    query = query.lte("publish_time", new Date(effectiveFilter.customEnd).toISOString());
   }
 
   // 媒体范围筛选
-  if (filter?.mediaScope && filter.mediaScope !== "all") {
+  if (effectiveFilter?.mediaScope && effectiveFilter.mediaScope !== "all") {
     const { data: mediaRows } = await db
       .from("media")
       .select("id")
-      .eq("media_level", filter.mediaScope === "central" ? "央媒" : filter.mediaScope === "provincial" ? "省媒" : "地市");
+      .eq("media_level", effectiveFilter.mediaScope === "central" ? "央媒" : effectiveFilter.mediaScope === "provincial" ? "省媒" : "地市");
     const mediaIds = (mediaRows ?? []).map((m) => m.id);
     if (mediaIds.length > 0) {
       query = query.in("media_id", mediaIds);
     }
-  } else if (filter?.customMediaIds && filter.customMediaIds.length > 0) {
-    query = query.in("media_id", filter.customMediaIds);
+  } else if (effectiveFilter?.customMediaIds && effectiveFilter.customMediaIds.length > 0) {
+    query = query.in("media_id", effectiveFilter.customMediaIds);
   }
 
   const { data: articles, error } = await query;
@@ -117,9 +145,9 @@ export async function runCluePipeline(filter?: PipelineFilter): Promise<Pipeline
 
     try {
       const analysis = await analyzeArticle(articleForClue, {
-        clueTypes: filter?.clueTypes,
-        topics: filter?.topics,
-        customRequirement: filter?.customRequirement,
+        clueTypes: effectiveFilter?.clueTypes,
+        topics: effectiveFilter?.topics,
+        customRequirement: effectiveFilter?.customRequirement,
       });
       const { action, clue } = await saveClue(articleForClue, analysis);
 

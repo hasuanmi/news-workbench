@@ -280,6 +280,32 @@ export const dailyReview = pgTable(
   (table) => [index("daily_review_status_idx").on(table.review_status)]
 );
 
+/**
+ * 每日评报版本快照
+ * 首次生成时落一份原始版本（source=generate）；每次「更新到当前评报」前把当前内容存快照，
+ * 支持查看历史版本与一键恢复（恢复时同样先把当前内容存一份快照）。
+ */
+export const dailyReviewRevision = pgTable(
+  "daily_review_revision",
+  {
+    id: varchar("id", { length: 36 }).primaryKey().default(sql`gen_random_uuid()`),
+    review_id: varchar("review_id", { length: 36 })
+      .notNull()
+      .references(() => dailyReview.id, { onDelete: "cascade" }),
+    version: integer("version").notNull(), // 该快照对应的评报版本号
+    sections: jsonb("sections"),
+    final_summary: text("final_summary"),
+    source: varchar("source", { length: 16 }).notNull().default("generate"), // generate | followup | restore
+    change_note: text("change_note"), // 本次改动说明（追问/协作修改指令）
+    created_by: varchar("created_by", { length: 36 }),
+    created_at: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
+  },
+  (table) => [
+    index("daily_review_revision_review_idx").on(table.review_id),
+    index("daily_review_revision_version_idx").on(table.review_id, table.version),
+  ]
+);
+
 // ============ 每周媒体简报 ============
 export const weeklyBrief = pgTable(
   "weekly_brief",

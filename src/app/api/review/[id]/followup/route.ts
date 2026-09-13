@@ -10,11 +10,8 @@ const sse = (obj: unknown) => encoder.encode(`data: ${JSON.stringify(obj)}\n\n`)
 /**
  * POST /api/review/[id]/followup — 对已保存评报进行「继续追问 / AI 协作修改」
  *
- * SSE 事件：
- *   { phase: "start" }
- *   { delta: "..." }      流式文本分片
- *   { done: true }
- *   { error } | [DONE]
+ * 严格基于本次评报上下文（日期 / 媒体 / 文章 / 同题聚类 / 维度 / 已生成评报）。
+ * SSE 事件：{ phase:"start" } / { delta } / { done:true } / { error } / [DONE]
  */
 export async function POST(req: NextRequest, ctx: { params: Promise<{ id: string }> }) {
   const auth = await requireAdmin(req);
@@ -55,7 +52,7 @@ export async function POST(req: NextRequest, ctx: { params: Promise<{ id: string
     });
   }
 
-  let sections: { [key: string]: ReviewModule } = {};
+  let sections: { [key: string]: unknown } = {};
   try {
     sections =
       typeof review.sections === "string" ? JSON.parse(review.sections) : review.sections ?? {};
@@ -65,27 +62,52 @@ export async function POST(req: NextRequest, ctx: { params: Promise<{ id: string
   const moduleOrder = ["today_focus", "same_topic", "peer_highlights", "gz_daily"];
   const modules = moduleOrder
     .map((key) => sections[key])
-    .filter((m): m is NonNullable<typeof m> => Boolean(m));
+    .filter((m): m is ReviewModule => Boolean(m));
+  const conditions = (sections.conditions ?? null) as
+    | { minWordCount?: number; dimensions?: string[]; topics?: string[]; scanMissing?: boolean; customRequirement?: string }
+    | null;
+
+  // 本次对比媒体名单（从生成条件/配置读取；此处用 conditions 中保存的，缺省回退配置）
+  let mediaNames: string[] = [];
+  const { data: mediaCfg } = await db
+    .from("app_config")
+    .select("value")
+    .eq("key", "review.media_names")
+    .maybeSingle();
+  if (mediaCfg?.value) {
+    try {
+      const parsed = typeof mediaCfg.value === "string" ? JSON.parse(mediaCfg.value) : mediaCfg.value;
+      if (Array.isArray(parsed)) mediaNames = parsed.map(String);
+    } catch {
+      /* ignore */
+    }
+  }
+  const dimensions = Array.isArray(conditions?.dimensions) ? conditions!.dimensions : [];
 
   const stream = new ReadableStream({
     async start(controller) {
       // 客户端中断（如关闭页面）后 controller 已关闭，再 enqueue 会抛错，这里统一安全注入
-    let closed = false;
-    const push = (data: Uint8Array) => {
-      if (closed) return;
-      try {
-        controller.enqueue(data);
-      } catch {
-        closed = true;
-      }
-    };
+      let closed = false;
+      const push = (data: Uint8Array) => {
+        if (closed) return;
+        try {
+          controller.enqueue(data);
+        } catch {
+          closed = true;
+        }
+      };
       push(sse({ phase: "start" }));
       try {
         const gen = runFollowup({
           mode,
-          reportDate: review.report_date,
-          modules,
-          finalSummary: review.final_summary ?? "",
+          context: {
+            reportDate: review.report_date,
+            modules,
+            finalSummary: review.final_summary ?? "",
+            mediaNames,
+            dimensions,
+            conditions,
+          },
           input,
           history,
         });

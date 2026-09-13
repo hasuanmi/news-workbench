@@ -260,6 +260,7 @@ export default function ReviewPage() {
                 reviewId={currentReviewId}
                 turns={followupTurns}
                 onTurnsChange={setFollowupTurns}
+                onReviewUpdated={() => viewHistory(currentReviewId)}
               />
             )}
           </div>

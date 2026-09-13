@@ -173,7 +173,8 @@ assets/                       # 媒体列表.xlsx、2024年新闻日历.docx（�
 - **每周简报** `src/lib/weekly-briefing.ts`：汇总近 7 天已发布线索 → AI 流式输出 Markdown 四段简报（新栏目/重点系列/关注专题/特色策划 + 总览）→ `parseMarkdownBriefing` 按二级标题拆分存 `weekly_brief` 表。`POST /api/admin/leads/weekly`（SSE 流式）、`GET /api/leads/weekly`（历史列表）。
 - **页面**：前台 `/leads`（卡片列表，置信度进度条/标签/追踪篇数）、`/leads/weekly`；后台 `/admin/leads`（识别触发按钮 + 待审队列 + 审核弹窗）。**入口已挂到「系统管理 → 新闻线索管理」卡片**。
 - `article` 表增加 `clue_processed` 标记列。Mock 文章可直接触发识别验证。
-- **线索关联原文 + 新鲜度**：新增 `news_clue_article` 关联明细表（clue_id/article_id/title/url/publish_time/media_id，唯一索引 clue_id+article_id），`news_clue` 增加 `recent_article_at`（最新原文发布时间）。识别合并时按 `series_key` 逐篇落关联明细并同步新鲜度；`GET /api/leads` 与后台 `GET /api/admin/leads` 通过「主查询 + 按 clue_id 批量二次查询 + Map 组装」填充 `articles[]` 并计算 `freshness_days`（距最新原文天数），前端 `clue-card.tsx` 据此展示关联原文列表与新鲜度徽章。展示开关读 `clue.display_rules.show_articles/show_freshness`。
+- **线索关联原文 + 新鲜度**：新增 `news_clue_article` 关联明细表（clue_id/article_id/title/url/publish_time/media_id，唯一索引 clue_id+article_id），`news_clue` 增加 `recent_article_at`（最新原文发布时间）。识别合并时按 `series_key` 逐篇落关联明细并同步新鲜度；`GET /api/leads` 与后台 `GET /api/admin/leads` 通过「主查询 + 按 clue_id 批量二次查询 + Map 组装」填充 `articles[]`（含 media_name）并计算 `freshness_days`（距最新原文天数），前端 `clue-card.tsx` 据此展示关联原文列表与新鲜度徽章。展示开关读 `clue.display_rules.show_articles/show_freshness`。
+- **可核验依据 + 时间窗口（重要规则）**：配置项 `clue.identify_rules`（`default_time_range`=24h / `pending_freshness_days`=3 / `require_article_evidence`=true）。待确认（pending_review）线索必须带关联原文依据（标题/完整发布时间/媒体名/原文链接），无依据者不进「今日待确认」；前台默认只展示时间窗口（24h/3d/7d）内新出现或近期更新的线索，旧 pending 不因库里存在旧文章而重新进入今日待确认，历史线索保留在历史库（timeRange=all 可查）。条件区支持「近24小时/近3天/近7天/全部历史」切换，默认近24小时。pipeline 默认时间窗口由配置读取，不硬编码。
 
 ## 已完成：M4 每日评报
 
@@ -186,7 +187,8 @@ assets/                       # 媒体列表.xlsx、2024年新闻日历.docx（�
 - **接口**：`POST /api/admin/review/generate`（SSE，事件 fetching/analyzing/structure/final*/saved/warning/error）、`GET /api/review`（历史列表+summary_preview）、`GET /api/review/[id]`（详情，sections 还原成 modules 数组 + 合并当前 display_rules）。
 - **展示规则驱动**：`review.display_rules`（show_media_name/show_article_title/show_article_url/show_evidence/show_comparison_table + modules 开关）控制 `review-result.tsx` 动态渲染；后台 `/admin/review` 分「生成规则」「展示规则」两块配置。
 - **版面信号降级**：整版/跨版/头版等外部抓取可能缺失，缺失时按字数 + AI 判断降级，不致任务失败。
-- **继续追问 / AI 协作修改**：`src/lib/review-followup.ts`（mode=question 追问 / mode=revise 定向修改），基于已保存 `daily_review` 的 sections+final_summary 组装上下文，复用 `llm-client`（自定义模型优先、豆包回退）SSE 流式输出。路由 `POST /api/review/[id]/followup`（事件 start/delta/done/error，含客户端断连防护），前端 `src/components/review/review-followup.tsx` 挂载在评报结果区，支持多轮追问与「将修改并入展示」。
+- **继续追问 / AI 协作修改**：`src/lib/review-followup.ts`（mode=question 追问 / mode=revise 定向修改），上下文严格锁定本次评报（日期/对比媒体/筛选条件/四区块含同题对比 rows/分析维度/final_summary），并约束模型只围绕材料做六类操作（展开主题/重新比较指定媒体/调整分析维度/补充遗漏/修改语言风格/精简扩写），不做脱离材料的闲聊；复用 `llm-client`（自定义模型优先、豆包回退）SSE 流式。路由 `POST /api/review/[id]/followup`（事件 start/delta/done/error，含客户端断连防护），前端 `src/components/review/review-followup.tsx` 挂载在评报结果区，支持多轮追问。
+- **版本快照与恢复**：新增 `daily_review_revision` 表（review_id/version/sections/final_summary/source=generate|followup|restore/change_note/created_by）。首次生成与每次「更新到当前评报」前都先把当前内容快照；`POST /api/review/[id]/revision` 用协作结果更新当前评报（可整体替换 final_summary 或替换单个区块，version+1），`GET /api/review/[id]/revisions` 列版本，`POST /api/review/[id]/revisions/restore` 按 revisionId 恢复（恢复前再存当前版本快照）。引擎函数 `writeRevision/applyFollowupRevision/restoreRevision/listRevisions` 在 `review-engine.ts`，前端追问组件支持「更新到当前评报」与「历史版本」面板查看/恢复。
 
 ## 已完成：M5 定时调度（cron）
 
