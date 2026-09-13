@@ -32,6 +32,43 @@ export interface ParsedHistoryNode {
 
 // ---------------------------------------------------------------- 文件解析
 
+/** 该行是否含实际事项（只有日期+星期、没有内容的行直接丢弃，能过滤掉大量空日期行） */
+function hasContent(raw: string): boolean {
+  const r = raw
+    .replace(/\d{1,2}[.．]\d{1,2}/g, "")
+    .replace(/星期[一二三四五六日天]/g, "")
+    .replace(/[|｜\s·、,，。;；:：-]/g, "");
+  return r.length >= 4;
+}
+
+/** 表头/分隔行识别（如"日期|星期|国内国际事项"、"2024|一 月"） */
+function isHeaderRow(raw: string): boolean {
+  const r = raw.replace(/\s/g, "");
+  if (!r || r.length < 3) return true;
+  if (r.includes("星期") && r.includes("事项")) return true;
+  if (/^\d{4}$/.test(r)) return true;
+  if (/^[一二三四五六七八九十]{1,3}月$/.test(r)) return true;
+  if (/^\d{4}[|｜]?[一二三四五六七八九十]{1,3}月$/.test(r)) return true;
+  return false;
+}
+
+/** 提取段落文本（无表格的 docx 走这条路） */
+function docxParagraphs(xml: string): RawRow[] {
+  const out: RawRow[] = [];
+  const paras = xml.split(/<w:p[\s>]/).slice(1);
+  for (const p of paras) {
+    if (!/<\/w:p>/.test(p)) continue;
+    const seg = p.split("</w:p>")[0];
+    const tRe = /<w:t(?:\s[^>]*)?>([\s\S]*?)<\/w:t>/g;
+    let text = "";
+    let m: RegExpExecArray | null;
+    while ((m = tRe.exec(seg)) !== null) text += m[1];
+    const trimmed = text.trim();
+    if (trimmed) out.push({ cells: [trimmed], raw: trimmed });
+  }
+  return out;
+}
+
 function docxRows(buffer: Buffer): RawRow[] {
   const zip = new AdmZip(buffer);
   const xml = zip.readAsText("word/document.xml");
@@ -62,7 +99,9 @@ function docxRows(buffer: Buffer): RawRow[] {
       }
     }
   }
-  return out;
+  // 无表格的 docx（如"简版日历"是纯段落）→ 退化为按段落取
+  const rows = out.length > 0 ? out : docxParagraphs(xml);
+  return rows.filter((r) => !isHeaderRow(r.raw));
 }
 
 function xlsxRows(buffer: Buffer): RawRow[] {
@@ -140,6 +179,10 @@ const SYSTEM_PROMPT = `你是新闻日历结构化助手。把用户给出的历
 4. importance 只能是：S（国家级重大）/ A（重要）/ B（一般）
 5. category_code 从给定分类里选一个最贴合的 code；无法确定就返回 null。
 6. 只输出 JSON，不要任何解释文字。
+7. 一行里常含多个事项（用"·"、"；"或换行分隔），**必须拆成多条**。
+8. 日期区间（如"1月1-3日"、"1月16日-20日"）取**开始日期**作 event_date，date_status=confirmed。
+9. 出现"注："、"待确定"、"时间待定"、"预计X月"这类，按 month_known 或 unknown 处理，**绝不编造具体日期**。
+10. 周年纪念节点（如"周恩来逝世50周年"）按当年日期输出即可。
 
 输出格式（数组）：
 [{"node_name":"","event_date":"2025-04-15 或 null","candidate_month":4 或 null,"date_status":"confirmed","category_code":"","region":"national","importance":"A","description":""}]`;

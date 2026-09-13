@@ -58,6 +58,21 @@ export function CalendarBoard() {
   const [searchInput, setSearchInput] = useState("");
   const [selected, setSelected] = useState<OccurrenceItem | null>(null);
   const [windowDays, setWindowDays] = useState(14);
+  const [floating, setFloating] = useState<
+    Array<{
+      id: string;
+      event_name: string;
+      date_status: string;
+      candidate_month: number | null;
+      importance: string;
+      region: string;
+      category?: { code: string; category_name: string; color: string } | null;
+      background: string | null;
+      planning_hint: unknown;
+      source: string | null;
+      tags: unknown;
+    }>
+  >([]);
 
   useEffect(() => {
     fetch("/api/calendar/categories")
@@ -77,6 +92,7 @@ export function CalendarBoard() {
       .then((r) => r.json())
       .then((d) => {
         setItems(d.items ?? []);
+        setFloating(d.floating ?? []);
         if (d.windowDays) setWindowDays(d.windowDays);
       })
       .catch(() => setItems([]))
@@ -249,6 +265,58 @@ export function CalendarBoard() {
               </div>
             );
           })}
+        </div>
+      )}
+
+      {floating.length > 0 && (
+        <div className="space-y-2 pt-2">
+          <div className="flex items-center gap-2 text-sm font-medium text-[var(--muted-foreground)]">
+            <span className="w-1.5 h-1.5 rounded-full bg-[#b8860b]" />
+            时间待定 / 仅知月份（{floating.length}）
+          </div>
+          <div className="grid sm:grid-cols-2 gap-2">
+            {floating.map((f) => (
+              <Card
+                key={f.id}
+                className="cursor-pointer hover:border-[var(--primary)] transition-colors"
+                onClick={() =>
+                  setSelected({
+                    id: f.id,
+                    event_name: f.event_name,
+                    date: f.date_status === "month_known" && f.candidate_month ? `${f.candidate_month}月` : "待定",
+                    daysUntil: -999,
+                    anniversary: null,
+                    importance: f.importance,
+                    region: f.region,
+                    category: f.category ?? undefined,
+                    background: f.background,
+                    planning_hint: f.planning_hint,
+                    source: f.source,
+                    tags: f.tags,
+                  })
+                }
+              >
+                <CardContent className="py-3 px-4 flex items-center gap-3">
+                  <Badge
+                    className={cn(
+                      "shrink-0",
+                      f.date_status === "month_known" && "bg-[#c87f2d] text-white",
+                      f.date_status === "unknown" && "bg-[#6b6257] text-white",
+                    )}
+                  >
+                    {f.date_status === "month_known" && f.candidate_month ? `${f.candidate_month}月` : "待定"}
+                  </Badge>
+                  <div className="flex-1 min-w-0">
+                    <div className="font-medium truncate">{f.event_name}</div>
+                    <div className="flex items-center gap-2 mt-0.5 text-xs text-[var(--muted-foreground)]">
+                      {f.category && <span style={{ color: f.category.color }}>{f.category.category_name}</span>}
+                      <span>时间待定</span>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
         </div>
       )}
 

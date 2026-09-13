@@ -49,15 +49,19 @@ function diffDays(from: Date, to: Date): number {
 export function computeOccurrence(event: CalendarRuleEvent, targetYear: number, today: Date): Occurrence | null {
   if (event.event_type === "fixed") {
     if (!event.original_date) return null;
-    const { m, d } = parseDate(event.original_date);
-    const date = `${targetYear}-${String(m).padStart(2, "0")}-${String(d).padStart(2, "0")}`;
-    const baseYear = event.anniversary_base_year ?? parseDate(event.original_date).y;
-    const anniversary = targetYear - baseYear;
+    const { y: oy, m, d } = parseDate(event.original_date);
+    const baseYear = event.anniversary_base_year ?? oy;
+    // 固定节点：取下一个 ≥ today 的同年月日（跨年滚动到明年），
+    // 这样"新闻日历"始终显示即将到来的发生日，而非被硬套到当前年变成过去。
+    let year = today.getUTCFullYear();
+    if (toDate(year, m, d).getTime() < today.getTime()) year += 1;
+    const date = `${year}-${String(m).padStart(2, "0")}-${String(d).padStart(2, "0")}`;
+    const anniversary = year - baseYear;
     return {
       event,
       date,
       anniversary: anniversary > 0 ? anniversary : null,
-      daysUntil: diffDays(today, toDate(targetYear, m, d)),
+      daysUntil: diffDays(today, toDate(year, m, d)),
     };
   }
   // dynamic

@@ -423,6 +423,7 @@ export const calendarCandidate = pgTable(
     target_year: integer("target_year").notNull(), // 目标年度（动态）
     candidate_date: date("candidate_date", { mode: "string" }),
     candidate_month: integer("candidate_month"),
+    base_year: integer("base_year"), // 周年基准年（历史迁移取原始发生年；其余填 target_year）
     date_status: varchar("date_status", { length: 16 }).notNull().default("confirmed"),
     category_id: varchar("category_id", { length: 36 }).references(() => calendarCategory.id),
     region: varchar("region", { length: 16 }).default("national"),
@@ -431,9 +432,10 @@ export const calendarCandidate = pgTable(
     source_type: varchar("source_type", { length: 32 }).notNull().default("manual"),
     source_detail: text("source_detail"),
     raw_text: text("raw_text"), // 粘贴识别时保存全文
+    description: text("description"),
     source_url: text("source_url"),
     ai_reason: text("ai_reason"), // AI 推荐理由
-    dedup_status: varchar("dedup_status", { length: 16 }).notNull().default("new"), // new | merged | duplicate
+    dedup_status: varchar("dedup_status", { length: 16 }).notNull().default("new"), // new | merged | duplicate | kept（用户保留，不再判重复）
     merged_into_id: varchar("merged_into_id", { length: 36 }),
     merged_sources: jsonb("merged_sources"), // 合并前的所有来源，如 ["historical_migration","ai_supplement"]
     review_status: varchar("review_status", { length: 16 }).notNull().default("pending"), // pending | confirmed | rejected | merged

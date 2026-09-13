@@ -70,6 +70,24 @@ export async function GET(req: NextRequest) {
 
   const eventMap = new Map(events.map((e) => [e.id, e]));
 
+  // 时间待定节点（month_known / unknown）：无具体日期，单独以"待定"区呈现
+  const floating = events
+    .filter((e) => e.date_status === "month_known" || e.date_status === "unknown")
+    .filter((e) => e.event_name?.includes(keyword ?? "") || !keyword)
+    .map((e) => ({
+      id: e.id,
+      event_name: e.event_name,
+      date_status: e.date_status,
+      candidate_month: e.event_month ?? null,
+      importance: e.importance,
+      region: e.region,
+      category: (e as { category?: { code: string; category_name: string; color: string } | null }).category ?? null,
+      background: (e as { background?: string | null }).background ?? null,
+      planning_hint: (e as { planning_hint?: unknown }).planning_hint ?? null,
+      source: (e as { source?: string | null }).source ?? null,
+      tags: (e as { tags?: unknown }).tags ?? null,
+    }));
+
   return NextResponse.json({
     items: occurrences.map((o) => {
       const raw = eventMap.get(o.event.id);
@@ -88,6 +106,7 @@ export async function GET(req: NextRequest) {
         tags: (raw as { tags?: unknown } | undefined)?.tags ?? null,
       };
     }),
+    floating,
     total: occurrences.length,
     windowDays: cfg.calendarWindowDays,
   });
