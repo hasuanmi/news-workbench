@@ -70,12 +70,45 @@ export async function GET(req: NextRequest) {
     tags: typeof c.tags === "string" ? safeJsonParse(c.tags, []) : c.tags,
   }));
 
+  // 批量查询每条线索的关联原文（外键嵌套关联不可用 → 二次查询 + Map 组装）
+  const clueIds = [...new Set((data ?? []).map((c) => c.id))];
+  const articleMap = new Map<string, any[]>();
+  if (clueIds.length > 0) {
+    const { data: links } = await db
+      .from("news_clue_article")
+      .select("clue_id, article_id, title, url, publish_time")
+      .in("clue_id", clueIds)
+      .order("created_at", { ascending: false });
+    (links ?? []).forEach((l) => {
+      const arr = articleMap.get(l.clue_id) ?? [];
+      arr.push({
+        id: l.article_id,
+        title: l.title,
+        url: l.url,
+        published_at: l.publish_time,
+      });
+      articleMap.set(l.clue_id, arr);
+    });
+  }
+  const nowTs = Date.now();
+  const DAY = 24 * 60 * 60 * 1000;
+  const enriched = clues.map((c) => {
+    (c as any).articles = articleMap.get(c.id) ?? [];
+    const recent = c.recent_article_at || ((c as any).articles[0]?.published_at as string | undefined) || c.last_seen_at;
+    (c as any).recent_article_at = recent || null;
+    (c as any).freshness_days =
+      recent && !Number.isNaN(new Date(recent).getTime())
+        ? Math.max(0, Math.floor((nowTs - new Date(recent).getTime()) / DAY))
+        : null;
+    return c;
+  });
+
   return NextResponse.json({
     success: true,
     total: count ?? 0,
     page,
     pageSize,
-    clues,
+    clues: enriched,
     stats: {
       pending_review: pendingCount ?? 0,
       auto_approved: autoCount ?? 0,

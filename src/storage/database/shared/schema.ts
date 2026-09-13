@@ -201,6 +201,8 @@ export const newsClue = pgTable(
     article_count: integer("article_count").notNull().default(1),
     first_found_at: timestamp("first_found_at", { withTimezone: true }).defaultNow().notNull(),
     last_seen_at: timestamp("last_seen_at", { withTimezone: true }).defaultNow().notNull(),
+    // 最新一篇关联原文的发布时间（新鲜度计算依据；null=无关联原文）
+    recent_article_at: timestamp("recent_article_at", { withTimezone: true }),
     created_at: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
     updated_at: timestamp("updated_at", { withTimezone: true }),
   },
@@ -210,6 +212,30 @@ export const newsClue = pgTable(
     index("news_clue_type_idx").on(table.clue_type),
     index("news_clue_review_idx").on(table.review_status),
     index("news_clue_found_idx").on(table.first_found_at),
+  ]
+);
+
+// ============ 线索-文章关联明细（WF04-B：关联原文 + 新鲜度） ============
+// 每条线索在识别/合并时，把命中的文章快照落库，供前台展示关联原文与基于真实发布时间的新鲜度。
+// 采用独立关联表（外键嵌套关联不可用），主查询 + 按 clue_id 批量二次查询 + Map 组装。
+export const newsClueArticle = pgTable(
+  "news_clue_article",
+  {
+    id: varchar("id", { length: 36 }).primaryKey().default(sql`gen_random_uuid()`),
+    clue_id: varchar("clue_id", { length: 36 })
+      .notNull()
+      .references(() => newsClue.id, { onDelete: "cascade" }),
+    article_id: varchar("article_id", { length: 36 }).notNull(),
+    title: varchar("title", { length: 500 }).notNull(),
+    url: text("url"),
+    publish_time: timestamp("publish_time", { withTimezone: true }),
+    media_id: varchar("media_id", { length: 36 }).notNull(),
+    created_at: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
+  },
+  (table) => [
+    uniqueIndex("news_clue_article_uniq_idx").on(table.clue_id, table.article_id),
+    index("news_clue_article_clue_idx").on(table.clue_id),
+    index("news_clue_article_article_idx").on(table.article_id),
   ]
 );
 

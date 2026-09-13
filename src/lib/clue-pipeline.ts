@@ -47,7 +47,7 @@ export async function runCluePipeline(filter?: PipelineFilter): Promise<Pipeline
   // 2. 取文章（根据条件筛选）
   let query = db
     .from("article")
-    .select("id, title, content, media_id, publish_time")
+    .select("id, title, content, media_id, publish_time, url")
     .eq("clue_processed", false)
     .order("publish_time", { ascending: false })
     .limit(100);
@@ -112,6 +112,7 @@ export async function runCluePipeline(filter?: PipelineFilter): Promise<Pipeline
       media_id: article.media_id,
       media_name: mediaMap.get(article.media_id) ?? "未知媒体",
       publish_time: article.publish_time,
+      url: article.url,
     };
 
     try {

@@ -68,6 +68,7 @@ async function main() {
     { key: "review.media_names", value: ["广州日报", "南方日报", "南方都市报", "新快报", "羊城晚报", "信息时报"], description: "每日评报默认媒体名单" },
     { key: "crawl.request_interval_ms", value: 10000, description: "单数据源抓取最小间隔(毫秒)" },
     { key: "ingest.api_token", value: "newsdesk-ingest-2026", description: "外部抓取服务接入令牌（/api/ingest/* 鉴权，可随时轮换）" },
+    { key: "clue.display_rules", value: { enable_actions: true, sort_by: "first_found_desc", group_by: "none", summary_max_length: 200, reason_max_length: 150, show_articles: true, show_freshness: true, fields: { show_clue_type: true, show_clue_name: true, show_summary: true, show_reason: true, show_tags: true, show_article_count: true, show_first_found: true, show_last_seen: true, show_confidence: true, show_articles: true, show_freshness: true } }, description: "新闻线索卡片展示规则（含关联原文与新鲜度开关）" },
   ];
   for (const cfg of configs) {
     const { error } = await client.from("app_config").upsert(cfg, { onConflict: "key" });

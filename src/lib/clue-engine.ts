@@ -38,6 +38,7 @@ export interface ArticleForClue {
   media_id: string;
   media_name: string;
   publish_time: string;
+  url?: string | null;
 }
 
 // ============ AI Prompt ============
@@ -241,6 +242,25 @@ async function getConfidenceThresholds(): Promise<{ auto: number; review: number
 
 // ============ 写入 news_clue（含系列去重） ============
 
+/**
+ * 把命中的文章快照写入线索-文章关联表（供前台展示关联原文 + 新鲜度）。
+ * 幂等：同一 (clue_id, article_id) 不重复写；命中已存在时更新标题/链接/发布时间。
+ */
+async function recordClueArticle(clueId: string, article: ArticleForClue): Promise<void> {
+  const db = supabase();
+  await db.from("news_clue_article").upsert(
+    {
+      clue_id: clueId,
+      article_id: article.id,
+      title: article.title,
+      url: article.url || null,
+      publish_time: article.publish_time || null,
+      media_id: article.media_id,
+    },
+    { onConflict: "clue_id,article_id" },
+  );
+}
+
 export async function saveClue(
   article: ArticleForClue,
   analysis: ClueAnalysis,
@@ -272,12 +292,17 @@ export async function saveClue(
         .update({
           article_count: count,
           last_seen_at: new Date().toISOString(),
+          // 同步最新一篇原文的发布时间（新鲜度取 max）
+          recent_article_at: article.publish_time || new Date().toISOString(),
           summary: analysis.summary,
           confidence: analysis.confidence,
           tags: JSON.stringify(analysis.tags),
           updated_at: new Date().toISOString(),
         })
         .eq("id", existing.id);
+
+      // 落关联明细
+      await recordClueArticle(existing.id, article);
 
       const { data: updatedClue } = await db
         .from("news_clue")
@@ -313,6 +338,7 @@ export async function saveClue(
       article_count: 1,
       first_found_at: article.publish_time,
       last_seen_at: article.publish_time,
+      recent_article_at: article.publish_time || new Date().toISOString(),
     })
     .select("*")
     .single();
@@ -321,6 +347,9 @@ export async function saveClue(
     console.error("写入 news_clue 失败:", error);
     return { clueId: "", action: "skipped" };
   }
+
+  // 落关联明细
+  await recordClueArticle(data.id, article);
 
   return { clueId: data.id, action: "created", clue: data };
 }

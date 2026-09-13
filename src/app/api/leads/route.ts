@@ -71,12 +71,48 @@ export async function GET(req: NextRequest) {
     display_rules: displayRules,
   }));
 
+  // 批量查询每条线索的关联原文（外键嵌套关联不可用 → 主查询 + 二次查询 + Map 组装）
+  const clueIds = [...new Set((data ?? []).map((c) => c.id))];
+  let articleMap = new Map<string, any[]>();
+  if (clueIds.length > 0) {
+    const { data: links } = await db
+      .from("news_clue_article")
+      .select("clue_id, article_id, title, url, publish_time")
+      .in("clue_id", clueIds)
+      .order("created_at", { ascending: false });
+    const grouped = (links ?? []).reduce<Map<string, any[]>>((acc, l) => {
+      const arr = acc.get(l.clue_id) ?? [];
+      arr.push({
+        id: l.article_id,
+        title: l.title,
+        url: l.url,
+        published_at: l.publish_time,
+      });
+      acc.set(l.clue_id, arr);
+      return acc;
+    }, new Map());
+    articleMap = grouped;
+  }
+
+  // 新鲜度：距最新一篇原文发布时间的天数
+  const nowTs = Date.now();
+  const DAY = 24 * 60 * 60 * 1000;
+  const enriched = clues.map((c) => {
+    const articles = articleMap.get(c.id) ?? [];
+    (c as any).articles = articles;
+    const recent = c.recent_article_at || (articles[0]?.published_at as string | undefined) || c.last_seen_at;
+    (c as any).recent_article_at = recent || null;
+    (c as any).freshness_days =
+      recent && !Number.isNaN(new Date(recent).getTime()) ? Math.max(0, Math.floor((nowTs - new Date(recent).getTime()) / DAY)) : null;
+    return c;
+  });
+
   return NextResponse.json({
     success: true,
     total: count ?? 0,
     page,
     pageSize,
-    clues,
+    clues: enriched,
   });
 }
 

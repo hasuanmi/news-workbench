@@ -26,6 +26,8 @@ export interface Clue {
   review_status: string;
   first_found_at: string;
   last_seen_at: string;
+  recent_article_at?: string | null;
+  freshness_days?: number | null;
   media_name: string;
   articles?: {
     id: string;
@@ -44,6 +46,8 @@ export interface Clue {
       show_first_found: boolean;
       show_last_seen: boolean;
       show_confidence: boolean;
+      show_articles: boolean;
+      show_freshness: boolean;
     };
     sort_by: string;
     group_by: string;
@@ -101,6 +105,8 @@ export function ClueCard({ clue, onConfirm, onIgnore, onView }: ClueCardProps) {
       show_first_found: true,
       show_last_seen: true,
       show_confidence: true,
+      show_articles: true,
+      show_freshness: true,
     },
     sort_by: "first_found_desc",
     group_by: "none",
@@ -206,6 +212,23 @@ export function ClueCard({ clue, onConfirm, onIgnore, onView }: ClueCardProps) {
               最近更新 {new Date(clue.last_seen_at).toLocaleDateString("zh-CN")}
             </span>
           )}
+          {/* 新鲜度徽章 */}
+          {fields.show_freshness && typeof clue.freshness_days === "number" && (
+            <span
+              className={`inline-flex items-center gap-1 rounded px-1.5 py-0.5 text-xs font-medium ${
+                clue.freshness_days <= 1
+                  ? "bg-green-50 text-green-700"
+                  : clue.freshness_days <= 3
+                    ? "bg-amber-50 text-amber-700"
+                    : "bg-gray-50 text-gray-500"
+              }`}
+              title={clue.recent_article_at ? `最新原文 ${new Date(clue.recent_article_at).toLocaleString("zh-CN")}` : ""}
+            >
+              {clue.freshness_days === 0
+                ? "今天更新"
+                : `${clue.freshness_days} 天前更新`}
+            </span>
+          )}
         </div>
 
         {/* 为什么值得关注 */}
@@ -219,7 +242,7 @@ export function ClueCard({ clue, onConfirm, onIgnore, onView }: ClueCardProps) {
         )}
 
         {/* 展开/收起关联文章 */}
-        {clue.articles && clue.articles.length > 0 && (
+        {fields.show_articles && clue.articles && clue.articles.length > 0 && (
           <>
             <button
               onClick={() => setExpanded(!expanded)}

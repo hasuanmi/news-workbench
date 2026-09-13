@@ -7,6 +7,7 @@ import { ReviewResult } from "@/components/review/review-result";
 import { Button } from "@/components/ui/button";
 import { Loader2, History, Sparkles } from "lucide-react";
 import type { ReviewModule } from "@/lib/review-types";
+import { ReviewFollowup, type FollowupTurn } from "@/components/review/review-followup";
 
 interface DisplayRules {
   show_comparison_table?: boolean;
@@ -45,6 +46,8 @@ export default function ReviewPage() {
   const [showHistory, setShowHistory] = useState(false);
   const [history, setHistory] = useState<HistoryItem[]>([]);
   const [historyLoading, setHistoryLoading] = useState(false);
+  const [currentReviewId, setCurrentReviewId] = useState<string | null>(null);
+  const [followupTurns, setFollowupTurns] = useState<FollowupTurn[]>([]);
   const abortRef = useRef<AbortController | null>(null);
 
   const handleGenerate = useCallback(async (filter: ReviewFilterType) => {
@@ -53,6 +56,8 @@ export default function ReviewPage() {
     setModules([]);
     setFinalSummary("");
     setDisplayRules(null);
+    setCurrentReviewId(null);
+    setFollowupTurns([]);
     setPhase("fetching");
 
     const controller = new AbortController();
@@ -116,6 +121,7 @@ export default function ReviewPage() {
               setFinalSummary((s) => s + (evt.content ?? ""));
             } else if (evt.phase === "saved") {
               setPhase("done");
+              if (evt.id) setCurrentReviewId(evt.id);
             } else if (evt.phase) {
               setPhase(evt.phase);
             }
@@ -159,6 +165,8 @@ export default function ReviewPage() {
       setModules(data.review.modules ?? []);
       setFinalSummary(data.review.final_summary ?? "");
       setDisplayRules(data.review.display_rules ?? null);
+      setCurrentReviewId(id);
+      setFollowupTurns([]);
       setPhase("done");
       setShowHistory(false);
       setError(null);
@@ -246,6 +254,13 @@ export default function ReviewPage() {
                 <Sparkles className="h-3.5 w-3.5" />
                 评报生成中（AI 结果仅供辅助，最终需人工确认）…
               </p>
+            )}
+            {!loading && currentReviewId && (
+              <ReviewFollowup
+                reviewId={currentReviewId}
+                turns={followupTurns}
+                onTurnsChange={setFollowupTurns}
+              />
             )}
           </div>
         )}

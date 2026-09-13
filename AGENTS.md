@@ -173,6 +173,7 @@ assets/                       # 媒体列表.xlsx、2024年新闻日历.docx（�
 - **每周简报** `src/lib/weekly-briefing.ts`：汇总近 7 天已发布线索 → AI 流式输出 Markdown 四段简报（新栏目/重点系列/关注专题/特色策划 + 总览）→ `parseMarkdownBriefing` 按二级标题拆分存 `weekly_brief` 表。`POST /api/admin/leads/weekly`（SSE 流式）、`GET /api/leads/weekly`（历史列表）。
 - **页面**：前台 `/leads`（卡片列表，置信度进度条/标签/追踪篇数）、`/leads/weekly`；后台 `/admin/leads`（识别触发按钮 + 待审队列 + 审核弹窗）。**入口已挂到「系统管理 → 新闻线索管理」卡片**。
 - `article` 表增加 `clue_processed` 标记列。Mock 文章可直接触发识别验证。
+- **线索关联原文 + 新鲜度**：新增 `news_clue_article` 关联明细表（clue_id/article_id/title/url/publish_time/media_id，唯一索引 clue_id+article_id），`news_clue` 增加 `recent_article_at`（最新原文发布时间）。识别合并时按 `series_key` 逐篇落关联明细并同步新鲜度；`GET /api/leads` 与后台 `GET /api/admin/leads` 通过「主查询 + 按 clue_id 批量二次查询 + Map 组装」填充 `articles[]` 并计算 `freshness_days`（距最新原文天数），前端 `clue-card.tsx` 据此展示关联原文列表与新鲜度徽章。展示开关读 `clue.display_rules.show_articles/show_freshness`。
 
 ## 已完成：M4 每日评报
 
@@ -185,6 +186,7 @@ assets/                       # 媒体列表.xlsx、2024年新闻日历.docx（�
 - **接口**：`POST /api/admin/review/generate`（SSE，事件 fetching/analyzing/structure/final*/saved/warning/error）、`GET /api/review`（历史列表+summary_preview）、`GET /api/review/[id]`（详情，sections 还原成 modules 数组 + 合并当前 display_rules）。
 - **展示规则驱动**：`review.display_rules`（show_media_name/show_article_title/show_article_url/show_evidence/show_comparison_table + modules 开关）控制 `review-result.tsx` 动态渲染；后台 `/admin/review` 分「生成规则」「展示规则」两块配置。
 - **版面信号降级**：整版/跨版/头版等外部抓取可能缺失，缺失时按字数 + AI 判断降级，不致任务失败。
+- **继续追问 / AI 协作修改**：`src/lib/review-followup.ts`（mode=question 追问 / mode=revise 定向修改），基于已保存 `daily_review` 的 sections+final_summary 组装上下文，复用 `llm-client`（自定义模型优先、豆包回退）SSE 流式输出。路由 `POST /api/review/[id]/followup`（事件 start/delta/done/error，含客户端断连防护），前端 `src/components/review/review-followup.tsx` 挂载在评报结果区，支持多轮追问与「将修改并入展示」。
 
 ## 已完成：M5 定时调度（cron）
 
