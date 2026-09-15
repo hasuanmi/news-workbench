@@ -236,11 +236,12 @@ async function importCalendar(client: ReturnType<typeof getSupabaseClient>) {
           const region = col === 3 ? "guangdong" : col === 4 ? "other" : "national";
 
           events.push({
-            event_name: cleanName.slice(0, 255),
+            event_name: cleanName.replace(/[第]?\d{1,4}\s*周年/g, "").slice(0, 255) || cleanName.slice(0, 255),
             event_type: isFixed ? "fixed" : "dynamic",
             original_date: isFixed && baseYear ? `${baseYear}-${String(month).padStart(2, "0")}-${String(day).padStart(2, "0")}` : null,
             event_date: dateStr,
-            anniversary_base_year: baseYear,
+            event_year: baseYear,
+            anniversary_base_year: null,
             category_id: catMap.get(code) || null,
             region,
             importance: "B",

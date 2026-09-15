@@ -67,7 +67,8 @@ export const calendarEvent = pgTable(
     event_type: varchar("event_type", { length: 16 }).notNull().default("dynamic"), // fixed | dynamic
     original_date: date("original_date", { mode: "string" }), // 原始事件日期（固定节点的基准日期）
     event_date: date("event_date", { mode: "string" }), // 当期日期（动态节点 / 当年发生日）
-    anniversary_base_year: integer("anniversary_base_year"), // 周年基准年
+    anniversary_base_year: integer("anniversary_base_year"), // 周年基准年（历史，已弃用，未周年型为空）
+    event_year: integer("event_year"), // 事件原始发生年份（周年型节点），target_year - event_year = 周年
     category_id: varchar("category_id", { length: 36 }).references(() => calendarCategory.id),
     region: varchar("region", { length: 16 }).notNull().default("national"), // national | guangdong | guangzhou | other
     importance: varchar("importance", { length: 4 }).default("B"), // S | A | B

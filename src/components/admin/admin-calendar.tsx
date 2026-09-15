@@ -18,6 +18,7 @@ import {
   TabsList,
   TabsTrigger,
 } from "@/components/ui/tabs";
+import { normalizeEventName } from "@/lib/calendar-engine";
 import {
   Dialog,
   DialogContent,
@@ -50,6 +51,7 @@ interface AdminEvent {
   event_type: "fixed" | "dynamic";
   original_date: string | null;
   event_date: string | null;
+  event_year: number | null;
   anniversary_base_year: number | null;
   region: string;
   importance: string;
@@ -68,7 +70,7 @@ const emptyForm = {
   event_name: "",
   event_type: "fixed" as "fixed" | "dynamic",
   date: "",
-  anniversary_base_year: "",
+  event_year: "",
   category_id: "",
   region: "national",
   importance: "B",
@@ -139,7 +141,7 @@ export function AdminCalendar() {
       event_name: ev.event_name,
       event_type: ev.event_type,
       date: ev.original_date ?? ev.event_date ?? "",
-      anniversary_base_year: ev.anniversary_base_year ? String(ev.anniversary_base_year) : "",
+      event_year: ev.event_year ? String(ev.event_year) : ev.anniversary_base_year ? String(ev.anniversary_base_year) : "",
       category_id: ev.category_id ?? "",
       region: ev.region,
       importance: ev.importance,
@@ -157,14 +159,14 @@ export function AdminCalendar() {
     }
     setSaving(true);
     const payload = {
-      event_name: form.event_name.trim(),
+      event_name: (form.event_name || "").replace(/\s*(第)?\d+\s*周年\s*$/g, "").trim(),
       event_type: form.event_type,
       category_id: form.category_id || null,
       region: form.region,
       importance: form.importance,
       description: form.background || null,
       ...(form.event_type === "fixed"
-        ? { original_date: form.date, anniversary_base_year: form.anniversary_base_year || Number(form.date.slice(0, 4)) }
+        ? { original_date: form.date, event_year: form.event_year ? Number(form.event_year) : Number(form.date.slice(0, 4)) }
         : { event_date: form.date }),
     };
     try {
@@ -250,10 +252,10 @@ export function AdminCalendar() {
                     </TableCell>
                     <TableCell>
                       <div className="font-medium flex items-center gap-2 flex-wrap">
-                        {ev.event_name}
-                        {ev.event_type === "fixed" && ev.anniversary_base_year && (
+                        {normalizeEventName(ev.event_name)}
+                        {ev.event_type === "fixed" && (ev.event_year ?? ev.anniversary_base_year) && (
                           <span className="text-xs text-[var(--primary)]">
-                            {new Date().getFullYear() - ev.anniversary_base_year}周年
+                            {new Date().getFullYear() - (ev.event_year ?? ev.anniversary_base_year!)}周年
                           </span>
                         )}
                         {ev.needs_review && (
@@ -381,12 +383,12 @@ export function AdminCalendar() {
             </div>
             {form.event_type === "fixed" && (
               <div className="space-y-1.5">
-                <Label>周年基准年（留空则取日期年份）</Label>
+                <Label>事件发生年份（可选，用于周年计算）</Label>
                 <Input
                   type="number"
                   placeholder="如 1949"
-                  value={form.anniversary_base_year}
-                  onChange={(e) => setForm({ ...form, anniversary_base_year: e.target.value })}
+                  value={form.event_year}
+                  onChange={(e) => setForm({ ...form, event_year: e.target.value })}
                 />
               </div>
             )}

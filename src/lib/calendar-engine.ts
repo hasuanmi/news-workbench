@@ -7,6 +7,9 @@ export interface CalendarRuleEvent {
   event_type: "fixed" | "dynamic";
   original_date?: string | null; // YYYY-MM-DD 固定节点基准日期
   event_date?: string | null; // YYYY-MM-DD 动态节点当期日期
+  /** 事件原始发生年份（周年基准）。统一用 event_year；anniversary_base_year 为历史兼容字段 */
+  event_year?: number | null;
+  /** @deprecated 历史字段，等价 event_year，为兼容保留 */
   anniversary_base_year?: number | null;
   region?: string;
   importance?: string | null;
@@ -50,7 +53,7 @@ export function computeOccurrence(event: CalendarRuleEvent, targetYear: number, 
   if (event.event_type === "fixed") {
     if (!event.original_date) return null;
     const { y: oy, m, d } = parseDate(event.original_date);
-    const baseYear = event.anniversary_base_year ?? oy;
+    const baseYear = event.event_year ?? event.anniversary_base_year ?? oy;
     // 固定节点：取下一个 ≥ today 的同年月日（跨年滚动到明年），
     // 这样"新闻日历"始终显示即将到来的发生日，而非被硬套到当前年变成过去。
     let year = today.getUTCFullYear();
@@ -81,6 +84,31 @@ export type RangeView = "week" | "next14" | "month" | "all";
  * 生成日历视图：仅返回 enabled + approved 的节点，落在窗口内
  * 动态节点只在其 event_date 所在年出现；固定节点每年都出现
  */
+/**
+ * 从事件名称中剥离"X周年"后缀，只保留事件主体名称。
+ * 例如"毛泽东诞辰131周年" → "毛泽东诞辰"、"改革开放40周年" → "改革开放"。
+ * 仅剥离别在末尾/任意位置紧贴数字+周年的片段，不匹配非周年文本。
+ */
+export function normalizeEventName(name: string): string {
+  const cleaned = name.replace(/[第]?\d{1,4}\s*周年/g, "").trim();
+  return cleaned || name;
+}
+
+/**
+ * 计算事件在某目标年份的周年数：targetYear - eventYear。
+ * 非周年型（无 event_year 且无历史 anniversary_base_year）返回 null。
+ * 周年数为 0 或负数（尚未发生或同一年）返回 null。
+ */
+export function getAnniversaryYears(
+  event: Pick<CalendarRuleEvent, "event_year" | "anniversary_base_year">,
+  targetYear: number
+): number | null {
+  const baseYear = event.event_year ?? event.anniversary_base_year ?? null;
+  if (baseYear == null) return null;
+  const years = targetYear - baseYear;
+  return years > 0 ? years : null;
+}
+
 export function buildCalendar(
   events: CalendarRuleEvent[],
   today: Date,

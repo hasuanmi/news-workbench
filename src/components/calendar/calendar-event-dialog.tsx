@@ -11,6 +11,7 @@ import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Button } from "@/components/ui/button";
+import { normalizeEventName } from "@/lib/calendar-engine";
 
 interface OccurrenceItem {
   id: string;
@@ -27,6 +28,7 @@ interface EventDetail extends OccurrenceItem {
   tags: string[];
   anniversary: number | null;
   anniversary_base_year: number | null;
+  event_year: number | null;
   review_status: string;
   enabled: boolean;
   category?: { code: string; category_name: string; color: string } | null;
@@ -136,7 +138,7 @@ export function CalendarEventDialog({
       <DialogContent className="max-w-2xl">
         <DialogHeader>
           <DialogTitle className="font-serif text-xl flex items-center gap-2 flex-wrap">
-            {detail?.event_name ?? item?.event_name}
+            {normalizeEventName(detail?.event_name ?? item?.event_name ?? "")}
             {detail && (
               <Badge variant="outline">
                 {detail.event_type === "fixed" ? "固定节点" : "动态节点"}
@@ -167,7 +169,11 @@ export function CalendarEventDialog({
                 {detail.anniversary != null && (
                   <Badge variant="secondary">
                     今年 {detail.anniversary} 周年
-                    {detail.anniversary_base_year ? `（${detail.anniversary_base_year} 年起）` : ""}
+                    {detail.event_year
+                      ? `（${detail.event_year} 年起）`
+                      : detail.anniversary_base_year
+                        ? `（${detail.anniversary_base_year} 年起）`
+                        : ""}
                   </Badge>
                 )}
                 {detail.review_status !== "approved" && (

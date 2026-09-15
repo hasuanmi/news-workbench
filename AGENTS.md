@@ -42,7 +42,7 @@ pnpm dev / pnpm build             # 开发 / 构建
   - 用户表 `app_user`（列 `enabled`，无 is_active）
   - 配置表 `app_config`（列 `key` / `value` / `description`）
   - 媒体表 `media`（列 `media_level`，非 level）
-  - 日历事件 `calendar_event`：用 `description`（无 background/notes）、`source_name`（无 source）、**无** planning_hint/tags/confidence 列
+  - 日历事件 `calendar_event`：用 `description`（无 background/notes）、`source_name`（无 source）、`event_year`（事件原始发生年，周年由 `target_year-event_year` 动态计算，名称只存事件主体不带"X周年"）、**无** planning_hint/tags/confidence 列
   - 分类表 `calendar_category`（含 `code`/`color`/`category_name`）
 - **Supabase 外键嵌套关联查询不可用**（PostgREST 报 "Could not find a relationship"），关联数据一律用「主查询 + 按 id 批量二次查询 + Map 组装」的方式。
 
@@ -150,6 +150,7 @@ assets/                       # 媒体列表.xlsx、2024年新闻日历.docx（�
 
 ## 已完成增强
 
+- **日历周年模型**：`calendar_event.event_name` 只存事件主体（历史导入自动剥离标题中的"X周年"）；`event_year` 存事件原始发生年；展示/引擎统一用 `anniversary = target_year - event_year` 动态生成"N周年"（引擎 `normalizeEventName`/`getAnniversaryYears` 纯函数，导入见 `scripts/migrate-calendar-anniversary.ts`），非周年型不计算。样例：`毛泽东诞辰`(event_year=1893, target_year=2026) → 毛泽东诞辰133周年。
 - **日历详情弹层**：`/api/calendar/[id]` 已改为二次查询（外键关联不可用）；弹层展示 description/tags/source_name/周年/审核状态等完整字段；
   `POST /api/calendar/[id]/summary` 通过 SSE 流式调用豆包大模型生成「AI 选题策划建议」（`coze-coding-dev-sdk` 的 `LLMClient.stream()`，nodejs runtime，SSE `data:` 分片 + `[DONE]`）。
 

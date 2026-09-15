@@ -10,7 +10,7 @@ import {
 
 const today = new Date(Date.UTC(2026, 8, 6)); // 2026-09-06
 
-test("固定节点：计算当年发生日与周年数", () => {
+test("固定节点：计算发生日与周年数（已过则取下一个同期）", () => {
   const ev: CalendarRuleEvent = {
     id: "1",
     event_name: "香港回归",
@@ -20,8 +20,23 @@ test("固定节点：计算当年发生日与周年数", () => {
   };
   const occ = computeOccurrence(ev, 2026, today);
   assert.ok(occ);
-  assert.equal(occ.date, "2026-07-01");
-  assert.equal(occ.anniversary, 29);
+  // today=2026-09-06 已过 7/1，引擎按窗口语义取下一个 ≥today 的同期 → 2027
+  assert.equal(occ.date, "2027-07-01");
+  assert.equal(occ.anniversary, 30);
+});
+
+test("固定节点：event_year 动态计算周年数", () => {
+  const ev: CalendarRuleEvent = {
+    id: "yy1",
+    event_name: "毛泽东诞辰",
+    event_type: "fixed",
+    original_date: "1893-12-26",
+    event_year: 1893,
+  };
+  const occ = computeOccurrence(ev, 2026, new Date(Date.UTC(2026, 4, 1)));
+  assert.ok(occ);
+  assert.equal(occ.anniversary, 133); // 2026-1893
+  assert.equal(occ.date, "2026-12-26");
 });
 
 test("固定节点：跨年窗口能命中明年1月的节点", () => {

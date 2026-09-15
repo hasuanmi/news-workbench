@@ -14,6 +14,7 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { CalendarEventDialog } from "./calendar-event-dialog";
+import { normalizeEventName } from "@/lib/calendar-engine";
 import { Search, Loader2, MapPin } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -237,7 +238,7 @@ export function CalendarBoard() {
                         </Badge>
                         <div className="flex-1 min-w-0">
                           <div className="font-medium truncate">
-                            {item.event_name}
+                            {normalizeEventName(item.event_name)}
                             {item.anniversary && (
                               <span className="ml-2 text-[var(--primary)] font-serif">
                                 {item.anniversary}周年
@@ -307,7 +308,7 @@ export function CalendarBoard() {
                     {f.date_status === "month_known" && f.candidate_month ? `${f.candidate_month}月` : "待定"}
                   </Badge>
                   <div className="flex-1 min-w-0">
-                    <div className="font-medium truncate">{f.event_name}</div>
+                    <div className="font-medium truncate">{normalizeEventName(f.event_name)}</div>
                     <div className="flex items-center gap-2 mt-0.5 text-xs text-[var(--muted-foreground)]">
                       {f.category && <span style={{ color: f.category.color }}>{f.category.category_name}</span>}
                       <span>时间待定</span>
