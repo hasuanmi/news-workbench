@@ -44,19 +44,8 @@ function NavLink({
   className?: string;
   onClick?: () => void;
 }) {
-  const router = useRouter();
-  const go = (e: React.MouseEvent<HTMLAnchorElement>) => {
-    e.preventDefault();
-    e.stopPropagation();
-    onClick?.();
-    if (typeof document !== "undefined" && "startViewTransition" in document) {
-      document.startViewTransition(() => router.push(href));
-    } else {
-      router.push(href);
-    }
-  };
   return (
-    <Link href={href} onClick={go} className={className}>
+    <Link href={href} onClick={onClick} className={className}>
       {children}
     </Link>
   );
@@ -68,12 +57,6 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   const { user, loading } = useCurrentUser();
   const [llmDialogOpen, setLlmDialogOpen] = useState(false);
   const [llmConnected, setLlmConnected] = useState(false);
-  // 是否支持原生 View Transitions API：支持则用它接管页面切换（平滑交叉淡入淡出），否则走 PageTransition 兜底
-  const [vtOK, setVtOK] = useState(false);
-
-  useEffect(() => {
-    if (typeof document !== "undefined" && "startViewTransition" in document) setVtOK(true);
-  }, []);
 
   useEffect(() => {
     // 检查 LLM 配置状态
@@ -94,7 +77,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   return (
     <div className="min-h-screen flex">
       {/* 侧边导航 */}
-      <aside className="app-sidebar w-56 shrink-0 border-r border-[var(--border)] bg-[var(--card)] flex flex-col">
+      <aside className="w-56 shrink-0 border-r border-[var(--border)] bg-[var(--card)] flex flex-col">
         <div className="h-16 flex items-center gap-2 px-5 border-b border-[var(--border)]">
           <div className="w-8 h-8 rounded-md bg-[var(--primary)] text-[var(--primary-foreground)] flex items-center justify-center">
             <Newspaper className="w-4 h-4" />
@@ -165,7 +148,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
       {/* 主内容 */}
       <main className="flex-1 min-w-0 overflow-x-hidden">
         <div className="max-w-[1400px] mx-auto px-8 py-6">
-          <PageTransition contentKey={pathname} enableStatic={vtOK}>{children}</PageTransition>
+          <PageTransition contentKey={pathname}>{children}</PageTransition>
         </div>
       </main>
 

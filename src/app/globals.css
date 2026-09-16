@@ -9,41 +9,8 @@ html {
   scrollbar-gutter: stable;
 }
 
-/* 页面切换过渡：原生 View Transitions API（App 主导航）——旧内容淡出，新内容淡入+轻微上移，克制止于 300ms */
-/* 页面切换：旧页面完全静止（不做任何位移/缩放/淡出），仅新页面做纯 opacity 淡入。
-   不使用 @view-transition{navigation:auto}，避免浏览器自动转场与手动 startViewTransition 叠加造成抖动。 */
-::view-transition-old(root) {
-  animation: none;
-}
-::view-transition-new(root) {
-  animation: page-fade-in 260ms ease-out;
-}
-@keyframes page-fade-in {
-  from {
-    opacity: 0;
-  }
-  to {
-    opacity: 1;
-  }
-}
-/* 左侧导航保持固定，不参与页面淡入/淡出 */
-.app-sidebar {
-  view-transition-name: app-sidebar;
-}
-::view-transition-old(app-sidebar),
-::view-transition-new(app-sidebar) {
-  animation: none;
-}
-@keyframes page-fade-in-up {
-  from {
-    opacity: 0;
-    transform: translateY(10px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
+/* 页面切换过渡：由 src/components/common/page-transition.tsx 用「仅新页面 opacity 淡入」实现，
+   旧页面始终静止；不使用 View Transitions API / navigation:auto，彻底避免位移、缩放与抖动。 */
 
 @theme inline {
   --color-background: var(--background);

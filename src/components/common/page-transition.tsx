@@ -1,66 +1,72 @@
 "use client";
 
-import * as React from "react";
+import { useEffect, useRef, useState, type ReactNode } from "react";
 import { cn } from "@/lib/utils";
 
-export interface PageTransitionProps {
-  children: React.ReactNode;
-  /** 切换键：contentKey 变化时先淡出旧内容(100ms)再淡入新内容(180ms) */
-  contentKey?: string;
-  className?: string;
-  /**
-   * 原生 View Transitions API 可用时置 true：跳过内部的淡出淡入动画（由浏览器接管全页过渡），
-   * 仅稳定渲染最新内容，避免两种动画叠加。
-   */
-  enableStatic?: boolean;
-}
-
 /**
- * 轻量内容切换：contentKey 变化时「旧内容淡出 120ms → 新内容淡入 240ms（轻微上移）」。
- * - 用 state 缓存旧 children，待旧内容完全淡出后才换成新 children，避免整页直接替换的“硬”感。
- * - 仅 opacity + 轻微上移，不做复杂转场；不引额外路由耦合。
+ * 页面切换过渡 —— 「仅新页面单向淡入」。
+ *
+ * 原则：
+ * - 旧页面完全静止（不透明、不位移、不缩放、不修改外部尺寸）。
+ * - 切换时在顶层叠加一个透明度从 0 → 1 的新内容层淡入出现。
+ * - 动画结束后把新内容设为基底，移除叠加层。
+ * - 仅使用 opacity，不引入 transform/translate/scale，杜绝任何抖动。
  */
 export function PageTransition({
   children,
-  contentKey,
   className,
-  enableStatic,
-}: PageTransitionProps) {
-  const [display, setDisplay] = React.useState<React.ReactNode>(children);
-  const [phase, setPhase] = React.useState<"in" | "out">("in");
-  const prevKey = React.useRef(contentKey);
-  const timer = React.useRef<ReturnType<typeof setTimeout> | null>(null);
+  contentKey,
+}: {
+  children: ReactNode;
+  className?: string;
+  contentKey?: string | number;
+}) {
+  // 当前稳定的基底内容（旧页面，不动）
+  const [base, setBase] = useState<ReactNode>(children);
+  // 正在淡入进入的新内容层
+  const [overlay, setOverlay] = useState<ReactNode | null>(null);
+  const [overlayVisible, setOverlayVisible] = useState(false);
+  const prevKey = useRef(contentKey);
+  const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  React.useEffect(() => {
-    if (prevKey.current !== contentKey) {
-      prevKey.current = contentKey;
-      if (timer.current) clearTimeout(timer.current);
-      // 淡出旧内容（120ms）
-      setPhase("out");
-      timer.current = setTimeout(() => {
-        // 旧内容已透明，替换为新内容并淡入（240ms）
-        setDisplay(children);
-        setPhase("in");
-      }, 120);
-    }
-    // children 变化但 key 未变（数据刷新）时直接展示新内容，保持现状
+  useEffect(() => {
+    if (contentKey === prevKey.current) return;
+    prevKey.current = contentKey;
+
+    if (timerRef.current) clearTimeout(timerRef.current);
+
+    // 旧内容不动，顶层放一个透明的新内容层，下一帧开始淡入
+    setOverlay(children);
+    setOverlayVisible(false);
+    const raf = requestAnimationFrame(() => {
+      requestAnimationFrame(() => setOverlayVisible(true));
+    });
+
+    // 动画结束后把新内容设为基底，移除叠加层
+    timerRef.current = setTimeout(() => {
+      setBase(children);
+      setOverlay(null);
+      setOverlayVisible(false);
+    }, 200);
+
+    return () => {
+      cancelAnimationFrame(raf);
+      if (timerRef.current) clearTimeout(timerRef.current);
+    };
   }, [contentKey, children]);
 
-  // View Transitions 接管时不再做内部动画（避免叠加），稳定渲染最新内容
-  if (enableStatic) {
-    return <div className={cn(className)}>{children}</div>;
-  }
-
   return (
-    <div
-      className={cn(
-        phase === "in"
-          ? "opacity-100 transition-opacity duration-[240ms] ease-out"
-          : "opacity-0 transition-opacity duration-[120ms] ease-out",
-        className
-      )}
-    >
-      {display}
+    <div className={cn("relative", className)}>
+      <div className="m-0 p-0">{base}</div>
+      {overlay ? (
+        <div
+          className="pointer-events-none absolute inset-0 z-10 transition-opacity duration-[180ms] ease-out"
+          style={{ opacity: overlayVisible ? 1 : 0 }}
+          aria-hidden="true"
+        >
+          {overlay}
+        </div>
+      ) : null}
     </div>
   );
 }
