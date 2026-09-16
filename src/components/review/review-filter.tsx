@@ -107,13 +107,6 @@ export function ReviewFilter({ onGenerate, loading }: ReviewFilterProps) {
     setTopicInput("");
   };
 
-  const toggleMedia = (id: string) => {
-    setFilter((f) => ({
-      ...f,
-      mediaIds: f.mediaIds.includes(id) ? f.mediaIds.filter((m) => m !== id) : [...f.mediaIds, id],
-    }));
-  };
-
   const toggleFlag = (flag: string) => {
     setFilter((f) => ({
       ...f,
@@ -161,21 +154,13 @@ export function ReviewFilter({ onGenerate, loading }: ReviewFilterProps) {
           </Popover>
         </div>
 
-        {/* 对比媒体 */}
+        {/* 对比媒体（固定默认，后台配置，不每天勾选） */}
         <div>
-          <label className="text-sm font-medium text-[#1f1b16] mb-2 block">
-            对比媒体（多选，默认取后台开启「评报监测」的媒体）
-          </label>
-          <div className="flex flex-wrap gap-2">
-            {medias.map((m) => (
-              <Button key={m.id} variant={filter.mediaIds.includes(m.id) ? "default" : "outline"} size="sm" onClick={() => toggleMedia(m.id)}>
-                {m.media_name}
-              </Button>
-            ))}
-            {medias.length === 0 && (
-              <span className="text-xs text-[#6b6257]">暂无媒体，请先在「媒体与数据源」中配置</span>
-            )}
+          <label className="text-sm font-medium text-[#1f1b16] mb-2 block">比较媒体（后台默认配置）</label>
+          <div className="text-sm text-[#6b6257] bg-[#faf7f2] border border-[#e8e2d8] rounded px-3 py-2">
+            {medias.length > 0 ? medias.map((m) => m.media_name).join("、") : "广州日报、南方日报、南方都市报、新快报、羊城晚报、信息时报"}
           </div>
+          <p className="text-xs text-[#6b6257] mt-1">默认比较媒体在后台「系统管理 → 每日评报 → 比较媒体」中维护，前台无需每天勾选。</p>
         </div>
 
         {/* 重点稿筛选条件 */}

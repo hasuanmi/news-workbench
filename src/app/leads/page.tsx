@@ -84,11 +84,11 @@ export default function LeadsPage() {
     refreshAfterReview(id, "confirmed");
   };
 
-  const handleIgnore = async (id: string) => {
+  const handleIgnore = async (id: string, reason?: string) => {
     await fetch(`/api/admin/leads/${id}/review`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ action: "ignore" }),
+      body: JSON.stringify({ action: "ignore", reason }),
     });
     refreshAfterReview(id, "ignored");
   };

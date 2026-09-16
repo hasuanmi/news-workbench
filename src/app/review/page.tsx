@@ -8,6 +8,8 @@ import { Button } from "@/components/ui/button";
 import { Loader2, History, Sparkles } from "lucide-react";
 import type { ReviewModule } from "@/lib/review-types";
 import { ReviewFollowup, type FollowupTurn } from "@/components/review/review-followup";
+import { DraftSelection } from "@/components/review/review-draft-selection";
+import type { DraftPayload } from "@/lib/review-draft";
 
 interface DisplayRules {
   show_comparison_table?: boolean;
@@ -30,10 +32,11 @@ interface HistoryItem {
 }
 
 const PHASE_TEXT: Record<string, string> = {
-  fetching: "正在按条件筛选文章…",
+  fetching: "正在筛选本期文章并生成选稿…",
   analyzing: "AI 正在进行结构化分析（重点识别 / 同题聚类 / 同行亮点）…",
   structure: "结构化分析完成，正在撰写最终评报…",
   final: "正在撰写最终评报…",
+  done: "评报已保存",
 };
 
 export default function ReviewPage() {
@@ -50,8 +53,14 @@ export default function ReviewPage() {
   const [followupTurns, setFollowupTurns] = useState<FollowupTurn[]>([]);
   const abortRef = useRef<AbortController | null>(null);
 
-  const handleGenerate = useCallback(async (filter: ReviewFilterType) => {
-    setLoading(true);
+  const [draft, setDraft] = useState<DraftPayload | null>(null);
+  const [draftExcluded, setDraftExcluded] = useState<string[]>([]);
+  const [draftDate, setDraftDate] = useState<string>("");
+  const [draftLoading, setDraftLoading] = useState(false);
+
+  /** 阶段1：本期选稿（筛选 + AI 分组，落库可追溯），不直接生成长文 */
+  const handleCreateDraft = useCallback(async (filter: ReviewFilterType) => {
+    setDraftLoading(true);
     setError(null);
     setModules([]);
     setFinalSummary("");
@@ -59,6 +68,56 @@ export default function ReviewPage() {
     setCurrentReviewId(null);
     setFollowupTurns([]);
     setPhase("fetching");
+    try {
+      const res = await fetch("/api/review/draft", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          date: filter.date.toISOString(),
+          minWordCount: filter.minWordCount,
+          highlightFlags: filter.highlightFlags,
+          dimensions: filter.dimensions,
+          topics: filter.topics,
+          scanMissing: filter.scanMissing,
+          customRequirement: filter.customRequirement,
+        }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "选稿失败");
+      setDraft(data.draft);
+      setDraftExcluded(data.draft?.excluded_article_ids ?? []);
+      setDraftDate(data.report_date);
+      setPhase("draft");
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "选稿失败");
+    } finally {
+      setDraftLoading(false);
+    }
+  }, []);
+
+  const toggleExclude = useCallback((articleId: string) => {
+    setDraftExcluded((prev) => {
+      const next = prev.includes(articleId) ? prev.filter((id) => id !== articleId) : [...prev, articleId];
+      // 同步到服务端，确保可追溯
+      fetch("/api/review/draft", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ date: draftDate, excluded_article_ids: next }),
+      }).catch(() => {});
+      return next;
+    });
+  }, [draftDate]);
+
+  /** 阶段2：基于已确认选稿生成评报（SSE） */
+  const handleGenerateFromDraft = useCallback(async () => {
+    setLoading(true);
+    setError(null);
+    setModules([]);
+    setFinalSummary("");
+    setDisplayRules(null);
+    setCurrentReviewId(null);
+    setFollowupTurns([]);
+    setPhase("analyzing");
 
     const controller = new AbortController();
     abortRef.current = controller;
@@ -67,16 +126,7 @@ export default function ReviewPage() {
       const res = await fetch("/api/admin/review/generate", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          date: filter.date.toISOString(),
-          mediaIds: filter.mediaIds,
-          minWordCount: filter.minWordCount,
-          highlightFlags: filter.highlightFlags,
-          dimensions: filter.dimensions,
-          topics: filter.topics,
-          scanMissing: filter.scanMissing,
-          customRequirement: filter.customRequirement,
-        }),
+        body: JSON.stringify({ reportDate: draftDate }),
         signal: controller.signal,
       });
 
@@ -138,7 +188,7 @@ export default function ReviewPage() {
       setLoading(false);
       abortRef.current = null;
     }
-  }, []);
+  }, [draftDate]);
 
   const loadHistory = useCallback(async () => {
     setHistoryLoading(true);
@@ -230,7 +280,20 @@ export default function ReviewPage() {
         )}
 
         {/* 条件区 */}
-        <ReviewFilter onGenerate={handleGenerate} loading={loading} />
+        <ReviewFilter onGenerate={handleCreateDraft} loading={loading} />
+
+        {/* 阶段1 选稿结果 */}
+        {!loading && draft && phase === "draft" && (
+          <div className="mt-4">
+            <DraftSelection
+              draft={draft}
+              excluded={draftExcluded}
+              onToggleExclude={toggleExclude}
+              onGenerate={handleGenerateFromDraft}
+              loadingGenerate={loading}
+            />
+          </div>
+        )}
 
         {/* 进度提示 */}
         {loading && (

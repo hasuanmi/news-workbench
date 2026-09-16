@@ -63,7 +63,7 @@ export interface Clue {
 interface ClueCardProps {
   clue: Clue;
   onConfirm?: (id: string) => void;
-  onIgnore?: (id: string) => void;
+  onIgnore?: (id: string, reason?: string) => void;
   onView?: (id: string) => void;
 }
 
@@ -359,7 +359,7 @@ export function ClueCard({ clue, onConfirm, onIgnore, onView }: ClueCardProps) {
                 onClick={() => onConfirm(clue.id)}
               >
                 <CheckCircle2 className="h-3 w-3 mr-1" />
-                确认
+                确认新栏目
               </Button>
             )}
             {onIgnore && (
@@ -367,10 +367,13 @@ export function ClueCard({ clue, onConfirm, onIgnore, onView }: ClueCardProps) {
                 size="sm"
                 variant="outline"
                 className="h-7 text-xs"
-                onClick={() => onIgnore(clue.id)}
+                onClick={() => {
+                  const reason = window.prompt("记录判定该条‘不是新栏目’的原因（供后续 AI 识别参考）：", "");
+                  onIgnore(clue.id, reason ?? undefined);
+                }}
               >
                 <XCircle className="h-3 w-3 mr-1" />
-                忽略
+                不是新栏目
               </Button>
             )}
           </div>

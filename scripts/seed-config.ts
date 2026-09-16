@@ -57,6 +57,8 @@ async function main() {
   const configs = [
     { key: "calendar.horizon_days", value: 14, description: "新闻日历默认展示未来天数" },
     { key: "calendar.home_days", value: 7, description: "首页展示未来天数" },
+    { key: "home.show_upcoming", value: 3, description: "首页未来节点默认展示条数" },
+    { key: "home.show_leads", value: 3, description: "首页最新线索默认展示条数" },
     { key: "review.word_count_threshold", value: 2000, description: "重点报道候选字数阈值" },
     { key: "ai.confidence_auto", value: 0.85, description: "置信度≥此值自动进入候选结果" },
     { key: "ai.confidence_review", value: 0.6, description: "置信度≥此值进入人工审核，低于此值不展示" },
@@ -66,6 +68,8 @@ async function main() {
     { key: "cron.daily_review", value: "30 10 * * *", description: "每日评报生成(默认10:30，待电子报更新时间确认后调整)" },
     { key: "cron.crawl", value: "0 8 * * *", description: "媒体文章抓取(每日08:00)" },
     { key: "review.media_names", value: ["广州日报", "南方日报", "南方都市报", "新快报", "羊城晚报", "信息时报"], description: "每日评报默认媒体名单" },
+    { key: "review.comparison_media", value: ["广州日报", "南方日报", "南方都市报", "新快报", "羊城晚报", "信息时报"], description: "每日评报固定比较媒体（后台默认配置，前台不逐日勾选）" },
+    { key: "review.xinhua_recognize", value: true, description: "识别新华社通稿来源（新华社/新华社记者/新华社××电/原始来源）" },
     { key: "crawl.request_interval_ms", value: 10000, description: "单数据源抓取最小间隔(毫秒)" },
     { key: "ingest.api_token", value: "newsdesk-ingest-2026", description: "外部抓取服务接入令牌（/api/ingest/* 鉴权，可随时轮换）" },
     { key: "clue.display_rules", value: { enable_actions: true, sort_by: "first_found_desc", group_by: "none", summary_max_length: 200, reason_max_length: 150, show_articles: true, show_freshness: true, fields: { show_clue_type: true, show_clue_name: true, show_summary: true, show_reason: true, show_tags: true, show_article_count: true, show_first_found: true, show_last_seen: true, show_confidence: true, show_articles: true, show_freshness: true } }, description: "新闻线索卡片展示规则（含关联原文与新鲜度开关）" },

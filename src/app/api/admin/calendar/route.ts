@@ -7,9 +7,10 @@ export async function GET(req: NextRequest) {
   if ("error" in auth) return auth.error;
 
   const sp = req.nextUrl.searchParams;
-  const status = sp.get("status"); // pending / approved / disabled
+  const status = sp.get("status"); // pending / approved / disabled / deleted
   const category = sp.get("category");
   const keyword = sp.get("keyword")?.trim();
+  const showDeleted = sp.get("deleted") === "1";
 
   let query = supabase()
     .schema("public")
@@ -17,9 +18,14 @@ export async function GET(req: NextRequest) {
     .select("*")
     .order("created_at", { ascending: false });
 
-  if (status === "pending") query = query.eq("needs_review", true);
-  if (status === "approved") query = query.eq("review_status", "approved").eq("enabled", true);
-  if (status === "disabled") query = query.eq("enabled", false);
+  if (status === "deleted" || showDeleted) {
+    query = query.not("deleted_at", "is", null);
+  } else {
+    query = query.is("deleted_at", null);
+    if (status === "pending") query = query.eq("needs_review", true);
+    if (status === "approved") query = query.eq("review_status", "approved").eq("enabled", true);
+    if (status === "disabled") query = query.eq("enabled", false);
+  }
   if (category) query = query.eq("category_id", category);
   if (keyword) query = query.ilike("event_name", `%${keyword}%`);
 
@@ -73,6 +79,10 @@ export async function POST(req: NextRequest) {
           : null,
     description: [body.background, body.notes].filter(Boolean).join("\n") || null,
     source_name: `manual:${auth.session.username}`,
+    // 来源标签：user_add（前台/后台直接添加）| user_paste（粘贴识别）| ai_recommend | history_migrate
+    source: ["ai_recommend", "history_migrate", "user_paste", "user_add"].includes(body.source)
+      ? body.source
+      : "user_add",
     needs_review: false,
     review_status: "approved",
     enabled: body.enabled !== false,

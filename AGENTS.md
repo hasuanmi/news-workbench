@@ -42,8 +42,9 @@ pnpm dev / pnpm build             # 开发 / 构建
   - 用户表 `app_user`（列 `enabled`，无 is_active）
   - 配置表 `app_config`（列 `key` / `value` / `description`）
   - 媒体表 `media`（列 `media_level`，非 level）
-  - 日历事件 `calendar_event`：用 `description`（无 background/notes）、`source_name`（无 source）、`event_year`（事件原始发生年，周年由 `target_year-event_year` 动态计算，名称只存事件主体不带"X周年"）、**无** planning_hint/tags/confidence 列
+  - 日历事件 `calendar_event`：用 `description`（无 background/notes）、`source_name`（无 source）、`event_year`（事件原始发生年，周年由 `target_year-event_year` 动态计算，名称只存事件主体不带"X周年"）、**无** planning_hint/tags/confidence 列；另有 `source`(来源标签)、`deleted_at`/`delete_reason`(软删除)、`date_status`/`event_month`(时间状态)
   - 分类表 `calendar_category`（含 `code`/`color`/`category_name`）
+  - 选稿表 `review_draft`（report_date 唯一，draft JSONB、excluded_article_ids JSONB、status、media_ids/media_names JSONB）
 - **Supabase 外键嵌套关联查询不可用**（PostgREST 报 "Could not find a relationship"），关联数据一律用「主查询 + 按 id 批量二次查询 + Map 组装」的方式。
 
 ## 目录结构
@@ -51,7 +52,7 @@ pnpm dev / pnpm build             # 开发 / 构建
 ```
 src/
 ├── app/
-│   ├── page.tsx              # 首页（工作台聚合）
+│   ├── page.tsx              # 首页（工作内容预览：未来7天节点 + 最新线索）
 │   ├── login/                # 登录页
 │   ├── calendar/             # 新闻日历（前台，编辑可见）
 │   ├── leads/                # 新闻线索（前台：线索卡片 + 每周简报）
@@ -62,7 +63,8 @@ src/
 │       ├── calendar/         # 前台日历查询 + categories
 │       ├── medias/           # 媒体下拉（scope=review 返回 monitor_review 媒体）
 │       ├── leads/            # 前台线索 + weekly（历史简报）
-│       ├── review/           # 【M4】历史评报列表 / [id] 详情
+│       ├── review/           # 【M4】历史评报列表 / [id] 详情 / [id]/followup 追问 / draft 本期选稿
+│       ├── home/             # 【首页】preview 工作内容预览（未来节点 + 最新线索）
 │       ├── stats/            # 首页统计
 │       ├── ingest/           # 【外部抓取服务接入】queue(拉队列) / articles(回推文章)，ingest token 鉴权
 │       └── admin/            # calendar / categories / media / sources / articles / ingest/mock / config / llm / leads / review / scheduler（全部 requireAdmin）
@@ -71,7 +73,7 @@ src/
 │   ├── app-shell.tsx         # 全局布局（侧边栏导航 + 登录态）
 │   ├── calendar/             # 日历看板、事件详情弹层
 │   ├── leads/                # 线索卡片、线索看板（前台条件区）
-│   ├── review/               # 评报条件区(review-filter)、结构化结果(review-result)
+│   ├── review/               # 评报条件区(review-filter)、结构化结果(review-result)、选稿面板(review-draft-selection)
 │   └── admin/                # 后台各管理页客户端组件（含线索/评报展示规则配置）
 ├── lib/
 │   ├── db.ts                 # Supabase 客户端
@@ -83,6 +85,7 @@ src/
 │   ├── clue-engine.ts        # M3 线索识别（结构化 JSON + 置信度路由 + clue_name）
 │   ├── clue-pipeline.ts      # M3 批量识别流水线（扫未处理文章→合并→入库）
 │   ├── review-engine.ts      # 【M4】评报：规则筛稿→AI 结构化四区块→SSE 流式总结→落库 daily_review
+│   ├── review-draft.ts       # 【M4】阶段1 本期选稿：固定比较媒体 + AI 同题分组/同行独有/新华社背景，落库 review_draft
 │   ├── review-types.ts       # 评报结构化类型（ReviewModule/DisplayRules/GenerationRules）
 │   ├── weekly-briefing.ts    # M3 每周简报（SSE + Markdown 四段拆分）
 │   ├── ingest.ts             # 外部抓取接入层：token 校验、文章去重入库、数据源状态、task_log
@@ -150,6 +153,8 @@ assets/                       # 媒体列表.xlsx、2024年新闻日历.docx（�
 
 ## 已完成增强
 
+- **首页改版（工作内容预览）**：`/` 不再做管理型统计看板，改为两块预览——「未来 N 天新闻节点」（默认7天，条数 `home.show_upcoming` 默认3，日期+名称+周年）与「最新新闻线索」（条数 `home.show_leads` 默认3，媒体+栏目+首次发现时间），各带「查看全部」跳转 `/calendar` `/leads`。数据来自新增 `GET /api/home/preview`（读 `app_config` 的 home.* 配置）。管理型统计保留在系统管理页。
+- **日历弱化审核、直接维护**：`calendar_event` 新增 `source`（ai_recommend/history_migrate/user_add/user_paste，来源标签）、`deleted_at`/`delete_reason`/`deleted_by`（软删除）。删除节点必须选择原因（不属于重要新闻节点/一次性事件/重要性不足/与广东广州关联度低/信息不准确/重复节点/已失效/其他，映射为 `not_important/one_off/weak/weak_local/inaccurate/duplicate/expired/other` 供 AI 推荐参考）；软删除保留原节点信息+来源+删除时间，不物理删，前台/后台默认过滤 `deleted_at is null`。删除入口：`DELETE /api/admin/calendar/[id]` 或 `PATCH ... + {delete_reason}`。节点来源标签展示于日历看板与详情弹层；时间未定沿用 date_status（confirmed/month_known/unknown，月份确定日期未定入"本月待定"，完全未知入"时间待定"）。
 - **日历周年模型**：`calendar_event.event_name` 只存事件主体（历史导入自动剥离标题中的"X周年"）；`event_year` 存事件原始发生年；展示/引擎统一用 `anniversary = target_year - event_year` 动态生成"N周年"（引擎 `normalizeEventName`/`getAnniversaryYears` 纯函数，导入见 `scripts/migrate-calendar-anniversary.ts`），非周年型不计算。样例：`毛泽东诞辰`(event_year=1893, target_year=2026) → 毛泽东诞辰133周年。
 - **日历详情弹层**：`/api/calendar/[id]` 已改为二次查询（外键关联不可用）；弹层展示 description/tags/source_name/周年/审核状态等完整字段；
   `POST /api/calendar/[id]/summary` 通过 SSE 流式调用豆包大模型生成「AI 选题策划建议」（`coze-coding-dev-sdk` 的 `LLMClient.stream()`，nodejs runtime，SSE `data:` 分片 + `[DONE]`）。
@@ -168,7 +173,7 @@ assets/                       # 媒体列表.xlsx、2024年新闻日历.docx（�
 
 ## 已完成：M3 新闻线索
 
-- **识别引擎** `src/lib/clue-engine.ts`：AI 从文章标题+正文识别四类线索（new_column 新栏目 / series 系列报道 / special_topic 专题 / feature_plan 特色策划），输出结构化 JSON（series_name/topic/tags/summary/confidence/reason）。阈值 `ai.confidence_auto`(0.85) / `ai.confidence_review`(0.6) 路由：≥0.85 auto_approved、0.6~0.85 pending_review、<0.6 rejected。
+- **识别引擎（V1 收敛为"新栏目"）** `src/lib/clue-engine.ts`：AI 只识别**新栏目（new_column）**一类线索，不再把系列报道/专题/特色策划作为线索。识别依据聚焦「开栏语/开栏的话/推出××栏目/即日起开设××栏目/新出现固定栏目名/栏目策划说明/短时间连续多篇同栏目名」。输出结构化 JSON（is_clue/clue_type/series_name/summary/confidence/reason）。阈值 `ai.confidence_auto`(0.85) / `ai.confidence_review`(0.6) 路由：≥0.85 auto_approved、0.6~0.85 pending_review、<0.6 rejected。`is_clue=true` 时 clue_type 只能是 `new_column`，否则视为非线索；历史 series/special_topic/feature_plan 数据保留可查但不再作为识别目标。
 - **流水线** `src/lib/clue-pipeline.ts`：扫 `article.clue_processed=false` 的文章 → 逐篇 AI 识别 → 同 media+series_key 合并（article_count 累加、更新 last_seen_at）→ 写 `news_clue` → 标记文章已处理 → 写 `task_log`(workflow=`clue_identify`)。入口 `POST /api/admin/leads/identify`（管理员触发，后续接 cron 每日 9 点）。
 - **接口**：`GET /api/leads`（前台，仅 auto_approved/approved，支持 date/type/media 筛选分页）、`GET /api/admin/leads`（后台全量+stats）、`POST /api/admin/leads/[id]/review`（审核 approve/reject/可改字段）。
 - **每周简报** `src/lib/weekly-briefing.ts`：汇总近 7 天已发布线索 → AI 流式输出 Markdown 四段简报（新栏目/重点系列/关注专题/特色策划 + 总览）→ `parseMarkdownBriefing` 按二级标题拆分存 `weekly_brief` 表。`POST /api/admin/leads/weekly`（SSE 流式）、`GET /api/leads/weekly`（历史列表）。
@@ -179,7 +184,12 @@ assets/                       # 媒体列表.xlsx、2024年新闻日历.docx（�
 
 ## 已完成：M4 每日评报
 
-- **交互模式（前台条件优先）**：`/review` 顶部条件区（日期/对比媒体/最低字数/版面信号/评报维度/关注主题/同行遗漏扫描/自定义要求），用户每次临时选择，不回写后台。默认媒体 = `media.monitor_review=true` 的媒体（`GET /api/medias?scope=review` 动态加载，不硬编码媒体名）。
+- **两段式：先选稿，再评报**。默认比较媒体固定为 `review.comparison_media`（广州日报/南方日报/南方都市报/新快报/羊城晚报/信息时报，后台配置，前台不再每天勾选）。`/review` 顶部条件区仅保留（日期/最低字数/版面信号/评报维度/关注主题/同行遗漏扫描/自定义要求）。
+  - **阶段1 本期选稿** `src/lib/review-draft.ts` + 路由 `POST/GET/PATCH /api/review/draft`：规则层筛稿后 AI 分组输出 `{same_topic 同题报道 / peer_highlights 同行独有报道 / xinhua_background 新华社共同背景}`，媒体/标题/发布时间/原文链接逐篇可核验，支持**排除**不应参与评报的文章（`excluded_article_ids` 落库可追溯）。落库 `review_draft` 表（report_date 唯一，status=draft/selected）。
+  - **阶段2 生成** `POST /api/admin/review/generate` 接收 `{ reportDate }` 复用已确认选稿（含排除稿）→ `analyzeStructure` 四区块 → `streamFinalReview` SSE 流式总结 → `saveDailyReview`。前端 `/review` 先展示选稿面板（`review-draft-selection.tsx`），用户确认后再点「基于以上稿件生成评报」。
+  - **新华社通稿特殊处理**：多家媒体只是转新华社同一通稿 → 归 `xinhua_background`，作为当天共同重大新闻背景展示，不做各媒体原创比较；识别 `新华社/新华社记者/新华社××电/原始来源`（`isXinhuaArticle`），在通稿基础上新增本地采访/案例/原创数据/延伸的稿子不归背景列，只在 `same_topic` 中比较其新增原创部分。
+  - **分析重点（不作简单打分/不分高下）**：同题比较聚焦切入角度差异、各媒体独有信息、独家采访、本地案例、数据支撑、有价值的延伸、报道亮点。
+- **交互模式（前台条件优先）**：`/review` 顶部条件区，用户每次临时选择，不回写后台。
 - **引擎** `src/lib/review-engine.ts`：
   - `fetchReviewArticles` 规则层筛稿（日期/媒体/字数/去重/已启用源），返回文章 + `gzMediaNames`（媒体名含「广州日报」即广州日报系，用于同行遗漏扫描）。
   - `analyzeStructure` 非流式调用 AI 输出结构化四区块 JSON：today_focus 今日重点 / same_topic 同题观察(含对比表 rows) / peer_highlights 同行亮点 / gz_daily 广州日报观察。模块开关、数量、摘要长度、语言风格读 `review.generation_rules`。

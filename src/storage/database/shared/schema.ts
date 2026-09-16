@@ -85,6 +85,12 @@ export const calendarEvent = pgTable(
     date_status: varchar("date_status", { length: 16 }).notNull().default("confirmed"),
     event_month: integer("event_month"), // month_known 时的月份（1-12）
     source_candidate_id: varchar("source_candidate_id", { length: 36 }), // 溯源到哪个候选节点
+    // ===== 来源标签 + 软删除（弱化审核、直接维护） =====
+    // source: ai_recommend | history_migrate | user_add | user_paste
+    source: varchar("source", { length: 24 }).notNull().default("user_add"),
+    deleted_at: timestamp("deleted_at", { withTimezone: true }), // 软删除时间，非空=已删除（保留原节点供 AI 参考）
+    delete_reason: varchar("delete_reason", { length: 32 }), // 删除原因：not_important/one_off/weak/weak_local/inaccurate/duplicate/expired/other
+    deleted_by: varchar("deleted_by", { length: 36 }),
     confirmed_at: timestamp("confirmed_at", { withTimezone: true }),
     confirmed_by: varchar("confirmed_by", { length: 36 }),
     created_by: varchar("created_by", { length: 36 }),
@@ -99,6 +105,8 @@ export const calendarEvent = pgTable(
     index("calendar_event_region_idx").on(table.region),
     index("calendar_event_enabled_idx").on(table.enabled),
     index("calendar_event_date_status_idx").on(table.date_status),
+    index("calendar_event_source_idx").on(table.source),
+    index("calendar_event_deleted_idx").on(table.deleted_at),
   ]
 );
 
@@ -304,6 +312,37 @@ export const dailyReviewRevision = pgTable(
   (table) => [
     index("daily_review_revision_review_idx").on(table.review_id),
     index("daily_review_revision_version_idx").on(table.review_id, table.version),
+  ]
+);
+
+// ============ 每日评报：本期选稿（选稿中间态，可追溯） ============
+// 「先选稿，再评报」：用户点生成后先落一份本期选稿，确认（可排除不要的稿件）后再生成最终评报。
+// 选稿结果可追溯：保留各家媒体、同题分组、同行独有报道、新华社通稿识别，供后续核验与恢复。
+export const reviewDraft = pgTable(
+  "review_draft",
+  {
+    id: varchar("id", { length: 36 }).primaryKey().default(sql`gen_random_uuid()`),
+    report_date: date("report_date", { mode: "string" }).notNull().unique(),
+    media_ids: jsonb("media_ids"), // 参与媒体 id 列表
+    media_names: jsonb("media_names"), // 参与媒体名称（固定比较媒体）
+    // 本期选稿：{ same_topic: [{theme, articles:[{media,title,publish_time,url,id}]}],
+    //            peer_exclusive: [{media,title,publish_time,url,why}],
+    //            xinhua: [{theme, articles:[...], note}] }
+    draft: jsonb("draft"),
+    // 排除的稿件（用户认为不应参与评报的文章 id）
+    excluded_article_ids: jsonb("excluded_article_ids").notNull().default([]),
+    status: varchar("status", { length: 16 }).notNull().default("draft"), // draft | generated
+    min_word_count: integer("min_word_count").notNull().default(2000),
+    dimensions: jsonb("dimensions"),
+    topics: jsonb("topics"),
+    scan_missing: boolean("scan_missing").notNull().default(true),
+    created_by: varchar("created_by", { length: 36 }),
+    created_at: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
+    updated_at: timestamp("updated_at", { withTimezone: true }),
+  },
+  (table) => [
+    index("review_draft_date_idx").on(table.report_date),
+    index("review_draft_status_idx").on(table.status),
   ]
 );
 

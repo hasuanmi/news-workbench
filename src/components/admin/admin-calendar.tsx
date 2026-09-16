@@ -35,7 +35,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
-import { Check, X, Pencil, Plus, Loader2 } from "lucide-react";
+import { Check, X, Pencil, Plus, Loader2, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 
@@ -79,6 +79,24 @@ const emptyForm = {
   tags: "",
 };
 
+const SOURCE_LABELS: Record<string, string> = {
+  ai_recommend: "AI推荐",
+  history_migrate: "历史迁移",
+  user_add: "用户新增",
+  user_paste: "粘贴识别",
+};
+
+const DELETE_REASONS = [
+  "不属于重要新闻节点",
+  "一次性事件",
+  "重要性不足",
+  "与广东/广州关联度低",
+  "信息不准确",
+  "重复节点",
+  "已失效",
+  "其他",
+] as const;
+
 export function AdminCalendar() {
   const [tab, setTab] = useState("pending");
   const [items, setItems] = useState<AdminEvent[]>([]);
@@ -89,6 +107,8 @@ export function AdminCalendar() {
   const [editing, setEditing] = useState<AdminEvent | null>(null);
   const [form, setForm] = useState({ ...emptyForm });
   const [saving, setSaving] = useState(false);
+  const [deleting, setDeleting] = useState<AdminEvent | null>(null);
+  const [deleteReason, setDeleteReason] = useState<string>(DELETE_REASONS[0]);
 
   useEffect(() => {
     fetch("/api/calendar/categories")
@@ -200,7 +220,7 @@ export function AdminCalendar() {
         <div>
           <h1 className="font-serif text-2xl font-bold">日历节点管理</h1>
           <p className="text-sm text-[var(--muted-foreground)] mt-1">
-            待审核队列优先处理；支持新增、编辑、停用、分类调整。
+            默认直接维护正式日历节点；删除需说明原因，供后续 AI 推荐参考（软删除，可追溯）。
           </p>
         </div>
         <Button onClick={openCreate}>
@@ -253,6 +273,11 @@ export function AdminCalendar() {
                     <TableCell>
                       <div className="font-medium flex items-center gap-2 flex-wrap">
                         {normalizeEventName(ev.event_name)}
+                        {ev.source && SOURCE_LABELS[ev.source] && (
+                          <Badge variant="secondary" className="text-[10px]">
+                            {SOURCE_LABELS[ev.source]}
+                          </Badge>
+                        )}
                         {ev.event_type === "fixed" && (ev.event_year ?? ev.anniversary_base_year) && (
                           <span className="text-xs text-[var(--primary)]">
                             {new Date().getFullYear() - (ev.event_year ?? ev.anniversary_base_year!)}周年
@@ -330,6 +355,17 @@ export function AdminCalendar() {
                           onClick={() => patchEvent(ev.id, { enabled: !ev.enabled })}
                         >
                           {ev.enabled ? "停用" : "启用"}
+                        </Button>
+                        <Button
+                          size="sm"
+                          variant="ghost"
+                          className="h-8 px-2 text-[var(--destructive)]"
+                          onClick={() => {
+                            setDeleting(ev);
+                            setDeleteReason(DELETE_REASONS[0]);
+                          }}
+                        >
+                          <Trash2 className="w-3.5 h-3.5" />
                         </Button>
                       </div>
                     </TableCell>
@@ -467,6 +503,51 @@ export function AdminCalendar() {
             <Button onClick={handleSave} disabled={saving}>
               {saving && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
               保存
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* 删除确认（软删除 + 必填原因） */}
+      <Dialog open={!!deleting} onOpenChange={(o) => !o && setDeleting(null)}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle className="font-serif">删除节点</DialogTitle>
+          </DialogHeader>
+          <p className="text-sm text-[var(--muted-foreground)]">
+            即将删除「{deleting ? normalizeEventName(deleting.event_name) : ""}」。删除为软删除，将保留原节点信息、来源与删除原因，供后续 AI 推荐参考。
+          </p>
+          <div className="space-y-1.5">
+            <Label>删除原因 *</Label>
+            <Select value={deleteReason} onValueChange={setDeleteReason}>
+              <SelectTrigger>
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {DELETE_REASONS.map((r) => (
+                  <SelectItem key={r} value={r}>
+                    {r}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setDeleting(null)}>
+              取消
+            </Button>
+            <Button
+              variant="destructive"
+              onClick={async () => {
+                if (!deleting) return;
+                const ok = await patchEvent(deleting.id, { delete_reason: deleteReason });
+                if (ok) {
+                  toast.success("已删除节点（可追溯）");
+                  setDeleting(null);
+                }
+              }}
+            >
+              <Trash2 className="w-4 h-4 mr-2" /> 确认删除
             </Button>
           </DialogFooter>
         </DialogContent>

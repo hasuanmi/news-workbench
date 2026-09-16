@@ -18,6 +18,7 @@ export async function GET(req: NextRequest) {
     .schema("public")
     .from("calendar_event")
     .select("*")
+    .is("deleted_at", null)
     .order("event_date", { ascending: true });
 
   if (all) {

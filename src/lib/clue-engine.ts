@@ -45,32 +45,36 @@ export interface ArticleForClue {
 
 const CLUE_SYSTEM_PROMPT = `你是一位资深新闻编辑助手，负责从媒体文章中识别"新闻线索"。
 
-新闻线索的定义（四类）：
-1. new_column（新栏目）：媒体新推出的持续性固定栏目，通常标题或正文会提到"新栏目""全新推出""首期"等
-2. series（系列报道）：围绕同一主题的连续报道，通常标题含"系列""第X篇""上/中/下"等
-3. special_topic（专题）：围绕重大主题形成的专题聚合
-4. feature_plan（特色策划）：连续整版/跨版专题、大型调查、融媒体策划、重大主题特别报道
+线索 V1 只关注一类：new_column（新栏目）。
+
+new_column（新栏目）的识别依据：
+1. 出现"开栏语""开栏的话""编者的话（开栏）"等开栏文字
+2. 明确宣示"推出××栏目""即日起开设××栏目""全新推出""首期上线"
+3. 出现新的、固定的栏目名称，并伴随栏目策划说明
+4. 短时间连续出现多篇同一（新）栏目名文章
 
 判定标准：
-- 必须是具有持续跟踪价值的线索，而非普通日常报道
+- 必须是"新出现"的持续性固定栏目，而非普通日常报道
 - 普通消息稿（如"某会议召开""某数据发布"）不算线索
+- 已有的、早已存在的栏目（非新推出）不算"新栏目"
+- 系列报道、专题、特色策划等一律不是 V1 线索：如识别到这类内容，is_clue 应为 false
 - 如果文章只是常规报道，is_clue 应为 false
-- 置信度：你对判断的确信程度（0-1），不确定时给低分
+- 置信度：你对"是否为新栏目"判断的确信程度（0-1），不确定时给低分
 
 输出格式（严格 JSON，不要 markdown 代码块）：
 {
   "is_clue": true/false,
-  "clue_type": "new_column" | "series" | "special_topic" | "feature_plan" | null,
-  "series_name": "系列/栏目/专题名称（如适用）",
-  "series_key": "用于去重的标准化键（如 '人民日报-高质量发展调研行'）",
-  "topic": "核心主题（一句话）",
+  "clue_type": "new_column" | null,
+  "series_name": "新栏目名称（如适用）",
+  "series_key": "用于去重的标准化键（如 '南方日报-湾区观察'）",
+  "topic": "栏目定位主题（一句话）",
   "tags": ["标签1", "标签2"],
   "summary": "50字以内的线索摘要",
   "confidence": 0.85,
-  "reason": "判断理由（30字以内）"
+  "reason": "判断理由（30字以内，重点给出栏目名称与开栏证据）"
 }
 
-如果 is_clue 为 false，clue_type/series_name/series_key/topic 填 null，tags 可为空数组。`;
+is_clue 为 true 时 clue_type 只能为 "new_column"；否则 clue_type 填 null。`;
 
 function buildCluePrompt(article: ArticleForClue, options?: ClueAnalysisOptions): ChatMessage[] {
   const contentSnippet = article.content
@@ -79,15 +83,6 @@ function buildCluePrompt(article: ArticleForClue, options?: ClueAnalysisOptions)
 
   // 构建动态条件
   let userContext = "";
-  if (options?.clueTypes && options.clueTypes.length > 0 && options.clueTypes.length < 4) {
-    const typeLabels: Record<string, string> = {
-      new_column: "新栏目",
-      series: "系列报道",
-      special_topic: "专题",
-      feature_plan: "特色策划",
-    };
-    userContext += `\n本次重点关注类型：${options.clueTypes.map((t) => typeLabels[t] || t).join("、")}`;
-  }
   if (options?.topics && options.topics.length > 0) {
     userContext += `\n重点主题：${options.topics.join("、")}`;
   }
@@ -105,7 +100,7 @@ function buildCluePrompt(article: ArticleForClue, options?: ClueAnalysisOptions)
 正文摘要：${contentSnippet}
 ${userContext}
 
-请判断这篇文章是否为新闻线索。`,
+请判断这篇文章是否为"新栏目"线索。`,
     },
   ];
 }
@@ -145,38 +140,20 @@ export async function analyzeArticle(
   return parseClueResponse(raw);
 }
 
-// 线索类型别名归一化：AI 可能返回不同措辞，统一映射到合法类型
+// 线索 V1 只保留 new_column；历史 series/special_topic/feature_plan 数据保留但不再作为识别目标
 const CLUE_TYPE_ALIASES: Record<string, string> = {
   new_column: "new_column",
   column: "new_column",
   newcolumn: "new_column",
   新栏目: "new_column",
   栏目: "new_column",
-  series: "series",
-  series_report: "series",
-  continuous: "series",
-  系列: "series",
-  系列报道: "series",
-  special_topic: "special_topic",
-  special: "special_topic",
-  topic: "special_topic",
-  theme: "special_topic",
-  专题: "special_topic",
-  feature_plan: "feature_plan",
-  feature: "feature_plan",
-  plan: "feature_plan",
-  特色策划: "feature_plan",
-  策划: "feature_plan",
 };
 
-function normalizeClueType(raw: unknown): "new_column" | "series" | "special_topic" | "feature_plan" | null {
+function normalizeClueType(raw: unknown): "new_column" | null {
   if (typeof raw !== "string" || !raw.trim()) return null;
   const key = raw.trim().toLowerCase();
   const mapped = CLUE_TYPE_ALIASES[key] ?? CLUE_TYPE_ALIASES[key.replace(/[\s_-]+/g, "")];
-  if (mapped && ["new_column", "series", "special_topic", "feature_plan"].includes(mapped)) {
-    return mapped as "new_column" | "series" | "special_topic" | "feature_plan";
-  }
-  return null;
+  return mapped === "new_column" ? "new_column" : null;
 }
 
 function parseClueResponse(raw: string): ClueAnalysis {
@@ -191,9 +168,9 @@ function parseClueResponse(raw: string): ClueAnalysis {
     const isClue = Boolean(parsed.is_clue);
     const clueType = normalizeClueType(parsed.clue_type);
     return {
-      is_clue: isClue,
-      // 是线索但 type 归不出合法值时，兜底为特色策划，杜绝非空约束报错
-      clue_type: isClue ? (clueType ?? "feature_plan") : null,
+      // V1 线索只认 new_column；AI 判是线索但类型归不出 new_column 时视为非线索
+      is_clue: isClue && clueType === "new_column",
+      clue_type: isClue && clueType === "new_column" ? "new_column" : null,
       series_name: parsed.series_name || null,
       series_key: parsed.series_key || null,
       topic: parsed.topic || null,

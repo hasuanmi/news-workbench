@@ -47,6 +47,23 @@ export async function POST(
       break;
     case "ignore":
       update.review_status = "ignored";
+      // 记录"不是新栏目"原因，供后续 AI 识别参考（不阻断主流程）
+      if (body.reason) {
+        await db
+          .from("ai_audit_log")
+          .insert({
+            module: "clue",
+            ref_id: id,
+            human_decision: "not_new_column",
+            input_summary: `判定不是新栏目，原因: ${String(body.reason).slice(0, 200)}`,
+            decided_by: auth.session.sub,
+          })
+          .then((r) => {
+            if (r.error) {
+              // 忽略
+            }
+          });
+      }
       break;
     case "modify":
       update.review_status = "approved";

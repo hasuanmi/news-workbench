@@ -2,11 +2,77 @@ import { NextRequest, NextResponse } from "next/server";
 import { supabase } from "@/lib/db";
 import { requireAdmin } from "@/lib/require-admin";
 
+export async function DELETE(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
+  const { id } = await params;
+  return softDelete(req, id);
+}
+
+// 删除原因中文 → 枚举码（供 AI 推荐参考）
+const DELETE_REASON_MAP: Record<string, string> = {
+  "不属于重要新闻节点": "not_important",
+  "一次性事件": "one_off",
+  "重要性不足": "weak",
+  "与广东/广州关联度低": "weak_local",
+  "信息不准确": "inaccurate",
+  "重复节点": "duplicate",
+  "已失效": "expired",
+  "其他": "other",
+};
+
+/**
+ * 软删除：必须选择删除原因；原节点信息/来源/删除时间保留，供后续 AI 推荐参考。
+ * 同时支持 DELETE 方法与 PATCH + delete_reason 两种入口。
+ */
+async function softDelete(req: NextRequest, id: string) {
+  const auth = await requireAdmin(req);
+  if ("error" in auth) return auth.error;
+  const body = await req.json().catch(() => ({}));
+  const rawReason = String(body.delete_reason ?? "").trim();
+  const deleteReason = DELETE_REASON_MAP[rawReason] ?? "other";
+
+  const { error } = await supabase()
+    .schema("public")
+    .from("calendar_event")
+    .update({
+      deleted_at: new Date().toISOString(),
+      delete_reason: deleteReason,
+      deleted_by: auth.session.sub,
+      enabled: false,
+      updated_at: new Date().toISOString(),
+    })
+    .eq("id", id);
+  if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+
+  // 记录 AI 审核日志供后续推荐参考
+  await supabase()
+    .schema("public")
+    .from("ai_audit_log")
+    .insert({
+      module: "calendar",
+      ref_id: id,
+      human_decision: "deleted",
+      input_summary: `删除原因: ${deleteReason}`,
+      decided_by: auth.session.sub,
+    })
+    .then((r) => {
+      if (r.error) {
+        // 不阻断主流程
+      }
+    });
+
+  return NextResponse.json({ success: true });
+}
+
 export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const auth = await requireAdmin(req);
   if ("error" in auth) return auth.error;
   const { id } = await params;
   const body = await req.json();
+
+  // 软删除入口：PATCH + delete_reason
+  if ("delete_reason" in body) {
+    return softDelete(req, id);
+  }
 
   const allowed = [
     "event_name",
@@ -20,6 +86,10 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
     "original_date",
     "event_date",
     "anniversary_base_year",
+    "source",
+    "event_year",
+    "event_month",
+    "date_status",
   ] as const;
   const update: Record<string, unknown> = {};
   for (const k of allowed) {
@@ -43,13 +113,4 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
     .single();
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
   return NextResponse.json({ item: data });
-}
-
-export async function DELETE(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
-  const auth = await requireAdmin(req);
-  if ("error" in auth) return auth.error;
-  const { id } = await params;
-  const { error } = await supabase().schema("public").from("calendar_event").delete().eq("id", id);
-  if (error) return NextResponse.json({ error: error.message }, { status: 500 });
-  return NextResponse.json({ success: true });
 }
