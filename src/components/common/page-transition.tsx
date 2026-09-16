@@ -55,8 +55,8 @@ export function PageTransition({
     <div
       className={cn(
         phase === "in"
-          ? "translate-y-0 opacity-100 transition-[opacity,transform] duration-[240ms] ease-out"
-          : "translate-y-1.5 opacity-0 transition-[opacity,transform] duration-[120ms] ease-out",
+          ? "opacity-100 transition-opacity duration-[240ms] ease-out"
+          : "opacity-0 transition-opacity duration-[120ms] ease-out",
         className
       )}
     >

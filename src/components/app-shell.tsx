@@ -94,7 +94,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   return (
     <div className="min-h-screen flex">
       {/* 侧边导航 */}
-      <aside className="w-56 shrink-0 border-r border-[var(--border)] bg-[var(--card)] flex flex-col">
+      <aside className="app-sidebar w-56 shrink-0 border-r border-[var(--border)] bg-[var(--card)] flex flex-col">
         <div className="h-16 flex items-center gap-2 px-5 border-b border-[var(--border)]">
           <div className="w-8 h-8 rounded-md bg-[var(--primary)] text-[var(--primary-foreground)] flex items-center justify-center">
             <Newspaper className="w-4 h-4" />
