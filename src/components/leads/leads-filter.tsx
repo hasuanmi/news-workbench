@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
+import { LoadingButton } from "@/components/common/loading-button";
 import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { CalendarIcon, RotateCcw, Sparkles } from "lucide-react";
@@ -232,14 +233,16 @@ export function LeadsFilter({ onIdentify, loading }: LeadsFilterProps) {
 
         {/* 操作按钮 */}
         <div className="flex gap-3 pt-2">
-          <Button
+          <LoadingButton
             onClick={() => onIdentify(filter)}
-            disabled={loading || filter.clueTypes.length === 0}
+            loading={loading}
+            loadingText="识别中…"
+            disabled={filter.clueTypes.length === 0}
             className="bg-[#b3392f] hover:bg-[#9a2f27] text-white"
           >
             <Sparkles className="h-4 w-4 mr-2" />
-            {loading ? "识别中..." : "开始识别"}
-          </Button>
+            开始识别
+          </LoadingButton>
           <Button variant="outline" onClick={handleReset} disabled={loading}>
             <RotateCcw className="h-4 w-4 mr-2" />
             重置条件

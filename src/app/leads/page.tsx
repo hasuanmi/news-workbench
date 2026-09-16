@@ -4,6 +4,9 @@ import { useCallback, useEffect, useState } from "react";
 import { AppShell } from "@/components/app-shell";
 import { LeadsFilter, type LeadsFilter as LeadsFilterType } from "@/components/leads/leads-filter";
 import { ClueCard, type Clue } from "@/components/leads/clue-card";
+import { EmptyState } from "@/components/common/empty-state";
+import { PageSkeleton } from "@/components/common/page-skeleton";
+import { toast } from "sonner";
 
 type Scope = "active" | "history";
 
@@ -63,9 +66,12 @@ export default function LeadsPage() {
       const found = data.stats?.cluesFound ?? data.cluesFound;
       if (processed !== undefined) {
         setInfo(`本次扫描 ${processed} 篇，识别出线索 ${found ?? 0} 条。已按新鲜度窗口收敛到今日待确认。`);
+        toast.success(`线索识别完成：${processed} 篇扫描，识别 ${found ?? 0} 条`);
       }
     } catch (e) {
-      setError(e instanceof Error ? e.message : "识别失败");
+      const msg = e instanceof Error ? e.message : "识别失败";
+      setError(msg);
+      toast.error(`识别失败：${msg}`);
     } finally {
       setLoading(false);
     }
@@ -147,7 +153,11 @@ export default function LeadsPage() {
 
         {/* 结果区 */}
         {loadingList ? (
-          <p className="text-sm text-[#6b6257] py-8 text-center">加载中…</p>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {Array.from({ length: 4 }).map((_, i) => (
+              <PageSkeleton key={i} lines={3} cards={0} withHeader={false} className="rounded-lg border border-[#eeeadd] p-4" />
+            ))}
+          </div>
         ) : clues.length > 0 ? (
           <div>
             <div className="flex items-center justify-between mb-4">
@@ -171,13 +181,15 @@ export default function LeadsPage() {
             </div>
           </div>
         ) : (
-          <div className="text-center py-12 text-[#6b6257]">
-            <p className="text-sm">
-              {scope === "active"
-                ? "时间窗口内暂无待确认线索。可在条件区选择 24 小时 / 3 天 / 7 天后点击「开始识别」。"
-                : "历史线索库暂无已确认线索。"}
-            </p>
-          </div>
+          <EmptyState
+            className="py-14"
+            title={scope === "active" ? "今天暂未发现新栏目" : "历史线索库暂无已确认线索"}
+            description={
+              scope === "active"
+                ? "可在条件区选择 24 小时 / 3 天 / 7 天时间窗口后点击「开始识别」。"
+                : "识别并确认过的新闻线索会沉淀到这里。"
+            }
+          />
         )}
       </div>
     </AppShell>

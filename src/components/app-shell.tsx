@@ -19,6 +19,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { useState, useEffect } from "react";
 import { LLMSettingsDialog } from "@/components/llm-settings-dialog";
+import { PageTransition } from "@/components/common/page-transition";
 
 const navItems = [
   { href: "/", label: "首页", icon: LayoutDashboard },
@@ -124,7 +125,9 @@ export function AppShell({ children }: { children: React.ReactNode }) {
 
       {/* 主内容 */}
       <main className="flex-1 min-w-0 overflow-x-hidden">
-        <div className="max-w-[1400px] mx-auto px-8 py-6">{children}</div>
+        <div className="max-w-[1400px] mx-auto px-8 py-6">
+          <PageTransition contentKey={pathname}>{children}</PageTransition>
+        </div>
       </main>
 
       {/* 大模型设置弹窗 */}

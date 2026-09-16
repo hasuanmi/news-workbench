@@ -71,6 +71,14 @@ src/
 │       └── admin/            # calendar / categories / media / sources / articles / ingest/mock / config / llm / leads / review / scheduler（全部 requireAdmin）
 ├── components/
 │   ├── ui/                   # shadcn/ui
+│   ├── common/               # 全系统统一交互状态组件（见核心开发规范 UIX）
+│   │   ├── loading-button.tsx   # 异步按钮：loading(spinner+文案+disabled)/成功对勾/失败叉
+│   │   ├── page-skeleton.tsx    # 首屏骨架（结构与真实内容一致）
+│   │   ├── empty-state.tsx      # 空状态（图标+引导文案+可选按钮）
+│   │   ├── error-state.tsx      # 错误状态（文案+重试）
+│   │   ├── async-area.tsx       # initialLoading/refreshing/error/empty/hasData 四态分派（refreshing 保留旧结果+“正在更新”徽标）
+│   │   ├── task-progress.tsx    # AI 阶段步骤条（仅展示真实阶段；currentId=null 时只显示“处理中”）
+│   │   └── page-transition.tsx  # 页面内容切换轻量淡入
 │   ├── app-shell.tsx         # 全局布局（侧边栏导航 + 登录态）
 │   ├── calendar/             # 日历看板、事件详情弹层
 │   ├── leads/                # 线索卡片、线索看板（前台条件区）
@@ -109,6 +117,12 @@ assets/                       # 媒体列表.xlsx、2024年新闻日历.docx（�
 4. **Middleware / Edge 约束**：`src/middleware.ts` 只能引用不依赖 `node:crypto` 的模块——会话逻辑在 `session.ts`（Web Crypto，HMAC SHA-256），密码哈希在 `password.ts`（scrypt，仅 API Route 用）。两者不可混用。
 5. **Hydration**：动态内容（当前日期、登录态）必须在客户端 useEffect 后渲染，禁止在服务端渲染期用 Date.now()/Math.random()/window。
 6. **类型严格**：禁隐式 any / as any；API 入参显式校验；所有 catch 错误收窄后再返回。
+7. **全系统交互状态统一（UIX）**：交互状态一律复用 `src/components/common/*` 公共组件，禁止各页面重复实现。规范详见 `DESIGN.md`「交互状态统一」：
+   - 异步按钮用 `LoadingButton`（loading 防重入 + 成功/失败反馈）；首屏加载用 `PageSkeleton`；空/错状态用 `EmptyState`/`ErrorState`。
+   - 数据刷新用 `AsyncArea` 的 `refreshing` 态**保留旧结果** + 顶部「正在更新」，禁止先清空再等待。
+   - **AI 进度不伪造**：仅当有真实 SSE 阶段事件才展示具体步骤（评报 fetching→analyzing→structure→final→saved）；后台任务（线索识别/日历补全等）无 SSE 阶段时只用 `LoadingButton`/状态文案显示「处理中」，不得按时间估算阶段。
+   - 页面切换用 `PageTransition`（contentKey 变化淡入，150–300ms）；操作反馈统一 `toast`（sonner）。
+   - 长任务不阻塞整页（禁用全屏 loading 遮罩锁死）。
 
 ## 待办与已知问题
 

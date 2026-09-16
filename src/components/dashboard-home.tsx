@@ -4,6 +4,8 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { CalendarDays, Radar, ArrowRight } from "lucide-react";
+import { PageSkeleton } from "@/components/common/page-skeleton";
+import { EmptyState } from "@/components/common/empty-state";
 
 interface UpcomingNode {
   id: string;
@@ -81,7 +83,9 @@ export function DashboardHome() {
             </Link>
           </CardHeader>
           <CardContent className="space-y-1">
-            {preview && preview.upcoming.length > 0 ? (
+            {!preview ? (
+              <PageSkeleton lines={3} cards={0} withHeader={false} className="py-2" />
+            ) : preview.upcoming.length > 0 ? (
               preview.upcoming.slice(0, preview.show_upcoming).map((n) => (
                 <Link
                   key={n.id}
@@ -111,9 +115,11 @@ export function DashboardHome() {
                 </Link>
               ))
             ) : (
-              <p className="text-sm text-[var(--muted-foreground)] py-4 text-center">
-                {preview ? "未来数日内暂无已确定日期的重要节点" : "加载中…"}
-              </p>
+              <EmptyState
+                className="py-6"
+                title="当前时间范围暂无节点"
+                description="未来数日内暂无已确定日期的重要新闻节点"
+              />
             )}
           </CardContent>
         </Card>
@@ -129,7 +135,9 @@ export function DashboardHome() {
             </Link>
           </CardHeader>
           <CardContent className="space-y-1">
-            {preview && preview.latest_leads.length > 0 ? (
+            {!preview ? (
+              <PageSkeleton lines={3} cards={0} withHeader={false} className="py-2" />
+            ) : preview.latest_leads.length > 0 ? (
               preview.latest_leads.slice(0, preview.show_leads).map((l) => (
                 <Link
                   key={l.id}
@@ -148,9 +156,11 @@ export function DashboardHome() {
                 </Link>
               ))
             ) : (
-              <p className="text-sm text-[var(--muted-foreground)] py-4 text-center">
-                {preview ? "暂无最新新栏目线索" : "加载中…"}
-              </p>
+              <EmptyState
+                className="py-6"
+                title="今天暂未发现新栏目"
+                description="最新识别出的新栏目线索会展示在这里"
+              />
             )}
           </CardContent>
         </Card>

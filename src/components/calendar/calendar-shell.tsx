@@ -16,13 +16,14 @@ import {
   TabsList,
   TabsTrigger,
 } from "@/components/ui/tabs";
-import { Plus, List, CalendarDays, Loader2 } from "lucide-react";
+import { Plus, List, CalendarDays } from "lucide-react";
 import { CalendarListView } from "./calendar-list-view";
 import { CalendarMonthView } from "./calendar-month-view";
 import { CalendarDetailPanel, type DetailEntry } from "./calendar-detail-panel";
 import { CalendarEditPanel } from "./calendar-edit-panel";
 import { CalendarDeleteDialog } from "./calendar-delete-dialog";
 import type { CalCategory, CalEvent, FloatingEvent } from "./calendar-types";
+import { PageSkeleton } from "@/components/common/page-skeleton";
 
 type ViewMode = "list" | "month";
 
@@ -247,9 +248,7 @@ export function CalendarShell() {
         {/* 主内容区：不设内部滚动，页面自然撑开滚动 */}
         <div className="flex-1 p-4">
           {loading ? (
-            <div className="flex items-center justify-center py-16 text-[var(--muted-foreground)]">
-              <Loader2 className="h-5 w-5 animate-spin mr-2" /> 加载中…
-            </div>
+            <PageSkeleton lines={4} cards={2} withHeader={false} className="py-4" />
           ) : view === "list" ? (
             <CalendarListView
               items={filtered}

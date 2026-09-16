@@ -3,7 +3,17 @@
 import { useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { History, Loader2, RefreshCcw, RotateCcw, Sparkles } from "lucide-react";
+import { History, RefreshCcw, RotateCcw, Sparkles } from "lucide-react";
+import { TaskProgress, type TaskStage } from "@/components/common/task-progress";
+import { LoadingButton } from "@/components/common/loading-button";
+import { toast } from "sonner";
+
+/** 重新生成的真实阶段（由后端 SSE 驱动，前端不伪造步骤） */
+const REGEN_STAGES: TaskStage[] = [
+  { id: "structure", label: "按补充要求重写四区块" },
+  { id: "final", label: "生成最终评报" },
+  { id: "saved", label: "保存为新版本" },
+];
 
 /**
  * 每日评报「补充要求 → 重新生成完整评报」（WF04-F）
@@ -32,7 +42,7 @@ interface ReviewFollowupProps {
 export function ReviewFollowup({ reviewId, onReviewUpdated }: ReviewFollowupProps) {
   const [input, setInput] = useState("");
   const [loading, setLoading] = useState(false);
-  const [progress, setProgress] = useState<string>("");
+  const [phase, setPhase] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [busyId, setBusyId] = useState<string | null>(null);
   const [showVersions, setShowVersions] = useState(false);
@@ -45,7 +55,7 @@ export function ReviewFollowup({ reviewId, onReviewUpdated }: ReviewFollowupProp
     if (!requirement || loading || !reviewId) return;
     setLoading(true);
     setError(null);
-    setProgress("正在读取本期选稿与原始评报…");
+    setPhase(null);
     setInput("");
 
     const controller = new AbortController();
@@ -84,16 +94,14 @@ export function ReviewFollowup({ reviewId, onReviewUpdated }: ReviewFollowupProp
               continue;
             }
             if (evt.phase === "structure") {
-              setProgress("结构化四区块已重写完成，正在撰写最终评报…");
+              setPhase("structure");
             } else if (evt.phase === "final") {
-              setProgress("正在生成最终评报…");
+              setPhase("final");
             } else if (evt.phase === "saved") {
               savedVersion = evt.version ?? null;
-              setProgress(`重新生成完成，已保存为新版本 v${evt.version}`);
+              setPhase("saved");
             } else if (evt.phase === "done") {
               // 完成
-            } else {
-              setProgress(evt.phase ?? "");
             }
           } catch {
             // 忽略不完整分片
@@ -103,16 +111,19 @@ export function ReviewFollowup({ reviewId, onReviewUpdated }: ReviewFollowupProp
       if (errored) throw new Error(errored);
       if (savedVersion) {
         // 通知父组件重新拉取本次评报详情，展示新版本内容（结构化渲染）
+        toast.success(`重新生成完成，已保存为新版本 v${savedVersion}`);
         onReviewUpdated?.();
         loadRevisions();
       }
     } catch (e) {
       if ((e as Error).name !== "AbortError") {
-        setError(e instanceof Error ? e.message : "重新生成失败");
+        const msg = e instanceof Error ? e.message : "重新生成失败";
+        setError(msg);
+        toast.error(`重新生成失败：${msg}`);
       }
     } finally {
       setLoading(false);
-      setProgress("");
+      setPhase(null);
       abortRef.current = null;
     }
   };
@@ -240,17 +251,26 @@ export function ReviewFollowup({ reviewId, onReviewUpdated }: ReviewFollowupProp
             rows={2}
             className="flex-1 rounded-md border border-[#e8e2d8] bg-white px-3 py-2 text-sm text-[#1f1b16] placeholder:text-[#9a948a] focus:outline-none focus:ring-2 focus:ring-[#b3392f]/30 disabled:opacity-60 resize-none"
           />
-          <Button onClick={submit} disabled={loading || !input.trim() || !reviewId}>
-            {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : <RefreshCcw className="h-4 w-4" />}
-            {loading ? "重新生成中" : "重新生成完整评报"}
-          </Button>
+          <LoadingButton
+            onClick={submit}
+            loading={loading}
+            loadingText="重新生成中…"
+            disabled={!input.trim() || !reviewId}
+            className="shrink-0"
+          >
+            <RefreshCcw className="h-4 w-4" />
+            重新生成完整评报
+          </LoadingButton>
         </div>
 
+        {/* 仅后端 SSE 真实返回阶段才展示具体步骤；无阶段则只显示“处理中” */}
         {loading && (
-          <p className="text-xs text-[#6b6257] flex items-center gap-1.5">
-            <Loader2 className="h-3.5 w-3.5 animate-spin" />
-            {progress || "正在重新生成…"}（生成完成后将保存为新版本，可在上方切换原版本）
-          </p>
+          <TaskProgress
+            stages={REGEN_STAGES}
+            currentId={phase}
+            running={loading}
+            failed={!!error}
+          />
         )}
 
         {error && (

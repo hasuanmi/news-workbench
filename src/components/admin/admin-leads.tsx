@@ -4,6 +4,8 @@ import { useEffect, useState, useCallback } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { LoadingButton } from "@/components/common/loading-button";
+import { toast } from "sonner";
 import {
   Select,
   SelectContent,
@@ -90,19 +92,24 @@ export function AdminLeadsBoard() {
 
   const handleIdentify = async () => {
     setIdentifying(true);
-    const res = await fetch("/api/admin/leads/identify", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      credentials: "include",
-      body: JSON.stringify({ limit: 20 }),
-    });
-    const data = await res.json();
-    setIdentifying(false);
-    if (data.success) {
-      alert(`识别完成：处理 ${data.processed} 篇，发现 ${data.cluesFound} 条线索`);
-      fetchClues();
-    } else {
-      alert("识别失败: " + (data.error || "未知错误"));
+    try {
+      const res = await fetch("/api/admin/leads/identify", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify({ limit: 20 }),
+      });
+      const data = await res.json();
+      if (data.success) {
+        toast.success(`线索识别完成：处理 ${data.processed} 篇，发现 ${data.cluesFound} 条线索`);
+        fetchClues();
+      } else {
+        toast.error("识别失败: " + (data.error || "未知错误"));
+      }
+    } catch {
+      toast.error("识别失败：网络异常");
+    } finally {
+      setIdentifying(false);
     }
   };
 
@@ -138,13 +145,14 @@ export function AdminLeadsBoard() {
     <div className="space-y-4">
       {/* 操作栏 */}
       <div className="flex items-center gap-3 sticky top-0 bg-[#faf7f2] z-10 py-3 border-b border-[#e8e2d8]">
-        <Button
+        <LoadingButton
           onClick={handleIdentify}
-          disabled={identifying}
+          loading={identifying}
+          loadingText="识别中…"
           className="bg-[#b3392f] hover:bg-[#9a2f26] text-white"
         >
-          {identifying ? "识别中..." : "AI 线索识别"}
-        </Button>
+          AI 线索识别
+        </LoadingButton>
 
         <Select value={statusFilter} onValueChange={(v) => { setStatusFilter(v); setPage(1); }}>
           <SelectTrigger className="w-32 h-9">

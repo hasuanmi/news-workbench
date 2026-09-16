@@ -5,11 +5,22 @@ import { AppShell } from "@/components/app-shell";
 import { ReviewFilter, type ReviewFilter as ReviewFilterType } from "@/components/review/review-filter";
 import { ReviewResult } from "@/components/review/review-result";
 import { Button } from "@/components/ui/button";
-import { Loader2, History, Sparkles } from "lucide-react";
+import { History, Sparkles } from "lucide-react";
 import type { ReviewModule } from "@/lib/review-types";
 import { ReviewFollowup } from "@/components/review/review-followup";
 import { DraftSelection } from "@/components/review/review-draft-selection";
 import type { DraftPayload } from "@/lib/review-draft";
+import { TaskProgress, type TaskStage } from "@/components/common/task-progress";
+import { EmptyState } from "@/components/common/empty-state";
+
+/** 评报生成的真实阶段（由后端 SSE 驱动，前端不伪造步骤） */
+const GENERATE_STAGES: TaskStage[] = [
+  { id: "fetching", label: "读取今日文章" },
+  { id: "analyzing", label: "筛选重点稿件" },
+  { id: "structure", label: "识别同题与同行独有" },
+  { id: "final", label: "生成评报" },
+  { id: "saved", label: "保存结果" },
+];
 
 interface DisplayRules {
   show_comparison_table?: boolean;
@@ -30,14 +41,6 @@ interface HistoryItem {
   version: number;
   summary_preview: string;
 }
-
-const PHASE_TEXT: Record<string, string> = {
-  fetching: "正在筛选本期文章并生成选稿…",
-  analyzing: "AI 正在进行结构化分析（重点识别 / 同题聚类 / 同行亮点）…",
-  structure: "结构化分析完成，正在撰写最终评报…",
-  final: "正在撰写最终评报…",
-  done: "评报已保存",
-};
 
 export default function ReviewPage() {
   const [modules, setModules] = useState<ReviewModule[]>([]);
@@ -102,15 +105,13 @@ export default function ReviewPage() {
     });
   }, [draftDate]);
 
-  /** 阶段2：基于已确认选稿生成评报（SSE） */
+  /** 阶段2：基于已确认选稿生成评报（SSE）。保留旧结果，边生成边平滑替换 */
   const handleGenerateFromDraft = useCallback(async () => {
     setLoading(true);
     setError(null);
-    setModules([]);
-    setFinalSummary("");
-    setDisplayRules(null);
-    setCurrentReviewId(null);
-    setPhase("analyzing");
+    setPhase("fetching");
+    // 不清空旧 modules/finalSummary，生成中保留旧内容 + “正在更新”；
+    // 收到真实 structure 阶段后再替换为新结构。
 
     const controller = new AbortController();
     abortRef.current = controller;
@@ -287,11 +288,16 @@ export default function ReviewPage() {
           </div>
         )}
 
-        {/* 进度提示 */}
+        {/* 进度提示：仅后端 SSE 真实返回阶段才展示具体步骤；无阶段则只显示“处理中” */}
         {loading && (
-          <div className="mb-4 p-3 bg-[#faf7f2] border border-[#e8e2d8] rounded-md text-sm text-[#6b6257] flex items-center gap-2">
-            <Loader2 className="h-4 w-4 animate-spin" />
-            {PHASE_TEXT[phase] || "处理中…"}
+          <div className="my-4">
+            <TaskProgress
+              stages={GENERATE_STAGES}
+              currentId={phase}
+              running={loading}
+              failed={!!error}
+              className="bg-white"
+            />
           </div>
         )}
 
@@ -300,16 +306,16 @@ export default function ReviewPage() {
           <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-md text-sm text-red-800">{error}</div>
         )}
 
-        {/* 结果区 */}
+        {/* 结果区：保留旧结果，顶部“正在更新”提示，完成后平滑替换 */}
         {hasResult && (
           <div className="space-y-6">
-            <ReviewResult modules={modules} finalSummary={finalSummary} displayRules={displayRules} />
-            {loading && phase === "final" && (
-              <p className="text-xs text-[#6b6257] flex items-center gap-1.5">
-                <Sparkles className="h-3.5 w-3.5" />
-                评报生成中（AI 结果仅供辅助，最终需人工确认）…
-              </p>
+            {loading && (
+              <div className="rounded-lg border border-sky-100 bg-sky-50 px-4 py-2 text-sm text-sky-700 flex items-center gap-2">
+                <Sparkles className="h-4 w-4 animate-pulse" />
+                正在更新评报…旧结果保留，生成完成后自动替换（AI 结果仅供辅助，最终需人工确认）
+              </div>
             )}
+            <ReviewResult modules={modules} finalSummary={finalSummary} displayRules={displayRules} />
             {!loading && currentReviewId && (
               <ReviewFollowup
                 reviewId={currentReviewId}
@@ -321,9 +327,11 @@ export default function ReviewPage() {
 
         {/* 空状态 */}
         {!hasResult && !loading && (
-          <div className="text-center py-12 text-[#6b6257]">
-            <p className="text-sm">设置条件后点击「生成每日评报」，AI 将分析当天报道并生成结构化评报</p>
-          </div>
+          <EmptyState
+            className="py-16 mt-4"
+            title="今日评报尚未生成"
+            description="设置日期等条件后点击「生成每日评报」，AI 将分析当天媒体横向比较并生成结构化评报"
+          />
         )}
       </div>
     </AppShell>
