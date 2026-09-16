@@ -38,17 +38,7 @@ export async function middleware(req: NextRequest) {
     return NextResponse.redirect(url);
   }
 
-  // 管理员区域权限
-  const isAdminArea = pathname.startsWith("/admin") || pathname.startsWith("/api/admin");
-  if (isAdminArea && session.role !== "admin") {
-    if (pathname.startsWith("/api/")) {
-      return NextResponse.json({ error: "需要管理员权限" }, { status: 403 });
-    }
-    const url = req.nextUrl.clone();
-    url.pathname = "/";
-    return NextResponse.redirect(url);
-  }
-
+  // 本版本取消角色权限区别：登录用户即可访问 /admin 与 /api/admin（role 字段保留仅作未来扩展）
   return NextResponse.next();
 }
 

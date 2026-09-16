@@ -9,7 +9,7 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({ error: "未登录" }, { status: 401 });
   }
   const db = supabase();
-  const isAdmin = session.role === "admin";
+  const isAdmin = true; // 本版本取消角色区别：登录用户即拥有管理员权限
 
   // 未来14天已审批启用节点
   const { data: events } = await db

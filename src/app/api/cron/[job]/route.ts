@@ -19,11 +19,11 @@ async function authorize(req: NextRequest): Promise<boolean> {
   const secret = process.env.CRON_SECRET || process.env.CRON_TOKEN || "";
   if (bearer && secret && bearer === secret) return true;
 
-  // 2. 管理员会话
+  // 2. 登录会话（本版本取消角色区别，登录即可）
   const cookieToken = req.cookies.get(SESSION_COOKIE)?.value;
   if (cookieToken) {
     const session = await verifySessionToken(cookieToken);
-    if (session?.role === "admin") return true;
+    if (session) return true;
   }
   return false;
 }

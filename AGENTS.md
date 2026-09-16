@@ -19,7 +19,7 @@
 - **Framework**: Next.js 16 (App Router) · React 19 · TypeScript 5 (strict)
 - **UI**: shadcn/ui（`src/components/ui/`）+ Tailwind CSS 4
 - **数据库**: Supabase (Postgres 15)，通过 drizzle-kit 管理 schema
-- **认证**: 内部账号体系，HMAC 签名无状态会话（cookie `nwb_session`），角色 admin / editor
+- **认证**: 内部账号体系，HMAC 签名无状态会话（cookie `nwb_session`）。**权限模型：当前版本取消 admin/editor 权限差异，所有登录用户统一拥有原管理员权限**——前端不按角色过滤菜单/操作，后端不做角色级权限限制（`requireAdmin`/middleware/统计/定时任务均以「已登录」为准）。`app_user.role` 字段仍保留，但本版本不参与权限判断，仅留作未来扩展。
 
 ## 常用命令
 
@@ -78,7 +78,7 @@ src/
 │   ├── config.ts             # app_config 读取（getAppConfig 内存缓存）
 │   ├── session.ts            # 【Edge 安全】HMAC 会话签发/校验，只用 Web Crypto（禁 node:crypto）
 │   ├── password.ts           # scrypt 密码哈希（仅 Node 运行时）
-│   ├── require-admin.ts      # API 管理员鉴权
+│   ├── require-admin.ts      # 鉴权（当前版本：仅校验已登录，不再区分角色）
 │   ├── calendar-engine.ts    # 日历规则引擎（纯函数，周年/窗口/置信度，含单测）
 │   ├── clue-engine.ts        # M3 线索识别（结构化 JSON + 置信度路由 + clue_name）
 │   ├── clue-pipeline.ts      # M3 批量识别流水线（扫未处理文章→合并→入库）

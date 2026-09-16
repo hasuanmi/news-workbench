@@ -25,7 +25,7 @@ const navItems = [
   { href: "/calendar", label: "新闻日历", icon: CalendarDays },
   { href: "/leads", label: "新闻线索", icon: Radar },
   { href: "/review", label: "每日评报", icon: FileText },
-  { href: "/admin", label: "系统管理", icon: Settings, adminOnly: true },
+  { href: "/admin", label: "系统管理", icon: Settings },
 ];
 
 export function AppShell({ children }: { children: React.ReactNode }) {
@@ -49,7 +49,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
     router.refresh();
   }
 
-  const visibleNav = navItems.filter((item) => !item.adminOnly || user?.role === "admin");
+  const visibleNav = navItems;
 
   return (
     <div className="min-h-screen flex">
@@ -87,18 +87,16 @@ export function AppShell({ children }: { children: React.ReactNode }) {
           })}
         </nav>
         <div className="p-3 border-t border-[var(--border)] space-y-2">
-          {/* 接入大模型按钮（仅 admin） */}
-          {user?.role === "admin" && (
-            <Button
-              variant="outline"
-              size="sm"
-              className="w-full justify-start gap-2"
-              onClick={() => setLlmDialogOpen(true)}
-            >
-              <Bot className="w-4 h-4" />
-              {llmConnected ? "模型已连接" : "接入大模型"}
-            </Button>
-          )}
+          {/* 接入大模型按钮（登录用户通用） */}
+          <Button
+            variant="outline"
+            size="sm"
+            className="w-full justify-start gap-2"
+            onClick={() => setLlmDialogOpen(true)}
+          >
+            <Bot className="w-4 h-4" />
+            {llmConnected ? "模型已连接" : "接入大模型"}
+          </Button>
 
           {loading ? (
             <div className="flex items-center gap-2 text-xs text-[var(--muted-foreground)] px-2">
@@ -108,9 +106,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
             <>
               <div className="px-2 text-xs">
                 <div className="font-medium">{user.displayName}</div>
-                <Badge variant="outline" className="mt-1 text-[10px] h-5">
-                  {user.role === "admin" ? "管理员" : "编辑"}
-                </Badge>
+                <Badge variant="outline" className="mt-1 text-[10px] h-5">管理员</Badge>
               </div>
               <Button
                 variant="ghost"
