@@ -8,7 +8,7 @@ import {
   getReviewRules,
   type ReviewConditions,
 } from "@/lib/review-engine";
-import { getDraftWithArticles, type DraftPayload } from "@/lib/review-draft";
+import { getDraftWithArticles, buildConditionsFromRules, type DraftPayload } from "@/lib/review-draft";
 import type { ReviewModule } from "@/lib/review-types";
 
 /**
@@ -33,17 +33,16 @@ export async function POST(req: NextRequest) {
   const body = await req.json().catch(() => {});
   const forceMode = typeof body.reportDate === "string" && body.reportDate.trim().length > 0;
 
-  // 组装条件（兼容两种模式）
-  const baseConditions: ReviewConditions = {
+  // 组装条件（兼容两种模式）：长期规则取后台默认，body 仅作为临时覆盖（前台不再传）
+  const baseConditions: ReviewConditions = await buildConditionsFromRules({
     date: body.date || new Date().toISOString(),
-    mediaIds: Array.isArray(body.mediaIds) ? body.mediaIds : [],
-    minWordCount: typeof body.minWordCount === "number" ? body.minWordCount : 2000,
-    highlightFlags: Array.isArray(body.highlightFlags) ? body.highlightFlags : [],
-    dimensions: Array.isArray(body.dimensions) ? body.dimensions : [],
-    topics: Array.isArray(body.topics) ? body.topics : [],
-    scanMissing: body.scanMissing !== false,
+    topics: Array.isArray(body.topics) ? body.topics : undefined,
     customRequirement: body.customRequirement,
-  };
+    minWordCount: typeof body.minWordCount === "number" ? body.minWordCount : undefined,
+    highlightFlags: Array.isArray(body.highlightFlags) ? body.highlightFlags : undefined,
+    dimensions: Array.isArray(body.dimensions) ? body.dimensions : undefined,
+    scanMissing: typeof body.scanMissing === "boolean" ? body.scanMissing : undefined,
+  });
 
   const encoder = new TextEncoder();
   const send = (obj: unknown) => encoder.encode(`data: ${JSON.stringify(obj)}\n\n`);

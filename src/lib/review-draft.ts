@@ -116,6 +116,53 @@ export async function resolveComparisonMedia(mediaIds?: string[]): Promise<{
   };
 }
 
+// ============ 选稿默认规则（后台统一维护，前台不再逐次勾选） ============
+
+export interface SelectionRules {
+  min_word_count: number;
+  highlight_flags: string[];
+  dimensions: string[];
+  scan_missing: boolean;
+  exclude_xinhua_reprint: boolean;
+}
+
+export const DEFAULT_SELECTION_RULES: SelectionRules = {
+  min_word_count: 2000,
+  highlight_flags: ["front_page", "full_page", "cross_page", "series", "special"],
+  dimensions: ["topic", "timeliness", "angle", "depth", "presentation"],
+  scan_missing: true,
+  exclude_xinhua_reprint: true,
+};
+
+/** 读取后台统一维护的选稿默认规则（review.selection_rules） */
+export async function getSelectionRules(): Promise<SelectionRules> {
+  return getConfigRaw<SelectionRules>("review.selection_rules", DEFAULT_SELECTION_RULES);
+}
+
+/** 由后台默认规则 + 前台临时可选项组装完整选稿条件（前台只传 date/topics/customRequirement） */
+export async function buildConditionsFromRules(partial: {
+  date?: string;
+  topics?: string[];
+  customRequirement?: string;
+  minWordCount?: number;
+  highlightFlags?: string[];
+  dimensions?: string[];
+  scanMissing?: boolean;
+}): Promise<ReviewConditions> {
+  const rules = await getSelectionRules();
+  const { mediaIds } = await resolveComparisonMedia();
+  return {
+    date: partial.date || new Date().toISOString(),
+    mediaIds,
+    minWordCount: typeof partial.minWordCount === "number" ? partial.minWordCount : rules.min_word_count,
+    highlightFlags: Array.isArray(partial.highlightFlags) ? partial.highlightFlags : rules.highlight_flags,
+    dimensions: Array.isArray(partial.dimensions) ? partial.dimensions : rules.dimensions,
+    topics: Array.isArray(partial.topics) ? partial.topics : [],
+    scanMissing: partial.scanMissing ?? rules.scan_missing,
+    customRequirement: partial.customRequirement,
+  };
+}
+
 // ============ 新华社来源识别 ============
 
 const XINHUA_PATTERNS = [/新华社\s*\d+/, /新华社(?!社)/, /新华社[^\s。，,]{0,8}电/, /Xinhua/i];

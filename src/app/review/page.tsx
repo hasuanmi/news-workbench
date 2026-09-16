@@ -74,11 +74,7 @@ export default function ReviewPage() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           date: filter.date.toISOString(),
-          minWordCount: filter.minWordCount,
-          highlightFlags: filter.highlightFlags,
-          dimensions: filter.dimensions,
           topics: filter.topics,
-          scanMissing: filter.scanMissing,
           customRequirement: filter.customRequirement,
         }),
       });

@@ -69,6 +69,7 @@ async function main() {
     { key: "cron.crawl", value: "0 8 * * *", description: "媒体文章抓取(每日08:00)" },
     { key: "review.media_names", value: ["广州日报", "南方日报", "南方都市报", "新快报", "羊城晚报", "信息时报"], description: "每日评报默认媒体名单" },
     { key: "review.comparison_media", value: ["广州日报", "南方日报", "南方都市报", "新快报", "羊城晚报", "信息时报"], description: "每日评报固定比较媒体（后台默认配置，前台不逐日勾选）" },
+    { key: "review.selection_rules", value: { min_word_count: 2000, highlight_flags: ["front_page", "full_page", "cross_page", "series", "special"], dimensions: ["topic", "timeliness", "angle", "depth", "presentation"], scan_missing: true, exclude_xinhua_reprint: true }, description: "每日评报选稿默认规则：最低字数/重点稿条件/评报维度/同行遗漏扫描/新华社纯转载排除（前台不再逐次选择，后台统一维护）" },
     { key: "review.xinhua_recognize", value: true, description: "识别新华社通稿来源（新华社/新华社记者/新华社××电/原始来源）" },
     { key: "crawl.request_interval_ms", value: 10000, description: "单数据源抓取最小间隔(毫秒)" },
     { key: "ingest.api_token", value: "newsdesk-ingest-2026", description: "外部抓取服务接入令牌（/api/ingest/* 鉴权，可随时轮换）" },

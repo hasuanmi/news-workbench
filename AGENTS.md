@@ -85,7 +85,7 @@ src/
 │   ├── clue-engine.ts        # M3 线索识别（结构化 JSON + 置信度路由 + clue_name）
 │   ├── clue-pipeline.ts      # M3 批量识别流水线（扫未处理文章→合并→入库）
 │   ├── review-engine.ts      # 【M4】评报：规则筛稿→AI 结构化四区块→SSE 流式总结→落库 daily_review
-│   ├── review-draft.ts       # 【M4】阶段1 本期选稿：固定比较媒体 + AI 同题分组/同行独有/新华社背景，落库 review_draft
+│   ├── review-draft.ts       # 【M4】阶段1 本期选稿：后台默认选稿规则(review.selection_rules)+ AI 同题分组/同行独有/新华社背景，落库 review_draft
 │   ├── review-types.ts       # 评报结构化类型（ReviewModule/DisplayRules/GenerationRules）
 │   ├── weekly-briefing.ts    # M3 每周简报（SSE + Markdown 四段拆分）
 │   ├── ingest.ts             # 外部抓取接入层：token 校验、文章去重入库、数据源状态、task_log
@@ -184,8 +184,8 @@ assets/                       # 媒体列表.xlsx、2024年新闻日历.docx（�
 
 ## 已完成：M4 每日评报
 
-- **两段式：先选稿，再评报**。默认比较媒体固定为 `review.comparison_media`（广州日报/南方日报/南方都市报/新快报/羊城晚报/信息时报，后台配置，前台不再每天勾选）。`/review` 顶部条件区仅保留（日期/最低字数/版面信号/评报维度/关注主题/同行遗漏扫描/自定义要求）。
-  - **阶段1 本期选稿** `src/lib/review-draft.ts` + 路由 `POST/GET/PATCH /api/review/draft`：规则层筛稿后 AI 分组输出 `{same_topic 同题报道 / peer_highlights 同行独有报道 / xinhua_background 新华社共同背景}`，媒体/标题/发布时间/原文链接逐篇可核验，支持**排除**不应参与评报的文章（`excluded_article_ids` 落库可追溯）。落库 `review_draft` 表（report_date 唯一，status=draft/selected）。
+- **两段式：先选稿，再评报**。默认比较媒体固定为 `review.comparison_media`（广州日报/南方日报/南方都市报/新快报/羊城晚报/信息时报，后台配置，前台不再每天勾选）。**前台 `/review` 条件区已做减法，仅保留（日期/关注主题(可选)/自定义要求(可选)/开始选稿）**；最低字数、版面信号、评报维度、同行遗漏扫描、新华社纯转载排除等长期业务规则统一收口到后台 `review.selection_rules`（后台「系统管理 → 每日评报管理 → 选稿规则」维护），前台不填主题/自定义要求即按后台默认全量评报。
+  - **阶段1 本期选稿** `src/lib/review-draft.ts` + 路由 `POST/GET/PATCH /api/review/draft`：`buildConditionsFromRules` 读取后台默认选稿规则（比较媒体/最低字数/重点稿/维度/同行遗漏扫描/新华社排除）组装条件 → 规则层筛稿后 AI 分组输出 `{same_topic 同题报道 / peer_highlights 同行独有报道 / xinhua_background 新华社共同背景}`，媒体/标题/发布时间/原文链接逐篇可核验，支持**排除**不应参与评报的文章（`excluded_article_ids` 落库可追溯）。落库 `review_draft` 表（report_date 唯一，status=draft/selected）。
   - **阶段2 生成** `POST /api/admin/review/generate` 接收 `{ reportDate }` 复用已确认选稿（含排除稿）→ `analyzeStructure` 四区块 → `streamFinalReview` SSE 流式总结 → `saveDailyReview`。前端 `/review` 先展示选稿面板（`review-draft-selection.tsx`），用户确认后再点「基于以上稿件生成评报」。
   - **新华社通稿特殊处理**：多家媒体只是转新华社同一通稿 → 归 `xinhua_background`，作为当天共同重大新闻背景展示，不做各媒体原创比较；识别 `新华社/新华社记者/新华社××电/原始来源`（`isXinhuaArticle`），在通稿基础上新增本地采访/案例/原创数据/延伸的稿子不归背景列，只在 `same_topic` 中比较其新增原创部分。
   - **分析重点（不作简单打分/不分高下）**：同题比较聚焦切入角度差异、各媒体独有信息、独家采访、本地案例、数据支撑、有价值的延伸、报道亮点。

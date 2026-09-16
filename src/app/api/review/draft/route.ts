@@ -1,20 +1,17 @@
 import { NextRequest, NextResponse } from "next/server";
 import { requireAdmin } from "@/lib/require-admin";
-import {
-  fetchReviewArticles,
-  type ReviewConditions,
-} from "@/lib/review-engine";
+import { fetchReviewArticles } from "@/lib/review-engine";
 import {
   buildDraft,
   saveDraft,
   loadDraftByDate,
   updateDraftExclusions,
-  resolveComparisonMedia,
+  buildConditionsFromRules,
 } from "@/lib/review-draft";
 
 /**
  * POST /api/review/draft — 阶段1：为本期生成选稿（筛选 + AI 分组），落库可追溯
- * Body: { date, minWordCount, dimensions, topics, scanMissing, customRequirement, mediaIds? }
+ * Body: { date, topics?, customRequirement? }  长期规则（比较媒体/最低字数/重点稿/维度/同行遗漏扫描）由后台统一维护
  */
 export async function POST(req: NextRequest) {
   const auth = await requireAdmin(req);
@@ -27,22 +24,13 @@ export async function POST(req: NextRequest) {
     .toISOString()
     .split("T")[0];
 
-  const conditions: ReviewConditions = {
+  const conditions = await buildConditionsFromRules({
     date: body.date || new Date().toISOString(),
-    mediaIds: Array.isArray(body.mediaIds) ? body.mediaIds : [],
-    minWordCount: typeof body.minWordCount === "number" ? body.minWordCount : 2000,
-    highlightFlags: Array.isArray(body.highlightFlags) ? body.highlightFlags : [],
-    dimensions: Array.isArray(body.dimensions) ? body.dimensions : [],
     topics: Array.isArray(body.topics) ? body.topics : [],
-    scanMissing: body.scanMissing !== false,
     customRequirement: body.customRequirement,
-  };
+  });
 
   try {
-    // 固定比较媒体（默认六家）
-    const { mediaIds } = await resolveComparisonMedia(conditions.mediaIds);
-    conditions.mediaIds = mediaIds;
-
     const { articles, gzMediaNames } = await fetchReviewArticles(conditions);
     if (articles.length === 0) {
       return NextResponse.json(
