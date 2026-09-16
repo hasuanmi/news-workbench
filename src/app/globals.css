@@ -4,6 +4,11 @@
 
 @custom-variant dark (&:is(.dark *));
 
+/* 页面出现/消失纵向滚动条时保持主内容宽度稳定，防止整页横向跳动 */
+html {
+  scrollbar-gutter: stable;
+}
+
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);

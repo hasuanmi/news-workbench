@@ -124,10 +124,10 @@ export default function LeadsPage() {
             <button
               key={tab.key}
               onClick={() => setScope(tab.key)}
-              className={`rounded-md px-3 py-1.5 text-sm font-medium transition-colors ${
+              className={`rounded-md border px-3 py-1.5 text-sm font-medium transition-colors ${
                 scope === tab.key
-                  ? "bg-[#b3392f] text-white"
-                  : "bg-white text-[#6b6257] border border-[#e8e2d8] hover:bg-[#faf7f2]"
+                  ? "bg-[#b3392f] text-white border-[#b3392f]"
+                  : "bg-white text-[#6b6257] border-[#e8e2d8] hover:bg-[#faf7f2] hover:border-[#d8d0bf]"
               }`}
             >
               {tab.label}

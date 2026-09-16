@@ -62,6 +62,12 @@
 ### 交互状态统一（全系统 UIX 规范）
 - 目标：让用户始终知道"操作是否生效、系统正在做什么、进行到哪一步、结果是否更新完成"，不做花哨动画。
 - 动画克制：淡入 / 轻微位移 / 进度变化，150–300ms；禁止大幅缩放、旋转、弹跳。
+- **布局稳定（防 Layout Shift）**：hover/active/selected 一律**不改变元素外部尺寸**：
+  - 恒定 1px「透明边框占位」：交互控件默认 `border border-transparent`，选中/悬停只改`border-color`，禁止「无 border ⇄ 有 border」切换（曾导致 2px 高度位移）。
+  - `ui/button` 的 `default/secondary/destructive` 与 `outline` 均恒有 1px border，切换仅颜色/背景变化。
+  - 不通过 padding、font-weight、加图标来切换选中（如必须加图标则预留位置）；同组控件固定统一高度（`h-8/h-9`）、统一 gap/padding/border-radius。
+  - 阴影仅视觉（hover 阴影、`translate-y-px` 用 transform）不占布局。
+  - 全局 `html { scrollbar-gutter: stable; }` 保持滚动条出现/消失时主内容宽度稳定。
 - **统一时长 token**（禁止页面内手写其他 duration）：
   - hover：150ms；button active：80–120ms（采用 active:translate-y-px 按压感）
   - 页面/内容替换：旧内容淡出 100ms → 新内容淡入 180ms（`PageTransition`）
