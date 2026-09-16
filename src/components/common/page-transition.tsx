@@ -25,7 +25,7 @@ export function PageTransition({
   return (
     <div
       key={String(contentKey)}
-      className={cn("animate-page-in motion-reduce:animate-none", className)}
+      className={cn("animate-page-in", className)}
     >
       {children}
     </div>
