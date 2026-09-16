@@ -11,7 +11,7 @@ export interface PageTransitionProps {
 }
 
 /**
- * 轻量内容切换：contentKey 变化时「旧内容淡出 100ms → 新内容淡入 180ms」。
+ * 轻量内容切换：contentKey 变化时「旧内容淡出 120ms → 新内容淡入 240ms（轻微上移）」。
  * - 用 state 缓存旧 children，待旧内容完全淡出后才换成新 children，避免整页直接替换的“硬”感。
  * - 仅 opacity + 轻微上移，不做复杂转场；不引额外路由耦合。
  */
@@ -25,13 +25,13 @@ export function PageTransition({ children, contentKey, className }: PageTransiti
     if (prevKey.current !== contentKey) {
       prevKey.current = contentKey;
       if (timer.current) clearTimeout(timer.current);
-      // 淡出旧内容
+      // 淡出旧内容（120ms）
       setPhase("out");
       timer.current = setTimeout(() => {
-        // 旧内容已透明，替换为新内容并淡入
+        // 旧内容已透明，替换为新内容并淡入（240ms）
         setDisplay(children);
         setPhase("in");
-      }, 100);
+      }, 120);
     }
     // children 变化但 key 未变（数据刷新）时直接展示新内容，保持现状
   }, [contentKey, children]);
@@ -40,8 +40,8 @@ export function PageTransition({ children, contentKey, className }: PageTransiti
     <div
       className={cn(
         phase === "in"
-          ? "translate-y-0 opacity-100 transition-[opacity,transform] duration-[180ms] ease-out"
-          : "translate-y-1 opacity-0 transition-[opacity,transform] duration-100 ease-out",
+          ? "translate-y-0 opacity-100 transition-[opacity,transform] duration-[240ms] ease-out"
+          : "translate-y-1.5 opacity-0 transition-[opacity,transform] duration-[120ms] ease-out",
         className
       )}
     >

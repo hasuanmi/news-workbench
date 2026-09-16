@@ -70,7 +70,7 @@
   - 全局 `html { scrollbar-gutter: stable; }` 保持滚动条出现/消失时主内容宽度稳定。
 - **统一时长 token**（禁止页面内手写其他 duration）：
   - hover：150ms；button active：80–120ms（采用 active:translate-y-px 按压感）
-  - 页面/内容替换：旧内容淡出 100ms → 新内容淡入 180ms（`PageTransition`）
+  - 页面切换/内容替换：旧内容淡出 120ms → 新内容淡入 240ms（`PageTransition`，淡入结合 1.5px 轻微上移）
   - toast：淡入 150ms / 淡出 300ms
 - **状态统一规则**：
   - hover：主按钮 `变深 + 极轻阴影`；次/ghost/outline `背景变浅 + 边框加深`；link `下划线`；可点击卡片 `浅底(bg-accent/50) + 轻描边(border-ring)`，**一律禁 hover 放大阴影**。
