@@ -1,10 +1,10 @@
 import { AppShell } from "@/components/app-shell";
-import { CalendarBoard } from "@/components/calendar/calendar-board";
+import { CalendarShell } from "@/components/calendar/calendar-shell";
 
 export default function CalendarPage() {
   return (
     <AppShell>
-      <CalendarBoard />
+      <CalendarShell />
     </AppShell>
   );
 }

@@ -1,10 +1,9 @@
 import { AppShell } from "@/components/app-shell";
 import Link from "next/link";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { CalendarDays, Database, Settings, Newspaper, Radio, FileText, Clock } from "lucide-react";
+import { Database, Settings, Newspaper, Radio, FileText, Clock } from "lucide-react";
 
 const sections = [
-  { href: "/admin/calendar", title: "日历节点管理", desc: "节点增删改、停用、分类调整、动态节点审核", icon: CalendarDays },
   { href: "/admin/categories", title: "日历分类管理", desc: "维护八大分类，新增/改名/停用分类", icon: Settings },
   { href: "/admin/media", title: "媒体与数据源", desc: "媒体池、电子报/官网地址、启用状态、抓取接入与 Mock 推送", icon: Newspaper },
   { href: "/admin/leads", title: "新闻线索管理", desc: "线索卡片展示字段、排序、分组、长度限制等呈现规则", icon: Radio },
