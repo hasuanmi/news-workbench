@@ -42,6 +42,17 @@ export async function GET(_req: NextRequest, { params }: { params: Promise<{ id:
     tags: Array.isArray(ev.tags) ? ev.tags : [],
     source_name: ev.source_name,
     category,
+    // 自动补全结果（由日历引擎自动生成，普通用户无需手动触发）
+    enrich: {
+      status: ev.enrich_status ?? "none",
+      fingerprint: ev.enrich_fingerprint,
+      background: ev.ai_background ?? null,
+      why: ev.ai_why ?? null,
+      topics: Array.isArray(ev.ai_topics) ? ev.ai_topics : [],
+      sources: Array.isArray(ev.ai_sources) ? ev.ai_sources : [],
+      error: ev.enrich_error ?? null,
+      enriched_at: ev.enriched_at ?? null,
+    },
   };
 
   return NextResponse.json({ item });

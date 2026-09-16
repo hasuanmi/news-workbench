@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { supabase } from "@/lib/db";
 import { requireAdmin } from "@/lib/require-admin";
+import { enqueueEnrich } from "@/lib/calendar-enrich";
 
 export async function DELETE(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
@@ -112,5 +113,19 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
     .select()
     .single();
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+
+  // 关键字段（名称/日期/地区/分类/周年基数）变化时，自动重新触发信息补全
+  const HAS_KEY_CHANGE =
+    "event_name" in update ||
+    "original_date" in update ||
+    "event_date" in update ||
+    "region" in update ||
+    "category_id" in update ||
+    "anniversary_base_year" in update ||
+    "event_year" in update ||
+    "event_month" in update ||
+    "date_status" in update;
+  if (HAS_KEY_CHANGE && data?.id) void enqueueEnrich(data.id, { force: true });
+
   return NextResponse.json({ item: data });
 }

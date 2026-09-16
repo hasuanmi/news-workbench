@@ -1,11 +1,11 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { Pencil, Power, Trash2, Sparkles } from "lucide-react";
+import { Pencil, Power, Trash2, Sparkles, RefreshCw, ExternalLink, Clock } from "lucide-react";
 import { normalizeEventName } from "@/lib/calendar-engine";
 import type { CalDetail } from "./calendar-types";
 
@@ -35,6 +35,15 @@ type DetailEntry = {
   source?: string | null;
   source_name?: string | null;
   category?: ({ id?: string } & NonNullable<Partial<CalDetail>["category"]>) | null;
+  enrich?: {
+    status: string;
+    background: string | null;
+    why: string | null;
+    topics: string[];
+    sources: { title: string; url: string; snippet?: string; authority?: string }[];
+    error?: string | null;
+    enriched_at?: string | null;
+  } | null;
 } & Omit<
   Partial<CalDetail>,
   "category"
@@ -58,89 +67,70 @@ export function CalendarDetailPanel({
   const [detail, setDetail] = useState<DetailEntry | null>(null);
   const [loading, setLoading] = useState(false);
   const [notFound, setNotFound] = useState(false);
+  const [regenerating, setRegenerating] = useState(false);
+  const [regenError, setRegenError] = useState<string | null>(null);
 
-  // AI 总结
-  const [summary, setSummary] = useState("");
-  const [summaryLoading, setSummaryLoading] = useState(false);
-  const [summaryError, setSummaryError] = useState<string | null>(null);
-  const abortRef = useRef<AbortController | null>(null);
+  const loadDetail = useCallback(async () => {
+    if (!eventId) return;
+    setLoading(true);
+    setNotFound(false);
+    try {
+      const d = await fetch(`/api/calendar/${eventId}`).then(async (r) => {
+        const j = await r.json();
+        return r.ok ? (j.item ?? null) : null;
+      });
+      setDetail(d);
+      if (!d) setNotFound(true);
+    } catch {
+      setNotFound(true);
+    } finally {
+      setLoading(false);
+    }
+  }, [eventId]);
 
   useEffect(() => {
     if (!eventId) return;
-    setLoading(true);
     setDetail(null);
-    setNotFound(false);
-    setSummary("");
-    setSummaryError(null);
-    setSummaryLoading(false);
-    abortRef.current?.abort();
-    fetch(`/api/calendar/${eventId}`)
-      .then(async (r) => {
-        const d = await r.json();
-        if (!r.ok) return null;
-        return (d.item ?? null) as DetailEntry | null;
-      })
-      .then((d) => {
-        setDetail(d);
-        if (!d) setNotFound(true);
-      })
-      .catch(() => setNotFound(true))
-      .finally(() => setLoading(false));
-    return () => abortRef.current?.abort();
-  }, [eventId]);
-
-  const generateSummary = async () => {
-    if (!detail || summaryLoading) return;
-    setSummaryLoading(true);
-    setSummary("");
-    setSummaryError(null);
-    const controller = new AbortController();
-    abortRef.current = controller;
-    try {
-      const res = await fetch(`/api/calendar/${detail.id}/summary`, {
-        method: "POST",
-        signal: controller.signal,
+    void loadDetail();
+    // 补全进行中（pending）时定时刷新，完成后自动呈现已生成内容
+    const timer = window.setInterval(() => {
+      setDetail((prev) => {
+        if (prev && prev.enrich?.status === "pending") void loadDetail();
+        return prev;
       });
-      if (!res.ok || !res.body) {
-        setSummaryError("AI 总结生成失败，请稍后重试");
-        setSummaryLoading(false);
+    }, 6000);
+    return () => window.clearInterval(timer);
+  }, [eventId, loadDetail]);
+
+  // 后台管理操作：异常时强制重新生成补全结果
+  const regenerate = async () => {
+    if (!detail || regenerating) return;
+    setRegenerating(true);
+    setRegenError(null);
+    try {
+      const res = await fetch(`/api/admin/calendar/${detail.id}/enrich`, { method: "POST" });
+      if (!res.ok) {
+        setRegenError("重新生成失败，请稍后重试");
         return;
       }
-      const reader = res.body.getReader();
-      const decoder = new TextDecoder();
-      let buffer = "";
-      for (;;) {
-        const { done, value } = await reader.read();
-        if (done) break;
-        buffer += decoder.decode(value, { stream: true });
-        const lines = buffer.split("\n\n");
-        buffer = lines.pop() ?? "";
-        for (const line of lines) {
-          const trimmed = line.trim();
-          if (!trimmed.startsWith("data:")) continue;
-          const payload = trimmed.slice(5).trim();
-          if (payload === "[DONE]") continue;
-          try {
-            const obj = JSON.parse(payload) as { text?: string; error?: string };
-            if (obj.error) setSummaryError(obj.error);
-            else if (obj.text) setSummary((s) => s + obj.text);
-          } catch {
-            // 忽略不完整分片
-          }
-        }
-      }
-    } catch (err) {
-      if ((err as Error).name !== "AbortError") {
-        setSummaryError("AI 总结生成失败，请稍后重试");
-      }
+      await loadDetail();
+    } catch {
+      setRegenError("重新生成失败，请稍后重试");
     } finally {
-      setSummaryLoading(false);
+      setRegenerating(false);
     }
   };
 
   const tags: string[] = detail?.tags ?? [];
   const source = detail?.source ?? null;
   const sourceLabel = source ? SOURCE_LABEL[source] ?? source : null;
+
+  const enrich = detail?.enrich ?? null;
+  const enrichStatus = enrich?.status ?? "none";
+  const isEnrichPending = enrichStatus === "pending";
+  const isEnrichDone = enrichStatus === "done";
+  const isEnrichNoSource = enrichStatus === "no_source";
+  const displayBackground = enrich?.background || detail?.description || "";
 
   return (
     <div className="flex h-full flex-col">
@@ -225,46 +215,118 @@ export function CalendarDetailPanel({
                 </div>
               )}
 
-              {/* 背景信息 */}
+              {/* 背景信息（优先展示 AI 自动补全，回退到人工备注） */}
               <section>
-                <h3 className="text-sm font-semibold mb-1.5">背景信息</h3>
+                <h3 className="text-sm font-semibold mb-1.5 flex items-center gap-1.5">
+                  背景信息
+                  {isEnrichPending && (
+                    <span className="inline-flex items-center gap-1 text-xs font-normal text-[var(--muted-foreground)]">
+                      <Clock className="h-3 w-3 animate-pulse" /> AI 补全中…
+                    </span>
+                  )}
+                </h3>
                 <p className="text-sm leading-relaxed whitespace-pre-wrap">
-                  {detail.description || "暂无背景信息，可点击「编辑」补充。"}
+                  {isEnrichDone
+                    ? displayBackground || "待补充"
+                    : isEnrichNoSource
+                      ? "待补充"
+                      : displayBackground || "待补充"}
+                  {!displayBackground && !isEnrichPending && (
+                    <span className="text-[var(--muted-foreground)]">
+                      {enrichStatus === "none"
+                        ? "系统正在检索权威来源并生成背景，请稍候或稍后刷新。"
+                        : "暂未检索到可靠来源。"}
+                    </span>
+                  )}
                 </p>
               </section>
 
-              {/* AI 选题策划建议 */}
+              {/* AI 自动补全：为什么值得关注 + 选题方向 + 参考来源 */}
               <section className="rounded-md border border-[var(--border)] bg-[var(--muted)]/30 p-3">
                 <div className="flex items-center justify-between mb-2">
                   <h3 className="text-sm font-semibold flex items-center gap-1.5">
-                    <Sparkles className="h-4 w-4" /> AI 选题策划建议
+                    <Sparkles className="h-4 w-4" /> AI 节点信息补全
                   </h3>
                   <Button
                     size="sm"
-                    variant={summary ? "outline" : "default"}
-                    onClick={generateSummary}
-                    disabled={summaryLoading}
+                    variant="outline"
+                    className="h-7 px-2 text-xs"
+                    onClick={regenerate}
+                    disabled={regenerating || isEnrichPending}
+                    title="异常情况下管理后台可重新生成"
                   >
-                    {summaryLoading ? "生成中…" : summary ? "重新生成" : "生成建议"}
+                    <RefreshCw className={`h-3.5 w-3.5 mr-1 ${regenerating ? "animate-spin" : ""}`} />
+                    {regenerating ? "重新生成中…" : "重新生成"}
                   </Button>
                 </div>
-                {summaryLoading && !summary && (
+
+                {isEnrichPending && (
                   <p className="text-sm text-[var(--muted-foreground)]">
-                    AI 正在分析节点信息，请稍候…
+                    系统正在联网检索权威来源并生成以下内容，完成后将自动呈现…
                   </p>
                 )}
-                {summaryError && <p className="text-sm text-red-700">{summaryError}</p>}
-                {summary && (
-                  <div className="text-sm leading-relaxed whitespace-pre-wrap [&_ul]:list-disc [&_ul]:pl-5 [&_ol]:list-decimal [&_ol]:pl-5 [&_li]:my-0.5 [&_strong]:font-semibold">
-                    {summary}
+
+                {isEnrichDone && (
+                  <div className="space-y-3">
+                    <div>
+                      <h4 className="text-xs font-semibold uppercase text-[var(--muted-foreground)] mb-0.5">
+                        为什么值得关注
+                      </h4>
+                      <p className="text-sm leading-relaxed">{enrich?.why || "待补充"}</p>
+                    </div>
+                    {enrich?.topics && enrich.topics.length > 0 && (
+                      <div>
+                        <h4 className="text-xs font-semibold uppercase text-[var(--muted-foreground)] mb-1">
+                          可参考的选题方向
+                        </h4>
+                        <ul className="space-y-1">
+                          {enrich.topics.map((t, i) => (
+                            <li key={i} className="text-sm flex gap-1.5">
+                              <span className="text-[var(--primary)] shrink-0">·</span>
+                              <span className="leading-relaxed">{t}</span>
+                            </li>
+                          ))}
+                        </ul>
+                      </div>
+                    )}
                   </div>
                 )}
-                {!summary && !summaryLoading && !summaryError && (
+
+                {isEnrichNoSource && (
                   <p className="text-sm text-[var(--muted-foreground)]">
-                    点击「生成建议」，AI 将结合节点背景与本地视角给出选题方向。
+                    暂未检索到可靠来源。参考来源：暂未检索到可靠来源。
                   </p>
                 )}
+
+                {regenError && <p className="text-sm text-red-700">{regenError}</p>}
               </section>
+
+              {/* 参考来源 */}
+              {enrich?.sources && enrich.sources.length > 0 && (
+                <section>
+                  <h3 className="text-sm font-semibold mb-1.5">参考来源</h3>
+                  <ul className="space-y-1.5">
+                    {enrich.sources.map((s, i) => (
+                      <li key={i} className="text-sm">
+                        <a
+                          href={s.url}
+                          target="_blank"
+                          rel="noreferrer"
+                          className="inline-flex items-start gap-1 text-[var(--primary)] hover:underline"
+                        >
+                          <ExternalLink className="h-3.5 w-3.5 mt-0.5 shrink-0" />
+                          <span className="leading-snug">{s.title || s.url}</span>
+                        </a>
+                        {s.snippet && (
+                          <p className="text-xs text-[var(--muted-foreground)] mt-0.5 line-clamp-2">
+                            {s.snippet}
+                          </p>
+                        )}
+                      </li>
+                    ))}
+                  </ul>
+                </section>
+              )}
             </div>
           </ScrollArea>
 

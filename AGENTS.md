@@ -158,6 +158,7 @@ assets/                       # 媒体列表.xlsx、2024年新闻日历.docx（�
 - **日历周年模型**：`calendar_event.event_name` 只存事件主体（历史导入自动剥离标题中的"X周年"）；`event_year` 存事件原始发生年；展示/引擎统一用 `anniversary = target_year - event_year` 动态生成"N周年"（引擎 `normalizeEventName`/`getAnniversaryYears` 纯函数，导入见 `scripts/migrate-calendar-anniversary.ts`），非周年型不计算。样例：`毛泽东诞辰`(event_year=1893, target_year=2026) → 毛泽东诞辰133周年。
 - **日历详情弹层**：`/api/calendar/[id]` 已改为二次查询（外键关联不可用）；弹层展示 description/tags/source_name/周年/审核状态等完整字段；
   `POST /api/calendar/[id]/summary` 通过 SSE 流式调用豆包大模型生成「AI 选题策划建议」（`coze-coding-dev-sdk` 的 `LLMClient.stream()`，nodejs runtime，SSE `data:` 分片 + `[DONE]`）。
+- **节点自动补全（AI）**：`calendar_event` 新增 `ai_background`/`ai_why`/`ai_topics`/`ai_sources`/`enrich_status`(none|pending|done|no_source|failed)/`enrich_fingerprint`/`enrich_error`/`enriched_at`。节点被新增、历史迁移、AI 推荐或用户粘贴识别后，由 `src/lib/calendar-enrich.ts` 自动触发补全：计算信息指纹（名称/日期/地区/分类）→ 联网检索（`coze-coding-dev-sdk` SearchClient，优先权威站点：中国政府网/新华社/人民日报/央视/粤穗政府等）→ 结合检索上下文调大模型生成「背景信息/为什么值得关注/可参考的选题方向」→ 落库。检索无可靠来源不编造，置 `no_source`（背景=待补充、来源=暂未检索到可靠来源）。指纹相同且已补全跳过（省 Token）；节点名称/日期/地区/分类修改自动重新触发。详情页 `GET /api/calendar/[id]` 直接返回 `enrich` 字段、前端直接展示，无需二次点击生成。后台保留 `POST /api/admin/calendar/[id]/enrich` 供异常时强制「重新生成」。触发入口在创建 `POST /api/admin/calendar` 与编辑 `PATCH /api/admin/calendar/[id]`（关键字段变化时 force）；开关/权威站/来源数读 `app_config` 的 `calendar.enrich.*`。
 
 ## 抓取架构（M2 已定稿：抓取能力解耦）
 

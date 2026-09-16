@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { supabase } from "@/lib/db";
 import { requireAdmin } from "@/lib/require-admin";
+import { enqueueEnrich } from "@/lib/calendar-enrich";
 
 export async function GET(req: NextRequest) {
   const auth = await requireAdmin(req);
@@ -96,5 +97,6 @@ export async function POST(req: NextRequest) {
     .select()
     .single();
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+  if (data?.id) void enqueueEnrich(data.id);
   return NextResponse.json({ item: data });
 }

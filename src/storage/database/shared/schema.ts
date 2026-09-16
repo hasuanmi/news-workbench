@@ -94,6 +94,15 @@ export const calendarEvent = pgTable(
     confirmed_at: timestamp("confirmed_at", { withTimezone: true }),
     confirmed_by: varchar("confirmed_by", { length: 36 }),
     created_by: varchar("created_by", { length: 36 }),
+    // ===== 自动补全（M：新增/编辑时联网检索 + LLM 生成，详情直接展示）=====
+    ai_background: text("ai_background"), // 背景信息
+    ai_why: text("ai_why"), // 为什么值得关注
+    ai_topics: jsonb("ai_topics"), // 可参考的选题方向 string[]
+    ai_sources: jsonb("ai_sources"), // 参考来源 [{title,url,snippet,authority,publish_time}]
+    enrich_status: varchar("enrich_status", { length: 16 }).notNull().default("none"), // none|pending|done|no_source|failed
+    enrich_fingerprint: varchar("enrich_fingerprint", { length: 64 }), // 名称/日期/地区/分类指纹，用于信息变化检测，避免重复调用
+    enrich_error: text("enrich_error"),
+    enriched_at: timestamp("enriched_at", { withTimezone: true }),
     created_at: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
     updated_at: timestamp("updated_at", { withTimezone: true }),
   },
