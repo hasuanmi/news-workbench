@@ -601,6 +601,71 @@ export async function applyFollowupRevision(params: {
   return { id: cur.id, version: nextVersion };
 }
 
+/**
+ * 「补充要求后重新生成完整评报」：基于当前评报材料 + 用户新要求，
+ * 用全新结构化四区块 + 最终评报**全量替换**当前评报为新版本。
+ * - 更新前先把当前内容存一份快照（source=followup，附用户要求），保留原版本可恢复。
+ * - 保留原 conditions（生成条件/维度等），只替换内容区块与最终评报。
+ * - daily_review.version +1。
+ */
+export async function applyFollowupRegeneration(params: {
+  reviewId: string;
+  modules: ReviewModule[];
+  finalSummary: string;
+  changeNote?: string;
+  createdBy?: string;
+}): Promise<{ id: string; version: number }> {
+  const dba = supabase();
+  const { data: cur, error: readErr } = await dba
+    .from("daily_review")
+    .select("id, version, sections, final_summary")
+    .eq("id", params.reviewId)
+    .single();
+  if (readErr || !cur) throw new Error("评报不存在或已被删除");
+
+  // 1. 先存当前版本快照（保留原版本，可恢复）
+  await writeRevision({
+    reviewId: cur.id,
+    version: cur.version ?? 1,
+    sections: cur.sections,
+    finalSummary: cur.final_summary ?? "",
+    source: "followup",
+    changeNote: params.changeNote,
+    createdBy: params.createdBy,
+  });
+
+  // 2. 保留原 conditions，替换四区块内容
+  let oldSections: Record<string, unknown> = {};
+  try {
+    oldSections = typeof cur.sections === "string" ? JSON.parse(cur.sections) : cur.sections ?? {};
+  } catch {
+    oldSections = {};
+  }
+  const conditions = oldSections.conditions ?? null;
+
+  const sections: Record<string, unknown> = {
+    today_focus: params.modules.find((m) => m.type === "today_focus") ?? null,
+    same_topic: params.modules.find((m) => m.type === "same_topic") ?? null,
+    peer_highlights: params.modules.find((m) => m.type === "peer_highlights") ?? null,
+    gz_daily: params.modules.find((m) => m.type === "gz_daily") ?? null,
+    conditions,
+  };
+
+  const nextVersion = (cur.version ?? 1) + 1;
+  const { error: updErr } = await dba
+    .from("daily_review")
+    .update({
+      sections: JSON.stringify(sections),
+      final_summary: params.finalSummary,
+      version: nextVersion,
+      updated_at: new Date().toISOString(),
+    })
+    .eq("id", cur.id);
+  if (updErr) throw new Error(`更新评报失败: ${updErr.message}`);
+
+  return { id: cur.id, version: nextVersion };
+}
+
 /** 列出某份评报的版本快照（含当前版本，倒序） */
 export async function listReviewRevisions(reviewId: string) {
   const dba = supabase();

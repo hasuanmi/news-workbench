@@ -17,6 +17,12 @@ interface Job {
   defaultCron: string;
   enabled: boolean;
   cron: string;
+  lastRunAt: string | null;
+  lastRunStatus: string | null;
+  lastSuccessAt: string | null;
+  lastProcessedCount: number | null;
+  lastError: string | null;
+  nextRunAt: string | null;
 }
 
 interface JobLog {
@@ -56,6 +62,15 @@ function fmtTime(t: string | null): string {
   ).padStart(2, "0")}`;
 }
 
+function fmtLongTime(t: string | null): string {
+  if (!t) return "—";
+  const d = new Date(t);
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(
+    2,
+    "0"
+  )} ${String(d.getHours()).padStart(2, "0")}:${String(d.getMinutes()).padStart(2, "0")}`;
+}
+
 function duration(start: string, end: string | null): string {
   if (!end) return "进行中…";
   const sec = Math.round((new Date(end).getTime() - new Date(start).getTime()) / 1000);
@@ -65,7 +80,8 @@ function duration(start: string, end: string | null): string {
 export default function SchedulerAdminPage() {
   const [jobs, setJobs] = useState<Job[]>([]);
   const [logs, setLogs] = useState<JobLog[]>([]);
-  const [cronConfigured, setCronConfigured] = useState(false);
+  const [autoScheduled, setAutoScheduled] = useState(false);
+  const [serverMessage, setServerMessage] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [runningJob, setRunningJob] = useState<string | null>(null);
@@ -78,7 +94,8 @@ export default function SchedulerAdminPage() {
       if (data.success) {
         setJobs(data.jobs);
         setLogs(data.logs);
-        setCronConfigured(data.cronConfigured);
+        setAutoScheduled(data.autoScheduled);
+        setServerMessage(data.message ?? null);
       }
     } finally {
       setLoading(false);
@@ -138,19 +155,38 @@ export default function SchedulerAdminPage() {
     <AppShell>
       <div className="space-y-6">
         <header>
-          <h1 className="font-serif text-2xl font-bold">定时任务</h1>
+          <h1 className="font-serif text-2xl font-bold">定时任务状态</h1>
           <p className="text-sm text-[var(--muted-foreground)] mt-1">
-            配置线索识别、每周简报、每日评报的自动调度。到达 cron 时间后，由服务器定时器或外部 cron
-            调用接口触发；也可在此手动立即执行。
+            查看新闻线索识别、每周简报、每日评报的自动调度状态。已启用并配好触发密钥 + 服务器 crontab
+            后才会真正自动运行；否则仅支持在此「立即执行」人工测试。
           </p>
         </header>
 
-        {!cronConfigured && (
+        {/* 自动运行状态横幅（明确告知是否真的会每天自动执行） */}
+        <Card className={autoScheduled ? "border-[var(--success)]/40 bg-[var(--success)]/5" : "border-[var(--warning)]/40 bg-[var(--warning)]/5"}>
+          <CardContent className="py-3 text-sm flex items-start gap-2">
+            <span className="text-lg leading-none mt-0.5">{autoScheduled ? "✅" : "⚠️"}</span>
+            <div>
+              {autoScheduled ? (
+                <p className="font-medium text-slate-700">已自动运行：触发密钥已配置，配合服务器 crontab 即会定时触发。</p>
+              ) : (
+                <p className="font-medium text-[var(--warning)]">
+                  尚未自动运行：系统当前<b>不会</b>自行定时执行抓取 / 线索识别 / 评报生成，仅支持后台手动「立即执行」。
+                </p>
+              )}
+              <p className="mt-1 text-slate-500">{serverMessage}</p>
+            </div>
+          </CardContent>
+        </Card>
+
+        {!autoScheduled && (
           <Card className="border-[var(--warning)]/40 bg-[var(--warning)]/5">
-            <CardContent className="py-3 text-sm text-[var(--muted-foreground)]">
-              未检测到 <code className="px-1 bg-[var(--secondary)] rounded">CRON_SECRET</code>{" "}
-              环境变量。外部定时器调用 <code className="px-1 bg-[var(--secondary)] rounded">/api/cron/{"{job}"}</code>{" "}
-              时需要此密钥鉴权；当前可使用「立即执行」手动触发。详见 DEPLOY.md。
+            <CardContent className="py-3 text-sm flex flex-wrap items-center gap-x-4 gap-y-1 text-[var(--muted-foreground)]">
+              <span>正式部署后请在服务器配置 crontab，定时调用</span>
+              <code className="px-1.5 bg-[var(--secondary)] rounded">/api/cron/{"{job}"}</code>
+              <span>（需环境变量</span>
+              <code className="px-1.5 bg-[var(--secondary)] rounded">CRON_SECRET</code>
+              <span>, 与后台密钥 <code className="px-1.5 bg-[var(--secondary)] rounded">ingest.api_token</code> / 抓取端保持一致）。完整方案见 DEPLOY.md「定时任务」。</span>
             </CardContent>
           </Card>
         )}
@@ -158,7 +194,7 @@ export default function SchedulerAdminPage() {
         <Card>
           <CardHeader className="flex-row items-center justify-between space-y-0">
             <CardTitle className="text-base flex items-center gap-2">
-              <Clock className="w-4 h-4" /> 任务调度
+              <Clock className="w-4 h-4" /> 任务调度与运行状态
             </CardTitle>
             <Button size="sm" onClick={save} disabled={saving}>
               <Save className="w-4 h-4 mr-1" />
@@ -172,9 +208,9 @@ export default function SchedulerAdminPage() {
               jobs.map((job) => (
                 <div
                   key={job.name}
-                  className="flex flex-col md:flex-row md:items-center gap-3 md:gap-4 p-3 rounded-md border border-[var(--border)]"
+                  className="flex flex-col lg:flex-row lg:items-center gap-3 lg:gap-4 p-3 rounded-md border border-[var(--border)]"
                 >
-                  <div className="flex items-center gap-3 md:w-64 shrink-0">
+                  <div className="flex items-center gap-3 lg:w-60 shrink-0">
                     <Switch
                       checked={job.enabled}
                       onCheckedChange={(v) => updateJob(job.name, { enabled: v })}
@@ -188,14 +224,36 @@ export default function SchedulerAdminPage() {
                   </div>
                   <div className="flex-1 min-w-0">
                     <p className="text-xs text-[var(--muted-foreground)]">{job.description}</p>
-                    <div className="flex items-center gap-2 mt-2">
-                      <Input
-                        value={job.cron}
-                        onChange={(e) => updateJob(job.name, { cron: e.target.value })}
-                        className="h-8 text-xs font-mono w-40"
-                        placeholder="分 时 日 月 周"
-                      />
-                      <span className="text-xs text-[var(--muted-foreground)]">{cronHint(job.cron)}</span>
+                    <div className="flex flex-wrap items-center gap-x-4 gap-y-1 mt-2 text-xs text-[var(--muted-foreground)]">
+                      <span className="flex items-center gap-1">
+                        执行时间：
+                        <Input
+                          value={job.cron}
+                          onChange={(e) => updateJob(job.name, { cron: e.target.value })}
+                          className="h-7 text-xs font-mono w-36 inline-flex"
+                          placeholder="分 时 日 月 周"
+                        />
+                      </span>
+                      <span>{cronHint(job.cron)}</span>
+                      <span className="flex items-center gap-1">
+                        下一次执行：<b>{job.nextRunAt ? fmtLongTime(job.nextRunAt) : "—"}</b>
+                      </span>
+                    </div>
+                    <div className="flex flex-wrap items-center gap-x-4 gap-y-1 mt-1.5 text-xs text-[var(--muted-foreground)]">
+                      <span>最近执行：{job.lastRunAt ? fmtLongTime(job.lastRunAt) : "从未执行"}</span>
+                      <span>
+                        最近成功：
+                        {job.lastSuccessAt ? fmtLongTime(job.lastSuccessAt) : "—"}
+                      </span>
+                      <span>
+                        最近处理：{job.lastProcessedCount !== null ? `${job.lastProcessedCount} 篇` : "—"}
+                      </span>
+                      {job.lastError && (
+                        <span className="text-[var(--destructive)]">最近错误：{job.lastError}</span>
+                      )}
+                      {job.lastRunStatus === "failed" && (
+                        <span className="text-[var(--destructive)]">最近一次失败</span>
+                      )}
                     </div>
                   </div>
                   <Button
@@ -210,7 +268,7 @@ export default function SchedulerAdminPage() {
                     ) : (
                       <Play className="w-4 h-4 mr-1" />
                     )}
-                    立即执行
+                    立即执行一次
                   </Button>
                 </div>
               ))

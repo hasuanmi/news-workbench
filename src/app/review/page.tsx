@@ -7,7 +7,7 @@ import { ReviewResult } from "@/components/review/review-result";
 import { Button } from "@/components/ui/button";
 import { Loader2, History, Sparkles } from "lucide-react";
 import type { ReviewModule } from "@/lib/review-types";
-import { ReviewFollowup, type FollowupTurn } from "@/components/review/review-followup";
+import { ReviewFollowup } from "@/components/review/review-followup";
 import { DraftSelection } from "@/components/review/review-draft-selection";
 import type { DraftPayload } from "@/lib/review-draft";
 
@@ -50,7 +50,6 @@ export default function ReviewPage() {
   const [history, setHistory] = useState<HistoryItem[]>([]);
   const [historyLoading, setHistoryLoading] = useState(false);
   const [currentReviewId, setCurrentReviewId] = useState<string | null>(null);
-  const [followupTurns, setFollowupTurns] = useState<FollowupTurn[]>([]);
   const abortRef = useRef<AbortController | null>(null);
 
   const [draft, setDraft] = useState<DraftPayload | null>(null);
@@ -66,7 +65,6 @@ export default function ReviewPage() {
     setFinalSummary("");
     setDisplayRules(null);
     setCurrentReviewId(null);
-    setFollowupTurns([]);
     setPhase("fetching");
     try {
       const res = await fetch("/api/review/draft", {
@@ -112,7 +110,6 @@ export default function ReviewPage() {
     setFinalSummary("");
     setDisplayRules(null);
     setCurrentReviewId(null);
-    setFollowupTurns([]);
     setPhase("analyzing");
 
     const controller = new AbortController();
@@ -212,7 +209,6 @@ export default function ReviewPage() {
       setFinalSummary(data.review.final_summary ?? "");
       setDisplayRules(data.review.display_rules ?? null);
       setCurrentReviewId(id);
-      setFollowupTurns([]);
       setPhase("done");
       setShowHistory(false);
       setError(null);
@@ -317,8 +313,6 @@ export default function ReviewPage() {
             {!loading && currentReviewId && (
               <ReviewFollowup
                 reviewId={currentReviewId}
-                turns={followupTurns}
-                onTurnsChange={setFollowupTurns}
                 onReviewUpdated={() => viewHistory(currentReviewId)}
               />
             )}

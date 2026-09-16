@@ -1,26 +1,30 @@
 /**
- * 每日评报「继续追问 / AI 协作修改」（WF04-F）
+ * 每日评报「补充要求 → 重新生成完整评报」（WF04-F 重构）
  *
- * 严格基于「本次评报」上下文：本次日期、对比媒体、相关文章、同题聚类结果、
- * 分析维度、生成条件与已生成评报。不做脱离当前材料的普通聊天。
- *
- * 支持的编辑操作：
- *   1. 展开某一主题  2. 重新比较指定媒体  3. 调整分析维度
- *   4. 补充遗漏      5. 修改语言风格      6. 精简 / 扩写某一部分
+ * 本功能不是普通聊天问答，而是「用户补充要求后重新生成一版完整每日评报」：
+ * - 输入：用户新增要求（对本期的补充/调整意见）。
+ * - 依据：本期选稿 / 同题聚类 / 同行独有 / 原始评报（四区块结构化 + 最终评报）。
+ * - 输出：全新结构化四区块（今日重点 / 同题观察 / 同行亮点 / 广州日报观察）+ 最终评报。
+ * - 由路由层调用 applyFollowupRegeneration 全量替换保存为新版本（原版本留快照可恢复）。
  *
  * 架构：
- * - 复用统一 LLM 出口 unifiedStream（自定义模型优先，豆包回退）。
- * - 纯函数组装上下文 + 流式生成，不直接碰 DB（由路由层读取已保存评报传入）。
- * - 长生成用 SSE 流式，避免同步超时。
+ * - 复用统一 LLM 出口 unifiedInvoke（结构化 JSON）/ unifiedStream（最终评报流式）。
+ * - 结构化部分非流式，最终评报流式（SSE 打字机）。
+ * - 不直接碰 DB（由路由层读取已保存评报传入，生成后由路由层落库）。
  */
 
-import { unifiedStream, type LLMStreamChunk } from "@/lib/llm-client";
+import { unifiedInvoke, unifiedStream, type LLMStreamChunk } from "@/lib/llm-client";
 import type { ChatMessage } from "@/lib/llm-adapter";
 import type { ReviewModule } from "@/lib/review-types";
 
-export type FollowupMode = "question" | "revise";
+const MODULE_LABELS: Record<string, string> = {
+  today_focus: "今日重点",
+  same_topic: "同题观察",
+  peer_highlights: "同行亮点",
+  gz_daily: "广州日报观察",
+};
 
-/** 本次评报的完整上下文（由路由从 daily_review.sections.conditions + 模块还原） */
+/** 本次评报的完整上下文（由路由从 daily_review.sections + final_summary 还原） */
 export interface ReviewContextInput {
   reportDate: string;
   modules: ReviewModule[];
@@ -38,30 +42,7 @@ export interface ReviewContextInput {
   } | null;
 }
 
-const SYSTEM_PROMPT = `你是广州日报值班编辑的"每日评报"AI 协作助手。你只能基于提供的【本次评报材料】作答或改稿，严禁脱离材料引入未给出的媒体、标题、数据或事实；材料不足时明确说明"本次评报材料中暂无相关依据"。
-
-本次允许的协作操作仅限以下六类：
-1. 展开某一主题：把评报中已有主题展开，补充该主题下已有的同题角度/同行做法细节。
-2. 重新比较指定媒体：针对编辑点名的媒体，基于材料中的同题对比与条目重新横向比较。
-3. 调整分析维度：按编辑指定的维度（如选题、时效、角度、深度、表现形式、独有价值）重新组织分析。
-4. 补充遗漏：基于"同行亮点 / 广州日报观察 / 独有价值"材料，补充广州可借鉴或可能遗漏的点。
-5. 修改语言风格：在不改变事实的前提下，按编辑要求调整语气与篇幅（如更精炼、更书面、编辑部口吻）。
-6. 精简或扩写某一部分：只针对编辑指定的区块或段落精简/扩写，其它部分保持不变。
-
-区分两种模式：
-- 追问(question)：用专业、简洁、客观的中文回答，引用材料中的媒体与标题作为依据，可给可操作建议，但不直接改稿。
-- 协作修改(revise)：输出可直接替换的成稿文本。若编辑指定了区块，只重写该区块并在开头用一行"【对应区块：xxx】"标注；若要求改最终评报，则输出完整的新最终评报。不得编造材料外内容。
-
-输出要求：中文、专业克制、编辑部术语（同题、同行、评报、选题、版面），不使用营销化表达，不输出 JSON。`;
-
-const MODULE_LABELS: Record<string, string> = {
-  today_focus: "今日重点",
-  same_topic: "同题观察",
-  peer_highlights: "同行亮点",
-  gz_daily: "广州日报观察",
-};
-
-/** 把本次评报的全部材料渲染为带给 AI 的上下文文本 */
+/** 把本次评报的全部材料渲染为带给 AI 的上下文文本（结构化四区块 + 最终评报） */
 export function buildReviewContext(input: ReviewContextInput): string {
   const { reportDate, modules, finalSummary, mediaNames, dimensions, conditions } = input;
   const lines: string[] = [];
@@ -88,7 +69,6 @@ export function buildReviewContext(input: ReviewContextInput): string {
     lines.push(`===== 区块：${title} =====`);
     if (mod.summary) lines.push(`区块摘要：${mod.summary}`);
 
-    // 同题聚类：完整对比表（媒体 / 角度 / 亮点 / 标题 / 链接）
     if (Array.isArray(mod.topics) && mod.topics.length > 0) {
       for (const topic of mod.topics) {
         lines.push(`同题主题「${topic.theme}」`);
@@ -106,7 +86,6 @@ export function buildReviewContext(input: ReviewContextInput): string {
       }
     }
 
-    // 相关文章条目：媒体 / 标题 / 摘要 / 原文链接（可核验依据）
     if (Array.isArray(mod.items) && mod.items.length > 0) {
       for (const item of mod.items) {
         const segs = [`- ${item.media || ""}${item.title ? `《${item.title}》` : ""}`];
@@ -119,44 +98,169 @@ export function buildReviewContext(input: ReviewContextInput): string {
     lines.push("");
   }
 
-  lines.push("===== 区块：最终评报（当前版本） =====");
+  lines.push("===== 原始最终评报（供参考与衔接） =====");
   lines.push(finalSummary || "（无）");
 
-  return lines.join("\n").slice(0, 9000); // 控制上下文长度，保留材料密度
+  return lines.join("\n").slice(0, 12000); // 控制上下文长度，保留材料密度
 }
 
-/**
- * 流式执行追问/协作修改。
- * @param param 本次评报上下文 + 用户输入 + 多轮历史
- * @yields 流式文本分片
- */
-export async function* runFollowup(params: {
-  mode: FollowupMode;
-  context: ReviewContextInput;
-  input: string;
-  history?: { role: "user" | "assistant"; content: string }[];
-}): AsyncGenerator<LLMStreamChunk> {
-  const context = buildReviewContext(params.context);
+const STRUCTURE_SYSTEM = `你是广州日报值班编辑的资深评报主笔。请基于【本次评报材料】与编辑给出的【新增要求】，重新生成一版完整、可整体替换旧版的评报结构化数据。
 
-  const messages: ChatMessage[] = [
-    { role: "system", content: SYSTEM_PROMPT },
-    { role: "user", content: `以下是【本次评报材料】，所有问答与改稿都只能基于它：\n\n${context}` },
+硬性要求：
+1. 严格基于提供的材料（本期选稿 / 同题聚类 / 同行独有 / 原始评报），可调整组织、切入角度、详略与语言侧重，以满足新增要求；不得新增材料之外的媒体、标题、数据或事实。
+2. 必须输出严格 JSON：不要 Markdown 代码块、不要多余文字，直接输出 JSON 结构，如下：
+{
+  "today_focus": { "summary": "今日重点概述", "items": [ { "media": "", "title": "", "summary": "", "url": "" } ] },
+  "same_topic": [ { "theme": "同题主题", "comparison": [ { "media": "", "angle": "", "highlight": "", "title": "", "url": "" } ], "analysis": "聚类分析" } ],
+  "peer_highlights": [ { "media": "", "title": "", "summary": "", "url": "", "why_noteworthy": "" } ],
+  "gz_daily": { "summary": "广州日报观察", "items": [ { "media": "", "title": "", "summary": "", "url": "" } ] }
+}
+3. today_focus / gz_daily 有 summary 与 items；same_topic / peer_highlights 为数组。
+4. 所有 url 沿用材料中的原文链接，不得编造。`;
+
+const FINAL_SYSTEM = `你是资深报纸评报主笔。基于重写后的结构化四区块，撰写一版完整、自然连贯的最终评报。
+用中文、连贯的自然语言（不要列表、不要 JSON、不要 ### / ** / - 等任何标记符号），段落式输出。
+内容应覆盖四部分：今日共同重点，然后是同题报道差异，然后是同行亮点（其他媒体有而广州日报没有重点覆盖的），最后是广州日报可借鉴之处。
+语言风格专业、客观、简洁，符合报纸评报口吻。只输出评报正文。`;
+
+/** 从 LLM 返回的原生文本中健壮地提取并解析 JSON（容忍 ```json 包裹 / 首尾空白） */
+function safeParseJson(raw: string): Record<string, any> {
+  const cleaned = raw
+    .trim()
+    .replace(/^```(?:json)?\s*/i, "")
+    .replace(/\s*```$/, "");
+  const first = cleaned.indexOf("{");
+  const last = cleaned.lastIndexOf("}");
+  if (first === -1 || last === -1 || last <= first) {
+    throw new Error("AI 未返回有效的结构化数据");
+  }
+  return JSON.parse(cleaned.slice(first, last + 1));
+}
+
+/** 结构化 prompt 组装 */
+function buildStructureMessages(
+  context: string,
+  requirement: string,
+): ChatMessage[] {
+  return [
+    { role: "system", content: STRUCTURE_SYSTEM },
+    {
+      role: "user",
+      content: `以下是【本次评报材料】：
+${context}
+
+【编辑新增要求】
+${requirement || "（无，按材料原样重新组织为一版完整评报）"}
+
+请输出完整的重新生成结果（严格 JSON）。`,
+    },
   ];
+}
 
-  // 携带多轮对话历史（如有），保证围绕同一份评报连贯协作
-  for (const h of params.history ?? []) {
-    messages.push({ role: h.role as ChatMessage["role"], content: h.content });
+/** 最终评报 prompt 组装（基于重写后结构化四区块 + 新增要求） */
+function buildFinalMessages(
+  dateStr: string,
+  modules: ReviewModule[],
+  requirement: string,
+): ChatMessage[] {
+  const structureText = JSON.stringify(modules, null, 1);
+  return [
+    { role: "system", content: FINAL_SYSTEM },
+    {
+      role: "user",
+      content: `评报日期：${dateStr}
+${requirement ? `本次编辑新增要求：${requirement}` : ""}
+
+重写后的结构化四区块：
+${structureText}
+
+请撰写最终评报正文（自然段落，不用任何标记符号）。`,
+    },
+  ];
+}
+
+/** 生成重新评报的结构化四区块（非流式，输出 ReviewModule[]） */
+export async function regenerateStructure(
+  input: ReviewContextInput & { requirement: string },
+): Promise<ReviewModule[]> {
+  const context = buildReviewContext(input);
+  const raw = await unifiedInvoke(buildStructureMessages(context, input.requirement), {
+    temperature: 0.3,
+  });
+  const parsed = safeParseJson(raw);
+
+  const modules: ReviewModule[] = [];
+
+  if (parsed.today_focus) {
+    modules.push({
+      type: "today_focus",
+      summary: parsed.today_focus.summary ?? "",
+      items: (parsed.today_focus.items ?? []).map((it: any) => ({
+        media: it?.media,
+        title: it?.title,
+        summary: it?.summary,
+        url: it?.url,
+      })),
+    });
   }
 
-  const modeText = params.mode === "question" ? "追问" : "协作修改";
-  const modeGuide =
-    params.mode === "revise"
-      ? "请按「协作修改」要求输出可直接替换的成稿；若针对某区块，开头标注【对应区块：xxx】。"
-      : "请按「追问」要求作答，不要直接重写整份评报。";
-  messages.push({
-    role: "user",
-    content: `${modeText}（${modeGuide}）：\n${params.input}`,
-  });
+  if (Array.isArray(parsed.same_topic)) {
+    modules.push({
+      type: "same_topic",
+      topics: parsed.same_topic
+        .slice(0, 8)
+        .map((t: any) => ({
+          theme: t?.theme,
+          comparison: (t?.comparison ?? []).map((r: any) => ({
+            media: r?.media,
+            angle: r?.angle,
+            highlight: r?.highlight,
+            title: r?.title,
+            url: r?.url,
+          })),
+          analysis: t?.analysis,
+        })),
+    });
+  }
 
-  yield* unifiedStream(messages, { temperature: params.mode === "revise" ? 0.4 : 0.3 });
+  if (Array.isArray(parsed.peer_highlights)) {
+    modules.push({
+      type: "peer_highlights",
+      items: parsed.peer_highlights.slice(0, 8).map((p: any) => ({
+        media: p?.media,
+        title: p?.title,
+        summary: p?.summary,
+        url: p?.url,
+        why_noteworthy: p?.why_noteworthy,
+      })),
+    });
+  }
+
+  if (parsed.gz_daily) {
+    modules.push({
+      type: "gz_daily",
+      summary: parsed.gz_daily.summary ?? "",
+      items: (parsed.gz_daily.items ?? []).map((it: any) => ({
+        media: it?.media,
+        title: it?.title,
+        summary: it?.summary,
+        url: it?.url,
+      })),
+    });
+  }
+
+  if (modules.length < 2) {
+    throw new Error("AI 返回的结构化数据不完整，请重试");
+  }
+  return modules;
+}
+
+/** 流式生成重新评报的最终评报文本 */
+export async function* streamRegeneratedFinalReview(
+  dateStr: string,
+  modules: ReviewModule[],
+  requirement: string,
+): AsyncGenerator<LLMStreamChunk> {
+  const messages = buildFinalMessages(dateStr, modules, requirement);
+  yield* unifiedStream(messages, { temperature: 0.4 });
 }

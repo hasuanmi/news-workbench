@@ -314,3 +314,58 @@ export async function getRecentJobLogs(limit = 20): Promise<
     error_message: string | null;
   }>;
 }
+
+/** 任务的运行状态摘要：最近执行/最近成功/最近处理量/最近错误/最近日志 */
+export interface JobRuntimeStatus {
+  name: JobName;
+  lastRunAt: string | null;
+  lastSuccessAt: string | null;
+  lastProcessedCount: number | null;
+  lastError: string | null;
+  lastLogId: string | null;
+  lastRunStatus: string | null;
+}
+
+/**
+ * 生成每个定时任务的运行状态。
+ * 基于 task_log 中最近一条/最近成功一条记录聚合。
+ */
+export async function getJobRuntimeStatuses(): Promise<Record<JobName, JobRuntimeStatus>> {
+  const logs = await getRecentJobLogs(100);
+  const byJob: Record<JobName, JobRuntimeStatus> = {
+    clue_identify: emptyStatus("clue_identify"),
+    weekly_briefing: emptyStatus("weekly_briefing"),
+    daily_review: emptyStatus("daily_review"),
+  };
+  for (const log of logs) {
+    const job = byJob[log.workflow_name as JobName];
+    if (!job) continue;
+    if (!job.lastRunAt) {
+      job.lastRunAt = log.start_time;
+      job.lastRunStatus = log.status;
+      job.lastLogId = log.id;
+      job.lastProcessedCount =
+        log.new_data_count ?? log.success_count ?? log.source_count ?? null;
+      if (log.status === "failed") job.lastError = log.error_message;
+    }
+    if (!job.lastSuccessAt && log.status === "success") {
+      job.lastSuccessAt = log.start_time;
+      if (job.lastProcessedCount === null) {
+        job.lastProcessedCount = log.new_data_count ?? log.success_count ?? null;
+      }
+    }
+  }
+  return byJob;
+}
+
+function emptyStatus(name: JobName): JobRuntimeStatus {
+  return {
+    name,
+    lastRunAt: null,
+    lastSuccessAt: null,
+    lastProcessedCount: null,
+    lastError: null,
+    lastLogId: null,
+    lastRunStatus: null,
+  };
+}

@@ -1,17 +1,31 @@
 import { NextRequest } from "next/server";
 import { requireAdmin } from "@/lib/require-admin";
 import { supabase } from "@/lib/db";
-import { runFollowup, type FollowupMode } from "@/lib/review-followup";
+import {
+  regenerateStructure,
+  streamRegeneratedFinalReview,
+  buildReviewContext,
+} from "@/lib/review-followup";
+import { applyFollowupRegeneration } from "@/lib/review-engine";
 import type { ReviewModule } from "@/lib/review-types";
 
 const encoder = new TextEncoder();
 const sse = (obj: unknown) => encoder.encode(`data: ${JSON.stringify(obj)}\n\n`);
 
 /**
- * POST /api/review/[id]/followup — 对已保存评报进行「继续追问 / AI 协作修改」
+ * POST /api/review/[id]/followup — 「补充要求 → 重新生成完整每日评报」
  *
- * 严格基于本次评报上下文（日期 / 媒体 / 文章 / 同题聚类 / 维度 / 已生成评报）。
- * SSE 事件：{ phase:"start" } / { delta } / { done:true } / { error } / [DONE]
+ * 本功能不是普通聊天问答：用户提交补充要求后，基于
+ * 本期选稿 / 同题聚类 / 同行独有 / 原始评报 / 用户新增要求，
+ * 重新生成一版完整评报，并全量替换保存为当前评报的新版本（原版本留快照可恢复）。
+ *
+ * SSE 事件流：
+ *   { phase:"start" }
+ *   { phase:"structure", modules }        // 重构后的结构化四区块（非流式）
+ *   { phase:"final", delta }               // 最终评报流式文本
+ *   { phase:"saved", id, version }         // 已保存为新版本
+ *   { phase:"done" } / { phase:"error", error }
+ *   data: [DONE]
  */
 export async function POST(req: NextRequest, ctx: { params: Promise<{ id: string }> }) {
   const auth = await requireAdmin(req);
@@ -19,20 +33,10 @@ export async function POST(req: NextRequest, ctx: { params: Promise<{ id: string
 
   const { id } = await ctx.params;
   const body = await req.json().catch(() => ({}));
-  const mode: FollowupMode = body.mode === "revise" ? "revise" : "question";
   const input: string = typeof body.input === "string" ? body.input.trim() : "";
-  const history: { role: "user" | "assistant"; content: string }[] = Array.isArray(body.history)
-    ? body.history.filter(
-        (h: unknown) =>
-          h &&
-          typeof h === "object" &&
-          ((h as { role?: unknown }).role === "user" || (h as { role?: unknown }).role === "assistant") &&
-          typeof (h as { content?: unknown }).content === "string",
-      )
-    : [];
 
   if (!input) {
-    return new Response(JSON.stringify({ error: "请输入追问内容或修改意见" }), {
+    return new Response(JSON.stringify({ error: "请输入补充要求" }), {
       status: 400,
       headers: { "Content-Type": "application/json" },
     });
@@ -54,20 +58,17 @@ export async function POST(req: NextRequest, ctx: { params: Promise<{ id: string
 
   let sections: { [key: string]: unknown } = {};
   try {
-    sections =
-      typeof review.sections === "string" ? JSON.parse(review.sections) : review.sections ?? {};
+    sections = typeof review.sections === "string" ? JSON.parse(review.sections) : review.sections ?? {};
   } catch {
     sections = {};
   }
   const moduleOrder = ["today_focus", "same_topic", "peer_highlights", "gz_daily"];
-  const modules = moduleOrder
-    .map((key) => sections[key])
-    .filter((m): m is ReviewModule => Boolean(m));
+  const modules = moduleOrder.map((key) => sections[key]).filter((m): m is ReviewModule => Boolean(m));
   const conditions = (sections.conditions ?? null) as
     | { minWordCount?: number; dimensions?: string[]; topics?: string[]; scanMissing?: boolean; customRequirement?: string }
     | null;
 
-  // 本次对比媒体名单（从生成条件/配置读取；此处用 conditions 中保存的，缺省回退配置）
+  // 本次对比媒体名单（缺省回退配置）
   let mediaNames: string[] = [];
   const { data: mediaCfg } = await db
     .from("app_config")
@@ -84,9 +85,19 @@ export async function POST(req: NextRequest, ctx: { params: Promise<{ id: string
   }
   const dimensions = Array.isArray(conditions?.dimensions) ? conditions!.dimensions : [];
 
+  // 本次评报完整上下文（含原始四区块 + 最终评报），给 AI 作依据
+  const contextInput = {
+    reportDate: review.report_date,
+    modules,
+    finalSummary: review.final_summary ?? "",
+    mediaNames,
+    dimensions,
+    conditions,
+  };
+  const contextText = buildReviewContext(contextInput);
+
   const stream = new ReadableStream({
     async start(controller) {
-      // 客户端中断（如关闭页面）后 controller 已关闭，再 enqueue 会抛错，这里统一安全注入
       let closed = false;
       const push = (data: Uint8Array) => {
         if (closed) return;
@@ -97,34 +108,42 @@ export async function POST(req: NextRequest, ctx: { params: Promise<{ id: string
         }
       };
       push(sse({ phase: "start" }));
+
       try {
-        const gen = runFollowup({
-          mode,
-          context: {
-            reportDate: review.report_date,
-            modules,
-            finalSummary: review.final_summary ?? "",
-            mediaNames,
-            dimensions,
-            conditions,
-          },
-          input,
-          history,
+        // 阶段1：重构结构化四区块（非流式，输出模块 JSON 供前端直接渲染）
+        const regeneratedModules = await regenerateStructure({
+          ...contextInput,
+          requirement: input,
         });
-        let any = false;
-        for await (const chunk of gen) {
-          any = true;
-          if (chunk.content) push(sse({ delta: chunk.content }));
+        push(sse({ phase: "structure", modules: regeneratedModules }));
+
+        // 阶段2：流式生成最终评报
+        let finalSummary = "";
+        for await (const chunk of streamRegeneratedFinalReview(
+          review.report_date,
+          regeneratedModules,
+          input,
+        )) {
+          if (chunk.content) {
+            finalSummary += chunk.content;
+            push(sse({ phase: "final", delta: chunk.content }));
+          }
           if (chunk.done) break;
         }
-        if (!any) {
-          push(sse({ error: "AI 未返回内容，请检查模型配置后重试" }));
-        } else {
-          push(sse({ done: true }));
-        }
+
+        // 阶段3：全量替换保存为新版本（原版本已自动快照，可恢复）
+        const saved = await applyFollowupRegeneration({
+          reviewId: id,
+          modules: regeneratedModules,
+          finalSummary,
+          changeNote: `重新生成评报：${input}`,
+          createdBy: "admin",
+        });
+        push(sse({ phase: "saved", id: saved.id, version: saved.version }));
+        push(sse({ phase: "done", version: saved.version }));
       } catch (err) {
-        console.error("评报追问失败:", err);
-        push(sse({ error: err instanceof Error ? err.message : String(err) }));
+        console.error("评报重新生成失败:", err);
+        push(sse({ phase: "error", error: err instanceof Error ? err.message : String(err) }));
       } finally {
         push(encoder.encode("data: [DONE]\n\n"));
         if (!closed) {
