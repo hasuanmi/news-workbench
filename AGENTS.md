@@ -28,6 +28,7 @@ pnpm install                      # 安装依赖（仅用 pnpm）
 pnpm tsx scripts/seed-config.ts   # 写入配置/分类/线索类型/评报维度种子（幂等 upsert）
 pnpm tsx scripts/seed-users.ts    # 创建 admin / editor 账号（幂等）
 pnpm tsx scripts/import-data.ts   # 从 assets/ 导入媒体表 + 新闻日历（幂等，按 name/dedup_key 去重）
+pnpm tsx scripts/mock-ingest.ts   # 模拟独立抓取服务：纯 HTTP 走 health/queue/articles 完整链路（可选 BASE_URL/INGEST_TOKEN）
 pnpm tsx --test src/lib/calendar-engine.test.ts   # 日历规则引擎单元测试
 pnpm dev / pnpm build             # 开发 / 构建
 ```
@@ -66,7 +67,7 @@ src/
 │       ├── review/           # 【M4】历史评报列表 / [id] 详情 / [id]/followup 追问 / draft 本期选稿
 │       ├── home/             # 【首页】preview 工作内容预览（未来节点 + 最新线索）
 │       ├── stats/            # 首页统计
-│       ├── ingest/           # 【外部抓取服务接入】queue(拉队列) / articles(回推文章)，ingest token 鉴权
+│       ├── ingest/           # 【外部抓取服务接入】health(健康检查) / queue(拉队列) / articles(回推文章)，ingest token 鉴权
 │       └── admin/            # calendar / categories / media / sources / articles / ingest/mock / config / llm / leads / review / scheduler（全部 requireAdmin）
 ├── components/
 │   ├── ui/                   # shadcn/ui
@@ -88,8 +89,9 @@ src/
 │   ├── review-draft.ts       # 【M4】阶段1 本期选稿：后台默认选稿规则(review.selection_rules)+ AI 同题分组/同行独有/新华社背景，落库 review_draft
 │   ├── review-types.ts       # 评报结构化类型（ReviewModule/DisplayRules/GenerationRules）
 │   ├── weekly-briefing.ts    # M3 每周简报（SSE + Markdown 四段拆分）
-│   ├── ingest.ts             # 外部抓取接入层：token 校验、文章去重入库、数据源状态、task_log
-│   ├── mock-ingest.ts        # Mock 外部服务（仿真文章，仅联调，不发真实网络请求）
+│   ├── ingest-contract.ts    # 统一文章契约 article-v1：DTO/normalize 校验/版本号/批量上限（业务只依赖此契约）
+│   ├── ingest.ts             # 外部抓取接入层：token 校验、external_id/hash/URL 去重、补全更新、数据源状态、health、task_log
+│   ├── mock-ingest.ts        # 服务端内置仿真文章（/api/admin/ingest/mock 用，不发真实网络请求）
 │   ├── llm-client.ts         # 统一 AI 出口（自定义 OpenAI 兼容模型优先，失败回退豆包）
 │   ├── llm-adapter.ts        # OpenAI 兼容直连适配器（SSE）
 │   └── crawler/              # 【沙箱 PoC，主流程不依赖】直连媒体站点测试用
@@ -164,12 +166,17 @@ assets/                       # 媒体列表.xlsx、2024年新闻日历.docx（�
 
 沙箱出口网络无法稳定访问外部媒体站点（反爬/超时），故抓取能力从主业务解耦：
 
-- **外部抓取服务**（独立部署）：只负责抓原始文章（标题/正文/发布时间/URL）。
-  - `GET /api/ingest/queue`：拉取启用中的数据源队列（`Authorization: Bearer <ingest_token>`）。
-  - `POST /api/ingest/articles`：批量回推文章与源级成败；主系统做去重入库（`article.content_hash` 唯一）、状态更新（`media_source.crawl_status` ok/warning/error、`fail_count`、`last_ingest_at`、`last_error`）、`task_log`（workflow=`ingest`）记录。
+- **外部抓取服务**（独立部署）：只负责抓原始文章。主业务（线索/评报/入库）只依赖统一文章契约 `src/lib/ingest-contract.ts`（`INGEST_SCHEMA_VERSION="article-v1"`、`INGEST_API_VERSION="1.0"`），不依赖任何站点 HTML。
+  - `GET /api/ingest/health`：无鉴权健康检查，返回 `{status,version,schema_version,checks:{database,ingest_enabled}}`，database 异常 503。
+  - `GET /api/ingest/queue`：拉取启用中的数据源队列（Bearer/X-Ingest-Token 鉴权），返回 version/schema_version/count/sources（source_id/media_id/media_name/source_type/source_url/crawl_method，snake_case+camelCase 双命名，按 last_ingest_at 升序）。
+  - `POST /api/ingest/articles`：批量回推（Bearer 鉴权）。**`source_id` 为唯一必填数据源身份，`media_name` 仅展示/日志不参与业务关联**。去重优先级：`external_id`（唯一索引 source_id+external_id）→ content_hash → URL；同 external_id/URL 的新版本正文更完整（长度 +100 且 ≥1.25 倍，`shouldEnrichExisting`）时**补全更新**（updated）而非判重丢弃。`crawl_time` 区分抓取时间与 `publish_time`。单源隔离、单篇失败不影响整批，返回 `{inserted,updated,duplicated,invalid,failed,successSources,failedSources,perSource}`；硬错误 code：missing_source_id/missing_title/missing_url/invalid_url，时间非法为软警告（回退 crawl_time/抓取时间）。批量上限：单源 50/单源分组 200/总 1000。
+  - 主系统做去重入库（`article.content_hash` 唯一、`external_id` 唯一）、状态更新（`media_source.crawl_status` ok/warning/error、`fail_count`、`last_ingest_at`、`last_ingest_count`、`last_error`）、`task_log`（workflow=`ingest`）记录。
   - 鉴权 token 为配置项 `ingest.api_token`（后台「系统配置」可轮换，默认 `newsdesk-ingest-2026`）。
+  - **完整接入契约见 `docs/ingest-contract.md`**（字段表/必填可选/时间格式/批量限制/超时重试/幂等/错误码/示例/状态字段）。
 - **主系统**：媒体配置、任务编排、article 入库去重、状态记录、AI 线索识别/同题聚类/评报。单个源失败只标记状态，绝不影响主系统页面。
-- **Mock 联调**：`POST /api/admin/ingest/mock`（管理员）生成仿真文章走完整 ingest 链路；`GET /api/admin/articles` 查看已入库文章。`src/lib/mock-ingest.ts` 不发真实网络请求。
+- **Mock 联调（两种）**：
+  - `scripts/mock-ingest.ts`：**独立抓取服务模拟脚本，纯走真实 HTTP**（health→queue→POST articles 两次），不直写 DB，覆盖 6 家评报媒体 + 线索媒体 + 同题/同行独有/新华社多家转载/新栏目开栏语/旧栏目/长短文/重复/缺正文/无效链接/时间异常/external_id 补全更新；运行 `pnpm tsx scripts/mock-ingest.ts`（可选 `BASE_URL`/`INGEST_TOKEN`）。
+  - `POST /api/admin/ingest/mock`（管理员）服务端内置仿真，走同一 ingest 入库链路；`GET /api/admin/articles` 查看已入库文章。`src/lib/mock-ingest.ts` 不发真实网络请求。
 - `src/lib/crawler/*` 为沙箱直连 PoC 代码，仅后台「沙箱直连测试」按钮使用，不在每日工作流中。
 
 ## 已完成：M3 新闻线索

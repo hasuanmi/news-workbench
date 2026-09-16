@@ -151,6 +151,7 @@ export const mediaSource = pgTable(
       .references(() => media.id, { onDelete: "cascade" }),
     source_type: varchar("source_type", { length: 16 }).notNull().default("website"), // website | epaper | other
     source_url: text("source_url"),
+    last_ingest_count: integer("last_ingest_count").notNull().default(0), // 最近一次成功推送新入库/更新篇数（外部抓取服务回传后由 ingest 更新）
     crawl_method: varchar("crawl_method", { length: 16 }).notNull().default("manual"), // rss | html | epaper | manual
     crawl_status: varchar("crawl_status", { length: 16 }).notNull().default("untested"), // untested | ok | warning | error（外部抓取服务回报）
     last_success_at: timestamp("last_success_at", { withTimezone: true }),
@@ -423,8 +424,9 @@ export const article = pgTable(
     source_id: varchar("source_id", { length: 36 }).notNull(),
     title: varchar("title", { length: 500 }).notNull(),
     url: text("url").notNull(),
+    external_id: varchar("external_id", { length: 128 }), // 外部抓取服务提供的文章唯一标识（同一数据源内唯一）
     publish_time: timestamp("publish_time", { withTimezone: true }),
-    crawl_time: timestamp("crawl_time", { withTimezone: true }),
+    crawl_time: timestamp("crawl_time", { withTimezone: true }), // 实际抓取时间（区别于发布时间）
     content_hash: varchar("content_hash", { length: 64 }), // 去重唯一键
     word_count: integer("word_count"),
     section: varchar("section", { length: 64 }), // 版面（电子报，外部抓取可能拿不到）
@@ -456,6 +458,7 @@ export const article = pgTable(
     index("article_media_idx").on(table.media_id),
     index("article_publish_idx").on(table.publish_time),
     uniqueIndex("article_hash_idx").on(table.content_hash),
+    uniqueIndex("article_source_external_idx").on(table.source_id, table.external_id),
   ]
 );
 

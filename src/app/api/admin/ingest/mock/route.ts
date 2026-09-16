@@ -53,7 +53,8 @@ export async function POST(request: NextRequest) {
 
   let successSources = 0;
   let totalInserted = 0;
-  const details: Array<{ sourceId: string; inserted: number; duplicated: number }> = [];
+  let totalUpdated = 0;
+  const details: Array<{ sourceId: string; inserted: number; updated: number; duplicated: number }> = [];
 
   for (const src of sources) {
     try {
@@ -63,18 +64,20 @@ export async function POST(request: NextRequest) {
         perSource
       );
       const r = await ingestArticles(src.id, mockArticles, src.media_id);
-      await reportSourceStatus(src.id, true);
+      await reportSourceStatus(src.id, true, null, r.inserted + r.updated);
       successSources += 1;
       totalInserted += r.inserted;
+      totalUpdated += r.updated;
       details.push({
         sourceId: src.id,
         inserted: r.inserted,
+        updated: r.updated,
         duplicated: r.duplicated + r.invalid,
       });
     } catch (e) {
       const msg = e instanceof Error ? e.message : "mock 入库异常";
       await reportSourceStatus(src.id, false, msg);
-      details.push({ sourceId: src.id, inserted: 0, duplicated: 0 });
+      details.push({ sourceId: src.id, inserted: 0, updated: 0, duplicated: 0 });
     }
   }
 
@@ -83,7 +86,7 @@ export async function POST(request: NextRequest) {
     sourceCount: sources.length,
     successCount: successSources,
     failureCount: sources.length - successSources,
-    newDataCount: totalInserted,
+    newDataCount: totalInserted + totalUpdated,
     errorMessage: "mock 模拟推送",
   });
 
@@ -92,6 +95,7 @@ export async function POST(request: NextRequest) {
     mock: true,
     sources: sources.length,
     inserted: totalInserted,
+    updated: totalUpdated,
     details,
   });
 }

@@ -41,6 +41,7 @@ interface Source {
   error_message: string | null;
   last_crawl_at: string | null;
   last_ingest_at: string | null;
+  last_ingest_count: number | null;
   fail_count: number;
   last_error: string | null;
 }
@@ -450,6 +451,9 @@ function SourceConfigDialog({
                       {s.last_ingest_at && (
                         <span className="ml-2 text-xs font-normal text-[#3f7d5c]">
                           最近入库 {fmtTime(s.last_ingest_at)}
+                          {typeof s.last_ingest_count === "number" && s.last_ingest_count > 0 && (
+                            <> · 入库 {s.last_ingest_count} 篇</>
+                          )}
                         </span>
                       )}
                       {s.fail_count > 0 && (
