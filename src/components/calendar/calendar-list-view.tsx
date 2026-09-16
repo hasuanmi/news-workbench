@@ -2,23 +2,33 @@
 
 import { Badge } from "@/components/ui/badge";
 import { normalizeEventName } from "@/lib/calendar-engine";
-import type { CalEvent } from "./calendar-types";
+import type { CalEvent, CalCategory } from "./calendar-types";
+
+type TagPalette = { bg: string; text: string; dot: string };
+const defaultPalette: TagPalette = { bg: "#f0ece4", text: "#5a534a", dot: "#9a948a" };
+
+function paletteForCategory(cat?: CalCategory | null): TagPalette {
+  const name = cat?.category_name ?? "";
+  if (/纪念日|节日/.test(name)) return { bg: "#f5f0f7", text: "#6b4a8a", dot: "#8f6cb0" };
+  if (/党史|历史/.test(name)) return { bg: "#f3e4e2", text: "#a03a2f", dot: "#c0584b" };
+  if (/总书记|讲话|论述/.test(name)) return { bg: "#f4e2e3", text: "#8f2f33", dot: "#b3392f" };
+  if (/重大会议|政策/.test(name)) return { bg: "#f0e6ef", text: "#7a3d88", dot: "#9a5aa8" };
+  if (/国家战略|区域发展/.test(name)) return { bg: "#e4ebf4", text: "#2d5a8a", dot: "#3d7fbf" };
+  if (/展会|会议|活动|行业/.test(name)) return { bg: "#e3eef7", text: "#1f6f9e", dot: "#2d8fc4" };
+  if (/广东|广州/.test(name)) return { bg: "#f4e6d8", text: "#a05c22", dot: "#c87f2d" };
+  return defaultPalette;
+}
+
+function tagStyle(ev: CalEvent): { bg: string; text: string; dot: string } {
+  const p = paletteForCategory(ev.category);
+  const isLocal = ev.region === "local";
+  const bg = isLocal ? "#f4e6d8" : p.bg;
+  const text = ev.importance === "S" ? "#b3392f" : p.text;
+  const dot = ev.importance === "S" ? "#b3392f" : isLocal ? "#c87f2d" : p.dot;
+  return { bg, text, dot };
+}
 
 const WEEKDAYS = ["日", "一", "二", "三", "四", "五", "六"];
-
-const importanceBadge = (imp: string | null) => {
-  if (imp === "S")
-    return (
-      <Badge className="bg-[var(--primary)] text-white">S</Badge>
-    );
-  if (imp === "A")
-    return <Badge className="bg-[#c87f2d] text-white">A</Badge>;
-  return (
-    <Badge variant="outline" className="text-[#6b6257] border-[#c9c2b6]">
-      B
-    </Badge>
-  );
-};
 
 const regionMark = (region: string | null) =>
   region === "local" ? (
@@ -84,33 +94,49 @@ export function CalendarListView({ items, todayStr, selectedId, onSelect }: Prop
                   <button
                     key={ev.id}
                     onClick={() => onSelect(ev)}
-                    className={`flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-left text-sm transition-colors ${
+                    className={`flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-left text-sm transition-shadow ${
                       selected
-                        ? "bg-[var(--muted)] ring-1 ring-inset ring-[var(--border)]"
-                        : "hover:bg-[var(--muted)]/60"
+                        ? "ring-1 ring-inset ring-[var(--primary)]"
+                        : "hover:ring-1 hover:ring-inset hover:ring-[var(--border)]"
                     }`}
+                    style={{ backgroundColor: tagStyle(ev).bg }}
                   >
-                    {importanceBadge(ev.importance)}
-                    <span className="min-w-0 flex-1 truncate">
+                    <span
+                      className="h-2 w-2 shrink-0 rounded-full"
+                      style={{ backgroundColor: tagStyle(ev).dot }}
+                    />
+                    <span
+                      className="min-w-0 flex-1 truncate font-medium"
+                      style={{ color: tagStyle(ev).text }}
+                    >
                       {normalizeEventName(ev.event_name)}
                       {ev.anniversary != null && (
-                        <span className="ml-1 text-xs text-[var(--muted-foreground)]">
+                        <span className="ml-1 text-xs opacity-75">
                           {ev.anniversary}周年
                         </span>
                       )}
                     </span>
                     {ev.category && (
                       <span
-                        className="shrink-0 text-xs"
-                        style={{ color: ev.category.color }}
+                        className="shrink-0 rounded-full px-1.5 py-0.5 text-[11px] font-medium"
+                        style={{
+                          color: tagStyle(ev).text,
+                          backgroundColor: "rgba(0,0,0,0.05)",
+                        }}
                       >
                         {ev.category.category_name}
                       </span>
                     )}
-                    <span className="shrink-0 text-xs text-[var(--muted-foreground)]">
+                    <span
+                      className="shrink-0 text-xs"
+                      style={{ color: tagStyle(ev).text, opacity: 0.65 }}
+                    >
                       {dist}
                     </span>
                     {regionMark(ev.region)}
+                    {ev.importance === "S" && (
+                      <Badge className="bg-[var(--primary)] text-white">S</Badge>
+                    )}
                   </button>
                 );
               })}
