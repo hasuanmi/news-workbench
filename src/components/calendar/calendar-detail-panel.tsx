@@ -5,7 +5,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { Pencil, Power, Trash2, Sparkles, RefreshCw, ExternalLink, Clock } from "lucide-react";
+import { Pencil, Power, Trash2, RefreshCw, ExternalLink, Clock } from "lucide-react";
 import { normalizeEventName } from "@/lib/calendar-engine";
 import type { CalDetail } from "./calendar-types";
 
@@ -42,6 +42,9 @@ type DetailEntry = {
     topics: string[];
     sources: { title: string; url: string; snippet?: string; authority?: string }[];
     error?: string | null;
+    failCount?: number;
+    canManualRegen?: boolean;
+    maxRetries?: number;
     enriched_at?: string | null;
   } | null;
 } & Omit<
@@ -92,10 +95,13 @@ export function CalendarDetailPanel({
     if (!eventId) return;
     setDetail(null);
     void loadDetail();
-    // 补全进行中（pending）时定时刷新，完成后自动呈现已生成内容
+    // 补全未完成（pending/processing）或失败待自动重试（failed 未达上限）时定时刷新，完成后自动呈现
     const timer = window.setInterval(() => {
       setDetail((prev) => {
-        if (prev && prev.enrich?.status === "pending") void loadDetail();
+        const s = prev?.enrich?.status;
+        if (prev && (s === "pending" || s === "processing" || s === "failed")) {
+          void loadDetail();
+        }
         return prev;
       });
     }, 6000);
@@ -127,9 +133,15 @@ export function CalendarDetailPanel({
 
   const enrich = detail?.enrich ?? null;
   const enrichStatus = enrich?.status ?? "none";
-  const isEnrichPending = enrichStatus === "pending";
-  const isEnrichDone = enrichStatus === "done";
-  const isEnrichNoSource = enrichStatus === "no_source";
+  // 状态机：none(未处理) / pending(已入队) / processing(处理中) / completed(已完成) / failed(失败)
+  const isEnrichBusy =
+    enrichStatus === "pending" || enrichStatus === "processing";
+  const isEnrichDone = enrichStatus === "completed";
+  const isEnrichFailed = enrichStatus === "failed";
+  // 成功但无可靠来源（ai_sources 为空）+ 已完成 → 显示「暂未检索到可靠来源」
+  const isEnrichNoSource = isEnrichDone && (enrich?.sources?.length ?? 0) === 0;
+  // 仅当失败且已达自动重试上限时，才允许次级「重新生成」（后台异常恢复）
+  const showManualRegen = isEnrichFailed && enrich?.canManualRegen === true;
   const displayBackground = enrich?.background || detail?.description || "";
 
   return (
@@ -215,98 +227,105 @@ export function CalendarDetailPanel({
                 </div>
               )}
 
-              {/* 背景信息（优先展示 AI 自动补全，回退到人工备注） */}
-              <section>
-                <h3 className="text-sm font-semibold mb-1.5 flex items-center gap-1.5">
-                  背景信息
-                  {isEnrichPending && (
-                    <span className="inline-flex items-center gap-1 text-xs font-normal text-[var(--muted-foreground)]">
-                      <Clock className="h-3 w-3 animate-pulse" /> AI 补全中…
-                    </span>
-                  )}
-                </h3>
-                <p className="text-sm leading-relaxed whitespace-pre-wrap">
-                  {isEnrichDone
-                    ? displayBackground || "待补充"
-                    : isEnrichNoSource
-                      ? "待补充"
-                      : displayBackground || "待补充"}
-                  {!displayBackground && !isEnrichPending && (
-                    <span className="text-[var(--muted-foreground)]">
-                      {enrichStatus === "none"
-                        ? "系统正在检索权威来源并生成背景，请稍候或稍后刷新。"
-                        : "暂未检索到可靠来源。"}
-                    </span>
-                  )}
-                </p>
-              </section>
-
-              {/* AI 自动补全：为什么值得关注 + 选题方向 + 参考来源 */}
+              {/* 自动补全：后台生成，前台直接展示（无需人工点击） */}
               <section className="rounded-md border border-[var(--border)] bg-[var(--muted)]/30 p-3">
-                <div className="flex items-center justify-between mb-2">
-                  <h3 className="text-sm font-semibold flex items-center gap-1.5">
-                    <Sparkles className="h-4 w-4" /> AI 节点信息补全
-                  </h3>
-                  <Button
-                    size="sm"
-                    variant="outline"
-                    className="h-7 px-2 text-xs"
-                    onClick={regenerate}
-                    disabled={regenerating || isEnrichPending}
-                    title="异常情况下管理后台可重新生成"
-                  >
-                    <RefreshCw className={`h-3.5 w-3.5 mr-1 ${regenerating ? "animate-spin" : ""}`} />
-                    {regenerating ? "重新生成中…" : "重新生成"}
-                  </Button>
-                </div>
-
-                {isEnrichPending && (
-                  <p className="text-sm text-[var(--muted-foreground)]">
-                    系统正在联网检索权威来源并生成以下内容，完成后将自动呈现…
-                  </p>
+                {/* 状态条 */}
+                {isEnrichBusy && (
+                  <div className="flex items-center gap-1.5 text-xs text-[var(--muted-foreground)] mb-2">
+                    <Clock className="h-3.5 w-3.5 animate-pulse" />
+                    正在自动补全…系统将自动呈现实时结果
+                  </div>
                 )}
-
-                {isEnrichDone && (
-                  <div className="space-y-3">
-                    <div>
-                      <h4 className="text-xs font-semibold uppercase text-[var(--muted-foreground)] mb-0.5">
-                        为什么值得关注
-                      </h4>
-                      <p className="text-sm leading-relaxed">{enrich?.why || "待补充"}</p>
-                    </div>
-                    {enrich?.topics && enrich.topics.length > 0 && (
-                      <div>
-                        <h4 className="text-xs font-semibold uppercase text-[var(--muted-foreground)] mb-1">
-                          可参考的选题方向
-                        </h4>
-                        <ul className="space-y-1">
-                          {enrich.topics.map((t, i) => (
-                            <li key={i} className="text-sm flex gap-1.5">
-                              <span className="text-[var(--primary)] shrink-0">·</span>
-                              <span className="leading-relaxed">{t}</span>
-                            </li>
-                          ))}
-                        </ul>
-                      </div>
-                    )}
+                {isEnrichFailed && (
+                  <div className="flex items-center gap-1.5 text-xs text-amber-700 mb-2">
+                    <Clock className="h-3.5 w-3.5 animate-pulse" />
+                    自动补全失败，系统将自动重试
+                    {showManualRegen && "（已用尽重试次数，可手动重新生成）"}
                   </div>
                 )}
 
+                {/* 背景信息 */}
+                <div className="mb-3">
+                  <h3 className="text-sm font-semibold mb-1">背景信息</h3>
+                  {isEnrichBusy ? (
+                    <p className="text-sm text-[var(--muted-foreground)]">
+                      {displayBackground || "正在自动补全…"}
+                    </p>
+                  ) : isEnrichNoSource ? (
+                    <p className="text-sm text-[var(--muted-foreground)]">待补充</p>
+                  ) : (
+                    <p className="text-sm leading-relaxed whitespace-pre-wrap">
+                      {displayBackground || "待补充"}
+                    </p>
+                  )}
+                </div>
+
+                {/* 为什么值得关注 */}
+                {(isEnrichDone || enrichStatus === "none") && !isEnrichBusy && !isEnrichFailed && (
+                  <div className="mb-3">
+                    <h4 className="text-xs font-semibold uppercase text-[var(--muted-foreground)] mb-0.5">
+                      为什么值得关注
+                    </h4>
+                    <p className="text-sm leading-relaxed">
+                      {isEnrichNoSource ? (
+                        <span className="text-[var(--muted-foreground)]">待补充</span>
+                      ) : (
+                        enrich?.why || "待补充"
+                      )}
+                    </p>
+                  </div>
+                )}
+
+                {/* 可参考的选题方向 */}
+                {(isEnrichDone || enrichStatus === "none") && !isEnrichBusy && !isEnrichFailed &&
+                  (enrich?.topics?.length ?? 0) > 0 && (
+                    <div className="mb-3">
+                      <h4 className="text-xs font-semibold uppercase text-[var(--muted-foreground)] mb-1">
+                        可参考的选题方向
+                      </h4>
+                      <ul className="space-y-1">
+                        {enrich!.topics!.map((t, i) => (
+                          <li key={i} className="text-sm flex gap-1.5">
+                            <span className="text-[var(--primary)] shrink-0">·</span>
+                            <span className="leading-relaxed">{t}</span>
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                  )}
+
+                {/* 无可靠来源提示 */}
                 {isEnrichNoSource && (
                   <p className="text-sm text-[var(--muted-foreground)]">
-                    暂未检索到可靠来源。参考来源：暂未检索到可靠来源。
+                    参考来源：暂未检索到可靠来源
                   </p>
                 )}
 
-                {regenError && <p className="text-sm text-red-700">{regenError}</p>}
+                {/* 已达到自动重试上限 → 仅此时提供次级「重新生成」管理操作 */}
+                {showManualRegen && (
+                  <div className="mt-2 flex items-center gap-2">
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      className="h-7 px-2 text-xs"
+                      onClick={regenerate}
+                      disabled={regenerating}
+                      title="自动重试已用尽，可在后台手动重新生成"
+                    >
+                      <RefreshCw className={`h-3.5 w-3.5 mr-1 ${regenerating ? "animate-spin" : ""}`} />
+                      {regenerating ? "重新生成中…" : "重新生成"}
+                    </Button>
+                    {regenError && <span className="text-xs text-red-700">{regenError}</span>}
+                  </div>
+                )}
               </section>
 
-              {/* 参考来源 */}
-              {enrich?.sources && enrich.sources.length > 0 && (
+              {/* 参考来源（已生成时展示） */}
+              {(enrich?.sources?.length ?? 0) > 0 && (
                 <section>
                   <h3 className="text-sm font-semibold mb-1.5">参考来源</h3>
                   <ul className="space-y-1.5">
-                    {enrich.sources.map((s, i) => (
+                    {enrich!.sources!.map((s, i) => (
                       <li key={i} className="text-sm">
                         <a
                           href={s.url}

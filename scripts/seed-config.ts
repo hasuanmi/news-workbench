@@ -75,7 +75,7 @@ async function main() {
     { key: "ingest.api_token", value: "newsdesk-ingest-2026", description: "外部抓取服务接入令牌（/api/ingest/* 鉴权，可随时轮换）" },
     { key: "clue.display_rules", value: { enable_actions: true, sort_by: "first_found_desc", group_by: "none", summary_max_length: 200, reason_max_length: 150, show_articles: true, show_freshness: true, fields: { show_clue_type: true, show_clue_name: true, show_summary: true, show_reason: true, show_tags: true, show_article_count: true, show_first_found: true, show_last_seen: true, show_confidence: true, show_articles: true, show_freshness: true } }, description: "新闻线索卡片展示规则（含关联原文与新鲜度开关）" },
     { key: "clue.identify_rules", value: { default_time_range: "24h", pending_freshness_days: 3, require_article_evidence: true }, description: "新闻线索识别规则：默认时间窗口(24h/3d/7d)、待确认线索新鲜度门槛(天)、待确认是否必须有可核验原文" },
-    { key: "calendar.enrich", value: { enabled: true, authority_sites: "gov.cn,www.gov.cn,news.cn,xinhuanet.com,people.com.cn,cctv.com,gd.gov.cn,gz.gov.cn,12371.cn,qstheory.cn", max_sources: 6 }, description: "节点自动补全配置：联网检索优先权威站点(中国政府网/新华社/人民日报/央视/粤穗政府等)、每节点最大参考来源数；信息未变化不重复调用" },
+    { key: "calendar.enrich", value: { enabled: true, authority_sites: "gov.cn,www.gov.cn,news.cn,xinhuanet.com,people.com.cn,cctv.com,gd.gov.cn,gz.gov.cn,12371.cn,qstheory.cn", max_sources: 6, max_retries: 3 }, description: "节点自动补全配置：联网检索优先权威站点(中国政府网/新华社/人民日报/央视/粤穗政府等)、每节点最大参考来源数、失败自动重试上限次数；信息未变化不重复调用" },
   ];
   for (const cfg of configs) {
     const { error } = await client.from("app_config").upsert(cfg, { onConflict: "key" });

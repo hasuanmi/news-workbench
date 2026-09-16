@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { supabase } from "@/lib/db";
+import { getEnrichConfig, maybeAutoRetryEnrich } from "@/lib/calendar-enrich";
 
 export async function GET(_req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
@@ -13,6 +14,15 @@ export async function GET(_req: NextRequest, { params }: { params: Promise<{ id:
     .maybeSingle();
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
   if (!ev) return NextResponse.json({ error: "节点不存在" }, { status: 404 });
+
+  // 补全失败时：未达自动重试上限则立即触发自动重试（不阻塞本次响应展示）
+  const maxRetries = (await getEnrichConfig()).max_retries;
+  const failCount = Number(ev.enrich_fail_count ?? 0);
+  if (ev.enrich_status === "failed" && failCount < maxRetries) {
+    void maybeAutoRetryEnrich(id);
+  }
+  // 已达重试上限 → 仅此时才允许用户「重新生成」（后台管理的异常恢复，不作为正常流程）
+  const canManualRegen = ev.enrich_status === "failed" && failCount >= maxRetries;
 
   let category: { code: string; category_name: string; color: string } | null = null;
   if (ev.category_id) {
@@ -51,6 +61,9 @@ export async function GET(_req: NextRequest, { params }: { params: Promise<{ id:
       topics: Array.isArray(ev.ai_topics) ? ev.ai_topics : [],
       sources: Array.isArray(ev.ai_sources) ? ev.ai_sources : [],
       error: ev.enrich_error ?? null,
+      failCount,
+      canManualRegen,
+      maxRetries,
       enriched_at: ev.enriched_at ?? null,
     },
   };

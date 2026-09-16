@@ -102,6 +102,7 @@ export const calendarEvent = pgTable(
     enrich_status: varchar("enrich_status", { length: 16 }).notNull().default("none"), // none|pending|done|no_source|failed
     enrich_fingerprint: varchar("enrich_fingerprint", { length: 64 }), // 名称/日期/地区/分类指纹，用于信息变化检测，避免重复调用
     enrich_error: text("enrich_error"),
+    enrich_fail_count: integer("enrich_fail_count").notNull().default(0),
     enriched_at: timestamp("enriched_at", { withTimezone: true }),
     created_at: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
     updated_at: timestamp("updated_at", { withTimezone: true }),

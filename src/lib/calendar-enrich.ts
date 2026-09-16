@@ -26,7 +26,12 @@ export interface EnrichSource {
   publish_time?: string;
 }
 
-export type EnrichStatus = "none" | "pending" | "done" | "no_source" | "failed";
+export type EnrichStatus =
+  | "none" // 未开始
+  | "pending" // 已入队，等待/即将执行
+  | "processing" // 正在检索+生成
+  | "completed" // 已完成（含检索到并生成 / 无可靠来源两种情况，用 ai_sources 是否非空区分）
+  | "failed"; // 失败，系统将自动重试（未达上限）
 
 export interface EnrichConfig {
   enabled: boolean;
@@ -34,6 +39,8 @@ export interface EnrichConfig {
   authority_sites: string;
   /** 每个节点最多采用的参考来源数 */
   max_sources: number;
+  /** 自动重试上限次数（超过后需要人工「重新生成」，避免无限刷 Token） */
+  max_retries: number;
 }
 
 const DEFAULT_ENRICH_CONFIG: EnrichConfig = {
@@ -41,6 +48,7 @@ const DEFAULT_ENRICH_CONFIG: EnrichConfig = {
   authority_sites:
     "gov.cn,www.gov.cn,news.cn,xinhuanet.com,people.com.cn,cctv.com,gd.gov.cn,gz.gov.cn,12371.cn,qstheory.cn",
   max_sources: 6,
+  max_retries: 3,
 };
 
 interface EnrichRow {
@@ -54,6 +62,7 @@ interface EnrichRow {
   category_id: string | null;
   enrich_status: EnrichStatus;
   enrich_fingerprint: string | null;
+  enrich_fail_count: number | null;
 }
 
 interface CategoryRow {
@@ -78,6 +87,10 @@ export async function getEnrichConfig(): Promise<EnrichConfig> {
           typeof v.max_sources === "number" && v.max_sources > 0
             ? v.max_sources
             : DEFAULT_ENRICH_CONFIG.max_sources,
+        max_retries:
+          typeof v.max_retries === "number" && v.max_retries > 0
+            ? v.max_retries
+            : DEFAULT_ENRICH_CONFIG.max_retries,
       };
     }
   } catch {
@@ -278,16 +291,21 @@ export async function runEventEnrich(
   if (
     !force &&
     row.enrich_fingerprint === fp &&
-    (row.enrich_status === "done" || row.enrich_status === "no_source")
+    row.enrich_status === "completed"
   ) {
     return false;
   }
 
-  // 置为补全中
+  // 重新生成时重置失败计数
   await supabase()
     .schema("public")
     .from("calendar_event")
-    .update({ enrich_status: "pending", enrich_fingerprint: fp, updated_at: new Date().toISOString() })
+    .update({
+      enrich_status: "processing",
+      enrich_fingerprint: fp,
+      enrich_fail_count: force ? 0 : row.enrich_fail_count ?? 0,
+      updated_at: new Date().toISOString(),
+    })
     .eq("id", id);
 
   let categoryName: string | null = null;
@@ -304,19 +322,20 @@ export async function runEventEnrich(
   // 1) 检索
   const sources = await searchSources(buildQuery(row), cfg);
 
-  // 未检索到可靠来源 → 不编造，标记 no_source
+  // 未检索到可靠来源 → 不编造，标记 completed（ai_sources 为空，详情展示「暂未检索到可靠来源」）
   if (sources.length === 0) {
     await supabase()
       .schema("public")
       .from("calendar_event")
       .update({
-        enrich_status: "no_source",
+        enrich_status: "completed",
         enrich_fingerprint: fp,
         ai_background: null,
         ai_why: null,
         ai_topics: null,
         ai_sources: null,
         enrich_error: null,
+        enrich_fail_count: 0,
         enriched_at: new Date().toISOString(),
         updated_at: new Date().toISOString(),
       })
@@ -339,12 +358,14 @@ export async function runEventEnrich(
         .schema("public")
         .from("calendar_event")
         .update({
-          enrich_status: "no_source",
+          enrich_status: "completed",
           enrich_fingerprint: fp,
           ai_background: gen.background && gen.background !== "待补充" ? gen.background : null,
           ai_why: gen.why && gen.why !== "待补充" ? gen.why : null,
           ai_topics: gen.topics && gen.topics.length ? gen.topics : null,
           ai_sources: sources,
+          enrich_error: null,
+          enrich_fail_count: 0,
           enriched_at: new Date().toISOString(),
           updated_at: new Date().toISOString(),
         })
@@ -354,13 +375,14 @@ export async function runEventEnrich(
         .schema("public")
         .from("calendar_event")
         .update({
-          enrich_status: "done",
+          enrich_status: "completed",
           enrich_fingerprint: fp,
           ai_background: gen.background && gen.background !== "待补充" ? gen.background : null,
           ai_why: gen.why && gen.why !== "待补充" ? gen.why : null,
           ai_topics: gen.topics && gen.topics.length ? gen.topics : null,
           ai_sources: sources,
           enrich_error: null,
+          enrich_fail_count: 0,
           enriched_at: new Date().toISOString(),
           updated_at: new Date().toISOString(),
         })
@@ -368,8 +390,9 @@ export async function runEventEnrich(
     }
     return true;
   } catch (err) {
-    // LLM/落库失败：标记 failed，保留参考来源供人工二次生成时复用
+    // LLM/落库失败：标记 failed 并递增失败计数（未达上限时系统将自动重试）
     const msg = err instanceof Error ? err.message : "补全失败";
+    const failCount = (row.enrich_fail_count ?? 0) + 1;
     await supabase()
       .schema("public")
       .from("calendar_event")
@@ -378,11 +401,33 @@ export async function runEventEnrich(
         enrich_fingerprint: fp,
         ai_sources: sources,
         enrich_error: msg.slice(0, 500),
+        enrich_fail_count: failCount,
         updated_at: new Date().toISOString(),
       })
       .eq("id", id);
     return true;
   }
+}
+
+/**
+ * 判断当前节点是否需要（且允许）自动重试补全。
+ * 从详情路由读取到 failed 时调用：未达重试上限则自动触发一次，返回 true。
+ */
+export async function maybeAutoRetryEnrich(id: string): Promise<boolean> {
+  const { data: ev } = await supabase()
+    .schema("public")
+    .from("calendar_event")
+    .select("id, enrich_status, enrich_fail_count")
+    .eq("id", id)
+    .maybeSingle();
+  if (!ev) return false;
+  if (ev.enrich_status !== "failed") return false;
+  const cfg = await getEnrichConfig();
+  const failCount = Number(ev.enrich_fail_count ?? 0);
+  if (failCount >= cfg.max_retries) return false;
+  // 触发自动重试（不加 force，指纹相同不阻碍——failed 时会重新执行）
+  void runEventEnrich(id, { force: false });
+  return true;
 }
 
 /** 记录补全任务的开始，返回可追踪的 taskId */
