@@ -5,41 +5,47 @@ import { cn } from "@/lib/utils";
 
 export interface PageTransitionProps {
   children: React.ReactNode;
-  /** 切换键：内容变化时应向后代/自身重新触发生命周期 */
+  /** 切换键：contentKey 变化时先淡出旧内容(100ms)再淡入新内容(180ms) */
   contentKey?: string;
   className?: string;
 }
 
 /**
- * 极轻量的内容切换淡入（200ms，仅 opacity + 轻微上移）。
- * 不做复杂动画；用于页面/区块数据刷新时的平滑替换。
+ * 轻量内容切换：contentKey 变化时「旧内容淡出 100ms → 新内容淡入 180ms」。
+ * - 用 state 缓存旧 children，待旧内容完全淡出后才换成新 children，避免整页直接替换的“硬”感。
+ * - 仅 opacity + 轻微上移，不做复杂转场；不引额外路由耦合。
  */
 export function PageTransition({ children, contentKey, className }: PageTransitionProps) {
-  // 默认已显示（避免首屏闪动）；仅当 contentKey 变化时重新做一次淡入
-  const [mounted, setMounted] = React.useState(true);
+  const [display, setDisplay] = React.useState<React.ReactNode>(children);
+  const [phase, setPhase] = React.useState<"in" | "out">("in");
   const prevKey = React.useRef(contentKey);
+  const timer = React.useRef<ReturnType<typeof setTimeout> | null>(null);
 
   React.useEffect(() => {
     if (prevKey.current !== contentKey) {
       prevKey.current = contentKey;
-      setMounted(false);
-      const raf = requestAnimationFrame(() => setMounted(true));
-      return () => {
-        cancelAnimationFrame(raf);
-        setMounted(true);
-      };
+      if (timer.current) clearTimeout(timer.current);
+      // 淡出旧内容
+      setPhase("out");
+      timer.current = setTimeout(() => {
+        // 旧内容已透明，替换为新内容并淡入
+        setDisplay(children);
+        setPhase("in");
+      }, 100);
     }
-  }, [contentKey]);
+    // children 变化但 key 未变（数据刷新）时直接展示新内容，保持现状
+  }, [contentKey, children]);
 
   return (
     <div
       className={cn(
-        "transition-all duration-200 ease-out",
-        mounted ? "translate-y-0 opacity-100" : "translate-y-1 opacity-0",
+        phase === "in"
+          ? "translate-y-0 opacity-100 transition-[opacity,transform] duration-[180ms] ease-out"
+          : "translate-y-1 opacity-0 transition-[opacity,transform] duration-100 ease-out",
         className
       )}
     >
-      {children}
+      {display}
     </div>
   );
 }

@@ -75,10 +75,10 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                 key={item.href}
                 href={item.href}
                 className={cn(
-                  "flex items-center gap-3 px-3 py-2 rounded-md text-sm transition-colors",
+                  "flex items-center gap-3 px-3 py-2 rounded-md text-sm transition-[color,background-color,transform] duration-150 active:translate-y-px focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/50",
                   active
                     ? "bg-[var(--primary)] text-[var(--primary-foreground)] font-medium"
-                    : "text-[var(--foreground)] hover:bg-[var(--accent)]"
+                    : "text-[var(--foreground)] hover:bg-[var(--accent)]/60"
                 )}
               >
                 <Icon className="w-4 h-4" />

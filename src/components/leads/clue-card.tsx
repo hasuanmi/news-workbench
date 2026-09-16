@@ -170,7 +170,7 @@ export function ClueCard({ clue, onConfirm, onIgnore, onView }: ClueCardProps) {
   const { fields, summary_max_length, reason_max_length, enable_actions } = rules;
 
   return (
-    <Card className="border-border/60 shadow-sm hover:shadow-md transition-shadow">
+    <Card className="border-border/60">
       <CardHeader className="pb-3">
         <div className="flex items-start justify-between gap-3">
           <div className="flex-1 min-w-0">

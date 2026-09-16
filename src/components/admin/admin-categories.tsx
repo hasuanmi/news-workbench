@@ -22,6 +22,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Pencil, Plus, Loader2 } from "lucide-react";
+import { LoadingButton } from "@/components/common/loading-button";
 import { toast } from "sonner";
 
 interface Category {
@@ -206,10 +207,9 @@ export function AdminCategories() {
             <Button variant="outline" onClick={() => setDialogOpen(false)}>
               取消
             </Button>
-            <Button onClick={handleSave} disabled={saving}>
-              {saving && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
+            <LoadingButton onClick={handleSave} loading={saving} loadingText="保存中...">
               保存
-            </Button>
+            </LoadingButton>
           </DialogFooter>
         </DialogContent>
       </Dialog>

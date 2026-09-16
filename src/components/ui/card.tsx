@@ -2,12 +2,18 @@ import * as React from "react"
 
 import { cn } from "@/lib/utils"
 
-function Card({ className, ...props }: React.ComponentProps<"div">) {
+function Card({
+  className,
+  clickable,
+  ...props
+}: React.ComponentProps<"div"> & { clickable?: boolean }) {
   return (
     <div
       data-slot="card"
       className={cn(
         "bg-card text-card-foreground flex flex-col gap-6 rounded-xl border py-6 shadow-sm",
+        clickable &&
+          "cursor-pointer transition-[color,background-color,border-color,box-shadow,transform] duration-150 hover:border-ring hover:bg-accent/50 active:translate-y-px active:shadow-xs focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/40",
         className
       )}
       {...props}

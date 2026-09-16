@@ -7,6 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Loader2, Save } from "lucide-react";
 import { toast } from "sonner";
+import { LoadingButton } from "@/components/common/loading-button";
 
 interface ConfigItem {
   id: string;
@@ -92,10 +93,9 @@ export function AdminConfig() {
             工作流只读取配置执行，调整规则无需修改代码。修改后下一次定时/手动任务生效。
           </p>
         </div>
-        <Button onClick={handleSave} disabled={saving}>
-          {saving ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <Save className="w-4 h-4 mr-2" />}
-          保存全部
-        </Button>
+        <LoadingButton onClick={handleSave} loading={saving} loadingText="保存中...">
+          <Save className="w-4 h-4 mr-2" /> 保存全部
+        </LoadingButton>
       </header>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">

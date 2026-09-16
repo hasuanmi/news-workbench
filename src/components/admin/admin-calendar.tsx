@@ -36,6 +36,7 @@ import {
 } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { Check, X, Pencil, Plus, Loader2, Trash2 } from "lucide-react";
+import { LoadingButton } from "@/components/common/loading-button";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 
@@ -108,6 +109,7 @@ export function AdminCalendar() {
   const [form, setForm] = useState({ ...emptyForm });
   const [saving, setSaving] = useState(false);
   const [deleting, setDeleting] = useState<AdminEvent | null>(null);
+  const [deletingNow, setDeletingNow] = useState(false);
   const [deleteReason, setDeleteReason] = useState<string>(DELETE_REASONS[0]);
 
   useEffect(() => {
@@ -500,10 +502,9 @@ export function AdminCalendar() {
             <Button variant="outline" onClick={() => setDialogOpen(false)}>
               取消
             </Button>
-            <Button onClick={handleSave} disabled={saving}>
-              {saving && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
+            <LoadingButton onClick={handleSave} loading={saving} loadingText="保存中...">
               保存
-            </Button>
+            </LoadingButton>
           </DialogFooter>
         </DialogContent>
       </Dialog>
@@ -536,11 +537,15 @@ export function AdminCalendar() {
             <Button variant="outline" onClick={() => setDeleting(null)}>
               取消
             </Button>
-            <Button
+            <LoadingButton
               variant="destructive"
+              loading={deletingNow}
+              loadingText="删除中..."
               onClick={async () => {
-                if (!deleting) return;
+                if (!deleting || deletingNow) return;
+                setDeletingNow(true);
                 const ok = await patchEvent(deleting.id, { delete_reason: deleteReason });
+                setDeletingNow(false);
                 if (ok) {
                   toast.success("已删除节点（可追溯）");
                   setDeleting(null);
@@ -548,7 +553,7 @@ export function AdminCalendar() {
               }}
             >
               <Trash2 className="w-4 h-4 mr-2" /> 确认删除
-            </Button>
+            </LoadingButton>
           </DialogFooter>
         </DialogContent>
       </Dialog>

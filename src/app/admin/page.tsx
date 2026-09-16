@@ -25,7 +25,7 @@ export default function AdminHome() {
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           {sections.map((s) => (
             <Link key={s.href} href={s.href}>
-              <Card className="h-full hover:border-[var(--primary)] transition-colors">
+              <Card clickable className="h-full">
                 <CardHeader className="flex-row items-center gap-3 space-y-0">
                   <div className="w-10 h-10 rounded-md bg-[var(--secondary)] flex items-center justify-center">
                     <s.icon className="w-5 h-5" />

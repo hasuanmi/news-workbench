@@ -62,6 +62,16 @@
 ### 交互状态统一（全系统 UIX 规范）
 - 目标：让用户始终知道"操作是否生效、系统正在做什么、进行到哪一步、结果是否更新完成"，不做花哨动画。
 - 动画克制：淡入 / 轻微位移 / 进度变化，150–300ms；禁止大幅缩放、旋转、弹跳。
+- **统一时长 token**（禁止页面内手写其他 duration）：
+  - hover：150ms；button active：80–120ms（采用 active:translate-y-px 按压感）
+  - 页面/内容替换：旧内容淡出 100ms → 新内容淡入 180ms（`PageTransition`）
+  - toast：淡入 150ms / 淡出 300ms
+- **状态统一规则**：
+  - hover：主按钮 `变深 + 极轻阴影`；次/ghost/outline `背景变浅 + 边框加深`；link `下划线`；可点击卡片 `浅底(bg-accent/50) + 轻描边(border-ring)`，**一律禁 hover 放大阴影**。
+  - active：统一 `translate-y-px` 按压 + 阴影降到最低。
+  - focus：统一 focus-visible ring（--ring + 偏移），覆盖导航 Link 与可点击卡片。
+  - disabled：opacity-50 + pointer-events-none。
+  - selected：左侧导航主色实底；Tabs 浅底+描边；列表项 data 高亮。
 - 统一公共组件（`src/components/common/*`，页面禁止各自重复实现）：
   - `LoadingButton`：异步按钮统一loading（spinner + 替换文案 + disabled 防重入），可短暂成功对勾 / 失败叉。
   - `PageSkeleton`：首屏加载骨架，结构与真实内容一致，避免加载完成后跳动。

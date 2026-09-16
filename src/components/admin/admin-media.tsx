@@ -30,6 +30,7 @@ import {
 import { Label } from "@/components/ui/label";
 import { Loader2, Settings2, ExternalLink, FlaskConical, Inbox } from "lucide-react";
 import { toast } from "sonner";
+import { LoadingButton } from "@/components/common/loading-button";
 
 interface Source {
   id: string;
@@ -518,34 +519,27 @@ function SourceConfigDialog({
                     </div>
                   </div>
                   <div className="flex justify-end gap-2">
-                    <Button
+                    <LoadingButton
                       size="sm"
                       variant="outline"
                       onClick={() => testCrawl(s.id)}
-                      disabled={!edit.url || testing === s.id}
+                      disabled={!edit.url}
+                      loading={testing === s.id}
+                      loadingText="测试中..."
                       title="沙箱内直连真实站点（PoC，多数站点受网络/反爬限制）"
                     >
-                      {testing === s.id ? (
-                        <Loader2 className="w-3 h-3 mr-1 animate-spin" />
-                      ) : (
-                        <ExternalLink className="w-3 h-3 mr-1" />
-                      )}
-                      {testing === s.id ? "测试中..." : "沙箱直连测试"}
-                    </Button>
-                    <Button
+                      <ExternalLink className="w-3 h-3 mr-1" /> 沙箱直连测试
+                    </LoadingButton>
+                    <LoadingButton
                       size="sm"
                       variant="outline"
                       onClick={() => onMock(s.id)}
-                      disabled={mockBusy}
+                      loading={mockBusy}
+                      loadingText="推送中..."
                       title="模拟外部抓取服务回推 3 篇文章，走真实入库去重链路"
                     >
-                      {mockBusy ? (
-                        <Loader2 className="w-3 h-3 mr-1 animate-spin" />
-                      ) : (
-                        <FlaskConical className="w-3 h-3 mr-1" />
-                      )}
-                      模拟推送
-                    </Button>
+                      <FlaskConical className="w-3 h-3 mr-1" /> 模拟推送
+                    </LoadingButton>
                     <Button
                       size="sm"
                       onClick={() =>
