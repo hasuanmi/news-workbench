@@ -165,7 +165,7 @@ export function CalendarShell() {
   };
 
   return (
-    <div className="flex h-[calc(100vh-7rem)] gap-0 overflow-hidden">
+    <div className="flex gap-0">
       {/* 左侧主内容 */}
       <div className="flex min-w-0 flex-1 flex-col border-r border-[var(--border)]">
         {/* 工具栏 */}
@@ -244,8 +244,8 @@ export function CalendarShell() {
           {loading ? "加载中…" : `未来 30 天共 ${filtered.length} 个节点`}
         </div>
 
-        {/* 主内容滚动区 */}
-        <div className="min-h-0 flex-1 overflow-y-auto p-4">
+        {/* 主内容区：不设内部滚动，页面自然撑开滚动 */}
+        <div className="flex-1 p-4">
           {loading ? (
             <div className="flex items-center justify-center py-16 text-[var(--muted-foreground)]">
               <Loader2 className="h-5 w-5 animate-spin mr-2" /> 加载中…
@@ -284,8 +284,8 @@ export function CalendarShell() {
         </div>
       </div>
 
-      {/* 右侧常驻面板 */}
-      <aside className="w-[30%] min-w-[320px] max-w-[440px] shrink-0 border-l border-[var(--border)] bg-white">
+      {/* 右侧常驻面板：sticky 顶部，页面滚动时保持可见；内容超高时面板内部滚动 */}
+      <aside className="sticky top-0 h-[calc(100vh-4rem)] w-[30%] min-w-[320px] max-w-[440px] shrink-0 self-start overflow-y-auto border-l border-[var(--border)] bg-white">
         {showCreate || editing ? (
           <CalendarEditPanel
             categories={categories}
