@@ -4,6 +4,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { PageHeader } from "@/components/common/page-header";
 import {
   Select,
   SelectContent,
@@ -167,11 +168,10 @@ export function CalendarShell() {
 
   return (
     <div>
-      {/* 页面标题：与其他页面一致，置于筛选栏上方 */}
-      <header className="mb-6">
-        <h1 className="text-2xl font-serif font-bold text-[#1f1b16]">新闻日历</h1>
-        <p className="text-sm text-[#6b6257] mt-1">按分类 / 地区 / 重要度筛选，列表或月历查看全年重点节点</p>
-      </header>
+      <PageHeader
+        title="新闻日历"
+        subtitle="按分类 / 地区 / 重要度筛选，列表或月历查看全年重点节点"
+      />
       <div className="flex gap-0">
       {/* 左侧主内容 */}
       <div className="flex min-w-0 flex-1 flex-col border-r border-[var(--border)]">

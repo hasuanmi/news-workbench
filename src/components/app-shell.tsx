@@ -29,12 +29,51 @@ const navItems = [
   { href: "/admin", label: "系统管理", icon: Settings },
 ];
 
+/**
+ * 主导航链接：点击时用原生 View Transitions API 接管页面切换（旧快照淡出 → 新内容淡入+轻微上移），
+ * 不支持该 API（降级 fallback）时直接 router.push（由 PageTransition 兜底做淡入淡出）。
+ */
+function NavLink({
+  href,
+  children,
+  className,
+  onClick,
+}: {
+  href: string;
+  children: React.ReactNode;
+  className?: string;
+  onClick?: () => void;
+}) {
+  const router = useRouter();
+  const go = (e: React.MouseEvent<HTMLAnchorElement>) => {
+    e.preventDefault();
+    e.stopPropagation();
+    onClick?.();
+    if (typeof document !== "undefined" && "startViewTransition" in document) {
+      document.startViewTransition(() => router.push(href));
+    } else {
+      router.push(href);
+    }
+  };
+  return (
+    <Link href={href} onClick={go} className={className}>
+      {children}
+    </Link>
+  );
+}
+
 export function AppShell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const router = useRouter();
   const { user, loading } = useCurrentUser();
   const [llmDialogOpen, setLlmDialogOpen] = useState(false);
   const [llmConnected, setLlmConnected] = useState(false);
+  // 是否支持原生 View Transitions API：支持则用它接管页面切换（平滑交叉淡入淡出），否则走 PageTransition 兜底
+  const [vtOK, setVtOK] = useState(false);
+
+  useEffect(() => {
+    if (typeof document !== "undefined" && "startViewTransition" in document) setVtOK(true);
+  }, []);
 
   useEffect(() => {
     // 检查 LLM 配置状态
@@ -71,7 +110,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
               item.href === "/" ? pathname === "/" : pathname.startsWith(item.href);
             const Icon = item.icon;
             return (
-              <Link
+              <NavLink
                 key={item.href}
                 href={item.href}
                 className={cn(
@@ -83,7 +122,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
               >
                 <Icon className="w-4 h-4" />
                 {item.label}
-              </Link>
+              </NavLink>
             );
           })}
         </nav>
@@ -126,7 +165,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
       {/* 主内容 */}
       <main className="flex-1 min-w-0 overflow-x-hidden">
         <div className="max-w-[1400px] mx-auto px-8 py-6">
-          <PageTransition contentKey={pathname}>{children}</PageTransition>
+          <PageTransition contentKey={pathname} enableStatic={vtOK}>{children}</PageTransition>
         </div>
       </main>
 

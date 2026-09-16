@@ -12,6 +12,7 @@ import { DraftSelection } from "@/components/review/review-draft-selection";
 import type { DraftPayload } from "@/lib/review-draft";
 import { TaskProgress, type TaskStage } from "@/components/common/task-progress";
 import { EmptyState } from "@/components/common/empty-state";
+import { PageHeader } from "@/components/common/page-header";
 
 /** 评报生成的真实阶段（由后端 SSE 驱动，前端不伪造步骤） */
 const GENERATE_STAGES: TaskStage[] = [
@@ -222,17 +223,17 @@ export default function ReviewPage() {
 
   return (
     <AppShell>
-      <div className="max-w-[1400px] mx-auto px-6 py-6">
-        <div className="flex items-center justify-between mb-6">
-          <div>
-            <h1 className="text-2xl font-serif font-bold text-[#1f1b16]">每日评报</h1>
-            <p className="text-sm text-[#6b6257] mt-1">选择条件后，AI 对当天媒体报道进行横向比较并生成结构化评报</p>
-          </div>
-          <Button variant="outline" onClick={() => setShowHistory((v) => !v)}>
-            <History className="h-4 w-4 mr-2" />
-            历史评报
-          </Button>
-        </div>
+      <div>
+        <PageHeader
+          title="每日评报"
+          subtitle="选择条件后，AI 对当天媒体报道进行横向比较并生成结构化评报"
+          right={
+            <Button variant="outline" onClick={() => setShowHistory((v) => !v)}>
+              <History className="h-4 w-4 mr-2" />
+              历史评报
+            </Button>
+          }
+        />
 
         {/* 历史侧拉/抽屉 */}
         {showHistory && (

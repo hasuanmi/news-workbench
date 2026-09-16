@@ -9,6 +9,32 @@ html {
   scrollbar-gutter: stable;
 }
 
+/* 页面切换过渡：原生 View Transitions API（App 主导航）——旧内容淡出，新内容淡入+轻微上移，克制止于 300ms */
+@view-transition {
+  navigation: auto;
+}
+::view-transition-old(root) {
+  animation: page-fade-out 160ms ease-out;
+}
+::view-transition-new(root) {
+  animation: page-fade-in-up 280ms ease-out;
+}
+@keyframes page-fade-out {
+  to {
+    opacity: 0;
+  }
+}
+@keyframes page-fade-in-up {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);

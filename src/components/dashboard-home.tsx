@@ -6,6 +6,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { CalendarDays, Radar, ArrowRight } from "lucide-react";
 import { PageSkeleton } from "@/components/common/page-skeleton";
 import { EmptyState } from "@/components/common/empty-state";
+import { PageHeader } from "@/components/common/page-header";
 
 interface UpcomingNode {
   id: string;
@@ -63,13 +64,11 @@ export function DashboardHome() {
 
   return (
     <div className="space-y-8">
-      <header>
-        <h1 className="font-serif text-2xl font-bold">工作台首页</h1>
-        <p className="text-sm text-[var(--muted-foreground)] mt-1">
-          未来节点与最新线索一屏速览，点击进入对应模块处理。
-        </p>
-        {error && <p className="text-xs text-[#b3392f] mt-2">{error}</p>}
-      </header>
+      <PageHeader
+        title="工作台首页"
+        subtitle="未来节点与最新线索一屏速览，点击进入对应模块处理。"
+      />
+      {error && <p className="text-xs text-[#b3392f] mt-2 -mt-4">{error}</p>}
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* ===== 未来新闻节点 ===== */}

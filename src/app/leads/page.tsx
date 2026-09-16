@@ -6,6 +6,7 @@ import { LeadsFilter, type LeadsFilter as LeadsFilterType } from "@/components/l
 import { ClueCard, type Clue } from "@/components/leads/clue-card";
 import { EmptyState } from "@/components/common/empty-state";
 import { PageSkeleton } from "@/components/common/page-skeleton";
+import { PageHeader } from "@/components/common/page-header";
 import { toast } from "sonner";
 
 type Scope = "active" | "history";
@@ -104,13 +105,11 @@ export default function LeadsPage() {
 
   return (
     <AppShell>
-      <div className="max-w-[1400px] mx-auto px-6 py-6">
-        <div className="mb-6">
-          <h1 className="text-2xl font-serif font-bold text-[#1f1b16]">新闻线索</h1>
-          <p className="text-sm text-[#6b6257] mt-1">
-            从时间窗口内的新文章中识别新栏目、系列报道、专题、特色策划；每条线索附原文依据供核验
-          </p>
-        </div>
+      <div>
+        <PageHeader
+          title="新闻线索"
+          subtitle="从时间窗口内的新文章中识别新栏目、系列报道、专题、特色策划；每条线索附原文依据供核验"
+        />
 
         {/* 条件区 */}
         <LeadsFilter onIdentify={handleIdentify} loading={loading} />

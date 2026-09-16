@@ -2,6 +2,7 @@ import { AppShell } from "@/components/app-shell";
 import Link from "next/link";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Database, Settings, Newspaper, Radio, FileText, Clock } from "lucide-react";
+import { PageHeader } from "@/components/common/page-header";
 
 const sections = [
   { href: "/admin/categories", title: "日历分类管理", desc: "维护八大分类，新增/改名/停用分类", icon: Settings },
@@ -16,12 +17,10 @@ export default function AdminHome() {
   return (
     <AppShell>
       <div className="space-y-6">
-        <header>
-          <h1 className="font-serif text-2xl font-bold">系统管理</h1>
-          <p className="text-sm text-[var(--muted-foreground)] mt-1">
-            所有规则配置化，业务规则变化优先改配置与开关，不改主工作流。
-          </p>
-        </header>
+        <PageHeader
+          title="系统管理"
+          subtitle="所有规则配置化，业务规则变化优先改配置与开关，不改主工作流。"
+        />
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           {sections.map((s) => (
             <Link key={s.href} href={s.href}>
