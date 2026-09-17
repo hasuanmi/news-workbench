@@ -199,8 +199,14 @@ async def run_once():
             continue
         clean.append(r)
     if clean:
-        resp = await client.push_articles(clean)
-        logger.info(f"[worker] 推送结果: {resp}")
+        # 主项目限制单批数据源数 <= 50，超过会返回 400 batch_too_large
+        batch_size = 50
+        total = (len(clean) + batch_size - 1) // batch_size
+        for i in range(0, len(clean), batch_size):
+            chunk = clean[i:i + batch_size]
+            resp = await client.push_articles(chunk)
+            logger.info(f"[worker] 推送第 {i // batch_size + 1}/{total} 批"
+                        f"（{len(chunk)} 个源）: {resp}")
 
 
 async def run_loop():
