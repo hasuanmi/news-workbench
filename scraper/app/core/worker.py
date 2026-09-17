@@ -7,6 +7,7 @@
 - crawlMethod=manual（无 URL）直接跳过。
 """
 import asyncio
+import re
 from urllib.parse import urlparse
 
 from app.core import settings
@@ -60,7 +61,14 @@ class GenericScraper(BaseScraper):
         soup = self._soup(html)
         art = Article(media=self.media)
         h1 = soup.find("h1") or soup.title
-        art.title = clean_text(h1.get_text()) if h1 else ""
+        title = clean_text(h1.get_text()) if h1 else ""
+        # h1 常是栏目名（如「要闻动态」），而 <title> 首段常是真实标题：取更长者
+        page_title = clean_text(soup.title.get_text()) if soup.title else ""
+        if page_title:
+            head = re.split(r"\s*[-_|]\s*", page_title)[0].strip()
+            if len(head) > len(title):
+                title = head
+        art.title = title
         art.publish_time = guess_time(soup, url)
         art.content = guess_content(soup)
         art.column_name = guess_column(soup)
@@ -100,6 +108,35 @@ def _select_scraper(source_url: str):
     return CUSTOM_MAP.get(bare) or CUSTOM_MAP.get(host)
 
 
+def _filter_stubs(stubs: list) -> list:
+    """过滤候选链接，剔除明显不是文章的项：
+    - 带 # 锚点的（栏目导航锚点，如 /cbjz/#newspapers，抓下来是同一页的重复标题）
+    - 非 http(s) 的（javascript:、mailto: 等）
+    - 重复 URL（归一化 host/path/query 后判重）
+    - 空 URL
+    """
+    seen = set()
+    out = []
+    for st in stubs:
+        url = ((st.get("url") if isinstance(st, dict) else None) or "").strip()
+        if not url:
+            continue
+        p = urlparse(url)
+        if p.fragment:
+            continue
+        if p.scheme not in ("http", "https"):
+            continue
+        host = p.netloc.lower()
+        if host.startswith("www."):
+            host = host[4:]
+        key = (host, p.path.rstrip("/"), p.query)
+        if key in seen:
+            continue
+        seen.add(key)
+        out.append(st)
+    return out
+
+
 async def dispatch_source(source: dict) -> dict:
     source_id = source.get("sourceId")
     source_url = (source.get("sourceUrl") or "").strip()
@@ -123,9 +160,10 @@ async def dispatch_source(source: dict) -> dict:
         return {"sourceId": source_id, "success": False,
                 "error": f"列表抓取失败: {str(e)[:150]}", "articles": []}
 
+    stubs = _filter_stubs(stubs)
     if not stubs:
         return {"sourceId": source_id, "success": False,
-                "error": "列表未解析到文章链接", "articles": []}
+                "error": "列表未解析到文章链接（已过滤锚点/重复后为空）", "articles": []}
 
     limit = settings.get_settings().worker_per_source
     stubs = stubs[:limit]
