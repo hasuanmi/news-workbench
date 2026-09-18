@@ -17,6 +17,7 @@ import "server-only";
 import { supabase } from "@/lib/db";
 import { invalidateConfigCache } from "@/lib/config";
 import { runCluePipeline } from "@/lib/clue-pipeline";
+import { getClueMonitorMediaIds } from "@/lib/active-media";
 import { updateCalendarRecommendations } from "@/lib/calendar-auto";
 import {
   getWeeklyClues,
@@ -192,9 +193,11 @@ export async function runJob(job: JobName, manual = false): Promise<JobResult> {
       return { job, success: true, summary: `权威来源 ${result.sourceCount} 页，新增 ${result.inserted}、补全 ${result.enriched}、重复 ${result.duplicates}、取证未通过 ${result.rejected}`, detail: result };
     }
     if (job === "clue_identify") {
-      const {data: media,error} = await db.from("media").select("id").eq("enabled",true).in("media_name",["广州日报","广州日报报业集团","南方日报","南方都市报"]);
-      if(error || !media?.length)throw new Error(error?.message??"未配置三家真实监测媒体");
-      const r = await runCluePipeline({timeRange:"3d",mediaScope:"custom",customMediaIds:media.map(m=>m.id),clueTypes:["new_column"]});
+      // 监测名单 = 所有 media.monitor_clue = true 的媒体（业务语义即监测范围）。
+      // 不再用 clue.auto_monitor_media 把识别范围固定为 3 家；采集未覆盖≠排除出监测范围。
+      const mediaIds = await getClueMonitorMediaIds();
+      if (!mediaIds.length) throw new Error("线索监测名单为空（media.monitor_clue 无 true 记录）");
+      const r = await runCluePipeline({timeRange:"3d",mediaScope:"custom",customMediaIds:mediaIds,clueTypes:["new_column"]});
       const ok = r.errors.length === 0;
       await finish(ok, {
         status: ok ? "success" : "failed",

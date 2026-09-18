@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { requireAdmin } from "@/lib/require-admin";
 import { runCluePipeline } from "@/lib/clue-pipeline";
 import { supabase } from "@/lib/db";
+import { getClueMonitorMediaIds } from "@/lib/active-media";
 
 /** POST /api/admin/leads/identify — 触发线索识别流水线（接受动态条件） */
 export async function POST(req: NextRequest) {
@@ -28,13 +29,23 @@ export async function POST(req: NextRequest) {
     }
   }
 
+  // 默认范围 = 线索监测名单（所有 media.monitor_clue = true 的媒体，即新闻线索监测目标）。
+  // 不硬编码 3 家、不依赖 clue.auto_monitor_media；显式 mediaScope:"all" 仍保留为"历史回溯 / 全部媒体识别"入口。
+  let mediaScope = body.mediaScope;
+  let customMediaIds = body.customMediaIds;
+  if (!customMediaIds && mediaScope !== "all") {
+    const monitorIds = await getClueMonitorMediaIds();
+    if (monitorIds.length) customMediaIds = monitorIds;
+    else mediaScope = "all"; // 名单为空时退回全部（历史回溯），非日常默认
+  }
+
   // 动态条件
   const filter = {
     timeRange: body.timeRange || defaultTimeRange,
     customStart: body.customStart,
     customEnd: body.customEnd,
-    mediaScope: body.mediaScope || "all",
-    customMediaIds: body.customMediaIds,
+    mediaScope: mediaScope || "custom",
+    customMediaIds,
     clueTypes: body.clueTypes || ["new_column", "series", "special_topic", "feature_plan"],
     topics: body.topics || [],
     customRequirement: body.customRequirement,
