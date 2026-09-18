@@ -9,7 +9,7 @@
  *   pnpm tsx scripts/mock-ingest.ts
  *
  *   BASE_URL=https://your-domain pnpm tsx scripts/mock-ingest.ts
- *   INGEST_TOKEN=newsdesk-ingest-2026 pnpm tsx scripts/mock-ingest.ts
+ *   INGEST_TOKEN=your-random-ingest-token pnpm tsx scripts/mock-ingest.ts
  *
  * 流程（与未来真实抓取服务完全一致）：
  *   1) GET  /api/ingest/health   探活
@@ -23,8 +23,11 @@
  * ============================================================
  */
 
+import { randomUUID } from "node:crypto";
+
 const BASE_URL = (process.env.BASE_URL ?? "http://localhost:5000").replace(/\/$/, "");
-const TOKEN = process.env.INGEST_TOKEN ?? "newsdesk-ingest-2026";
+const RUN_ID = process.env.ACCEPTANCE_RUN_ID ?? randomUUID();
+const TOKEN = process.env.INGEST_TOKEN ?? "your-random-ingest-token";
 const SCHEMA_VERSION = "article-v1";
 
 // 以脚本运行当天为基准日，保证评报「按日期筛选」可命中
@@ -84,6 +87,7 @@ function body(topic: string, n: number, seed = ""): string {
 }
 
 async function main(): Promise<void> {
+  log.info(`Mock ingest run_id=${RUN_ID}`);
   log.info(`== 0. 健康检查 GET ${BASE_URL}/api/ingest/health ==`);
   const healthRes = await fetch(`${BASE_URL}/api/ingest/health`);
   const health = (await healthRes.json()) as Record<string, unknown>;
@@ -127,7 +131,7 @@ async function main(): Promise<void> {
     bySource.get(sourceId)!.push(a);
   };
   const tag = (s: string): string =>
-    `${s}-${TODAY.getFullYear()}${String(TODAY.getMonth() + 1).padStart(2, "0")}${String(
+    `mock-${RUN_ID}-${s}-${TODAY.getFullYear()}${String(TODAY.getMonth() + 1).padStart(2, "0")}${String(
       TODAY.getDate()
     ).padStart(2, "0")}`;
 
@@ -445,7 +449,10 @@ async function postArticles(
   const res = await fetch(`${BASE_URL}/api/ingest/articles`, {
     method: "POST",
     headers: { "Content-Type": "application/json", Authorization: `Bearer ${TOKEN}` },
-    body: JSON.stringify({ schema_version: SCHEMA_VERSION, results }),
+    body: JSON.stringify({ schema_version: SCHEMA_VERSION, results: results.map(result => ({
+      ...result,
+      articles: result.articles.map(article => ({ ...article, is_test: true, test_run_id: RUN_ID })),
+    })) }),
   });
   const json = (await res.json()) as IngestResp & { error?: string };
   if (!res.ok) throw new Error(`推送失败 HTTP ${res.status}: ${json.error ?? ""}`);

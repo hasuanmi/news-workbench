@@ -35,8 +35,9 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
-import { Check, X, Pencil, Plus, Loader2, Trash2 } from "lucide-react";
+import { Pencil, Plus, Loader2, Trash2 } from "lucide-react";
 import { LoadingButton } from "@/components/common/loading-button";
+import { ErrorState } from "@/components/common/error-state";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 
@@ -99,15 +100,26 @@ const DELETE_REASONS = [
 ] as const;
 
 export function AdminCalendar() {
-  const [tab, setTab] = useState("pending");
+  const [tab, setTab] = useState("enabled");
   const [items, setItems] = useState<AdminEvent[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
   const [loading, setLoading] = useState(false);
+  const [loadError, setLoadError] = useState<string | null>(null);
   const [keyword, setKeyword] = useState("");
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editing, setEditing] = useState<AdminEvent | null>(null);
   const [form, setForm] = useState({ ...emptyForm });
   const [saving, setSaving] = useState(false);
+  const [updating, setUpdating] = useState(false);
+  async function updateAI() {
+    setUpdating(true);
+    try {
+      const response = await fetch("/api/admin/scheduler/run", {method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({job:"calendar_recommend"})});
+      const result=await response.json();if(!response.ok||!result.success)throw new Error(result.error??result.summary);
+      toast.success(result.summary);await load();
+    } catch(error) {toast.error(error instanceof Error?error.message:"更新失败");}
+    finally {setUpdating(false);}
+  }
   const [deleting, setDeleting] = useState<AdminEvent | null>(null);
   const [deletingNow, setDeletingNow] = useState(false);
   const [deleteReason, setDeleteReason] = useState<string>(DELETE_REASONS[0]);
@@ -121,13 +133,17 @@ export function AdminCalendar() {
 
   const load = useCallback(() => {
     setLoading(true);
+    setLoadError(null);
     const params = new URLSearchParams();
     if (tab !== "all") params.set("status", tab);
     if (keyword) params.set("keyword", keyword);
     fetch(`/api/admin/calendar?${params.toString()}`)
-      .then((r) => r.json())
+      .then((r) => {
+        if (!r.ok) throw new Error("新闻节点暂时无法加载，请重试；如持续失败，请检查数据库结构与连接。");
+        return r.json();
+      })
       .then((d) => setItems(d.items ?? []))
-      .catch(() => setItems([]))
+      .catch((error: unknown) => setLoadError(error instanceof Error ? error.message : "新闻节点加载失败"))
       .finally(() => setLoading(false));
   }, [tab, keyword]);
 
@@ -225,6 +241,7 @@ export function AdminCalendar() {
             默认直接维护正式日历节点；删除需说明原因，供后续 AI 推荐参考（软删除，可追溯）。
           </p>
         </div>
+        <Button onClick={updateAI} disabled={updating}>{updating ? "更新中…" : "立即更新 AI 推荐"}</Button>
         <Button onClick={openCreate}>
           <Plus className="w-4 h-4 mr-1" /> 新增节点
         </Button>
@@ -232,8 +249,7 @@ export function AdminCalendar() {
 
       <Tabs value={tab} onValueChange={setTab}>
         <TabsList>
-          <TabsTrigger value="pending">待审核</TabsTrigger>
-          <TabsTrigger value="approved">已启用</TabsTrigger>
+          <TabsTrigger value="enabled">已启用</TabsTrigger>
           <TabsTrigger value="disabled">已停用</TabsTrigger>
           <TabsTrigger value="all">全部</TabsTrigger>
         </TabsList>
@@ -252,6 +268,8 @@ export function AdminCalendar() {
             <div className="flex items-center justify-center py-16 text-[var(--muted-foreground)]">
               <Loader2 className="w-5 h-5 animate-spin mr-2" /> 加载中
             </div>
+          ) : loadError ? (
+            <ErrorState title="节点管理加载失败" message={loadError} onRetry={load} />
           ) : items.length === 0 ? (
             <div className="py-16 text-center text-[var(--muted-foreground)]">暂无数据</div>
           ) : (
@@ -284,11 +302,6 @@ export function AdminCalendar() {
                           <span className="text-xs text-[var(--primary)]">
                             {new Date().getFullYear() - (ev.event_year ?? ev.anniversary_base_year!)}周年
                           </span>
-                        )}
-                        {ev.needs_review && (
-                          <Badge variant="outline" className="text-[10px] border-[#b8860b] text-[#b8860b]">
-                            待审
-                          </Badge>
                         )}
                       </div>
                     </TableCell>
@@ -323,30 +336,6 @@ export function AdminCalendar() {
                     </TableCell>
                     <TableCell className="text-right">
                       <div className="flex items-center justify-end gap-1">
-                        {ev.needs_review && (
-                          <>
-                            <Button
-                              size="sm"
-                              variant="outline"
-                              className="h-8 px-2 text-[#3f7d5c]"
-                              onClick={() =>
-                                patchEvent(ev.id, { needs_review: false, review_status: "approved", enabled: true })
-                              }
-                            >
-                              <Check className="w-3.5 h-3.5" /> 通过
-                            </Button>
-                            <Button
-                              size="sm"
-                              variant="outline"
-                              className="h-8 px-2 text-[var(--destructive)]"
-                              onClick={() =>
-                                patchEvent(ev.id, { needs_review: false, review_status: "rejected", enabled: false })
-                              }
-                            >
-                              <X className="w-3.5 h-3.5" /> 驳回
-                            </Button>
-                          </>
-                        )}
                         <Button size="sm" variant="ghost" className="h-8 px-2" onClick={() => openEdit(ev)}>
                           <Pencil className="w-3.5 h-3.5" />
                         </Button>

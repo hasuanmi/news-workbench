@@ -72,9 +72,13 @@ export async function GET(req: NextRequest) {
   const date = req.nextUrl.searchParams.get("date");
   if (!date) return NextResponse.json({ error: "缺少 date 参数" }, { status: 400 });
 
-  const row = await loadDraftByDate(date);
-  if (!row) return NextResponse.json({ error: "该日期暂无选稿" }, { status: 404 });
-  return NextResponse.json({ success: true, draft: row });
+  try {
+    const row = await loadDraftByDate(date);
+    if (!row) return NextResponse.json({ error: "该日期暂无选稿" }, { status: 404 });
+    return NextResponse.json({ success: true, draft: row });
+  } catch (error) {
+    return NextResponse.json({ error: error instanceof Error ? error.message : "读取选稿失败" }, { status: 500 });
+  }
 }
 
 /** PATCH /api/review/draft — 更新该日期选稿的排除稿（可追溯） */
@@ -89,7 +93,11 @@ export async function PATCH(req: NextRequest) {
     : [];
   if (!date) return NextResponse.json({ error: "缺少 date 参数" }, { status: 400 });
 
-  await updateDraftExclusions(date, excluded);
-  const row = await loadDraftByDate(date);
-  return NextResponse.json({ success: true, draft: row });
+  try {
+    await updateDraftExclusions(date, excluded);
+    const row = await loadDraftByDate(date);
+    return NextResponse.json({ success: true, draft: row });
+  } catch (error) {
+    return NextResponse.json({ error: error instanceof Error ? error.message : "更新选稿失败" }, { status: 500 });
+  }
 }

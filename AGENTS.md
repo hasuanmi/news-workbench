@@ -33,7 +33,7 @@ pnpm tsx --test src/lib/calendar-engine.test.ts   # 日历规则引擎单元测�
 pnpm dev / pnpm build             # 开发 / 构建
 ```
 
-默认账号：`admin / newsdesk2026`（系统管理员）、`editor / newsdesk2026`（值班编辑）。
+默认账号：`admin / your-admin-password`（系统管理员）、`editor / your-admin-password`（值班编辑）。
 
 ## 数据库
 
@@ -185,7 +185,7 @@ assets/                       # 媒体列表.xlsx、2024年新闻日历.docx（�
   - `GET /api/ingest/queue`：拉取启用中的数据源队列（Bearer/X-Ingest-Token 鉴权），返回 version/schema_version/count/sources（source_id/media_id/media_name/source_type/source_url/crawl_method，snake_case+camelCase 双命名，按 last_ingest_at 升序）。
   - `POST /api/ingest/articles`：批量回推（Bearer 鉴权）。**`source_id` 为唯一必填数据源身份，`media_name` 仅展示/日志不参与业务关联**。去重优先级：`external_id`（唯一索引 source_id+external_id）→ content_hash → URL；同 external_id/URL 的新版本正文更完整（长度 +100 且 ≥1.25 倍，`shouldEnrichExisting`）时**补全更新**（updated）而非判重丢弃。`crawl_time` 区分抓取时间与 `publish_time`。单源隔离、单篇失败不影响整批，返回 `{inserted,updated,duplicated,invalid,failed,successSources,failedSources,perSource}`；硬错误 code：missing_source_id/missing_title/missing_url/invalid_url，时间非法为软警告（回退 crawl_time/抓取时间）。批量上限：单源 50/单源分组 200/总 1000。
   - 主系统做去重入库（`article.content_hash` 唯一、`external_id` 唯一）、状态更新（`media_source.crawl_status` ok/warning/error、`fail_count`、`last_ingest_at`、`last_ingest_count`、`last_error`）、`task_log`（workflow=`ingest`）记录。
-  - 鉴权 token 为配置项 `ingest.api_token`（后台「系统配置」可轮换，默认 `newsdesk-ingest-2026`）。
+  - 鉴权 token 为配置项 `ingest.api_token`（后台「系统配置」可轮换，默认 `your-random-ingest-token`）。
   - **完整接入契约见 `docs/ingest-contract.md`**（字段表/必填可选/时间格式/批量限制/超时重试/幂等/错误码/示例/状态字段）。
 - **主系统**：媒体配置、任务编排、article 入库去重、状态记录、AI 线索识别/同题聚类/评报。单个源失败只标记状态，绝不影响主系统页面。
 - **Mock 联调（两种）**：

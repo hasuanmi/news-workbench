@@ -5,7 +5,7 @@ import { runJob, type JobName } from "@/lib/scheduler";
 export const runtime = "nodejs";
 export const maxDuration = 300;
 
-const JOB_NAMES: JobName[] = ["clue_identify", "weekly_briefing", "daily_review"];
+const JOB_NAMES: JobName[] = ["calendar_recommend", "clue_identify", "weekly_briefing", "daily_review"];
 
 /**
  * POST /api/admin/scheduler/run — 后台手动触发任务（manual=true，不受 enabled 开关限制）

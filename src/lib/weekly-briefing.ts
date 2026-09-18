@@ -66,6 +66,7 @@ export async function getWeeklyClues(weekStart: string): Promise<WeeklyBriefingD
   const { data: clues, error } = await db
     .from("news_clue")
     .select("*")
+    .eq("is_test", false)
     .in("review_status", ["auto_approved", "approved"])
     .gte("first_found_at", start)
     .lte("first_found_at", end)

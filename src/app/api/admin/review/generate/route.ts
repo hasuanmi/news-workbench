@@ -110,6 +110,7 @@ export async function POST(req: NextRequest) {
           conditions,
           gen,
           gzMediaNames,
+          draft ?? undefined,
         );
         controller.enqueue(send({ phase: "structure", modules, display_rules: display }));
 

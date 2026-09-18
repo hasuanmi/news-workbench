@@ -11,6 +11,8 @@ export async function GET(_req: NextRequest, { params }: { params: Promise<{ id:
     .from("calendar_event")
     .select("*")
     .eq("id", id)
+    .eq("enabled", true)
+    .is("deleted_at", null)
     .maybeSingle();
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
   if (!ev) return NextResponse.json({ error: "节点不存在" }, { status: 404 });
@@ -51,6 +53,11 @@ export async function GET(_req: NextRequest, { params }: { params: Promise<{ id:
     description: ev.description,
     tags: Array.isArray(ev.tags) ? ev.tags : [],
     source_name: ev.source_name,
+    source_type: ev.source_type ?? null,
+    source: ev.source ?? null,
+    event_year: ev.event_year ?? null,
+    date_status: ev.date_status,
+    event_month: ev.event_month,
     category,
     // 自动补全结果（由日历引擎自动生成，普通用户无需手动触发）
     enrich: {

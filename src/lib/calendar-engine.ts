@@ -16,6 +16,8 @@ export interface CalendarRuleEvent {
   category_id?: string | null;
   enabled?: boolean;
   review_status?: string;
+  deleted_at?: string | null;
+  date_status?: string | null;
   background?: string | null;
   planning_hint?: unknown;
   tags?: unknown;
@@ -81,7 +83,7 @@ export function computeOccurrence(event: CalendarRuleEvent, targetYear: number, 
 export type RangeView = "week" | "next14" | "month" | "all";
 
 /**
- * 生成日历视图：仅返回 enabled + approved 的节点，落在窗口内
+ * 生成日历视图：仅返回启用且未软删除的节点，落在窗口内；审核字段仅兼容。
  * 动态节点只在其 event_date 所在年出现；固定节点每年都出现
  */
 /**
@@ -121,8 +123,8 @@ export function buildCalendar(
 
   const occurrences: Occurrence[] = [];
   for (const event of events) {
-    if (event.enabled === false) continue;
-    if (event.review_status && event.review_status !== "approved") continue;
+    if (event.enabled !== true || event.deleted_at != null) continue;
+    if (event.date_status === "month_known" || event.date_status === "unknown") continue;
 
     if (view === "all") {
       // 全部视图：动态节点按自身日期；固定节点取目标年

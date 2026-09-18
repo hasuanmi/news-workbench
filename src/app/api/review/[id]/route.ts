@@ -8,7 +8,7 @@ export async function GET(_req: NextRequest, ctx: { params: Promise<{ id: string
   const { id } = await ctx.params;
   const db = supabase();
 
-  const { data, error } = await db.from("daily_review").select("*").eq("id", id).single();
+  const { data, error } = await db.from("daily_review").select("*").eq("is_test", false).eq("id", id).single();
   if (error || !data) {
     return NextResponse.json({ error: "评报不存在" }, { status: 404 });
   }

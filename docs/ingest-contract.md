@@ -20,7 +20,7 @@
 | 鉴权方式 | 请求头 `Authorization: Bearer <INGEST_API_TOKEN>`（兼容 `X-Ingest-Token`） |
 | 内容类型 | `application/json; charset=utf-8` |
 
-> Token 为配置项 `ingest.api_token`（后台「系统配置」可轮换），默认 `newsdesk-ingest-2026`。
+> Token 为配置项 `ingest.api_token`（后台「系统配置」可轮换），默认 `your-random-ingest-token`。
 > 环境变量名：`INGEST_API_TOKEN`（兼容 `INGEST_TOKEN`）。
 
 ---

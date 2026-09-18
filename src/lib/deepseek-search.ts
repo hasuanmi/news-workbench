@@ -79,6 +79,7 @@ export async function deepseekWebSearch(opts: {
         }
       }
     }
+    if (!sources.length) throw new Error("未返回可验证的联网来源。DeepSeek内置web_search被忽略时不能视为完成检索；请使用正式日历的立即更新入口。");
     return { text: text.trim(), sources };
   } finally {
     clearTimeout(timer);

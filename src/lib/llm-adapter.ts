@@ -34,6 +34,7 @@ export interface OpenAIChunk {
 export async function openAIInvoke(
   config: OpenAIConfig,
   messages: ChatMessage[],
+  onRequest?: (host:string) => void,
 ): Promise<OpenAIResponse> {
   const url = `${config.baseUrl.replace(/\/$/, "")}/chat/completions`;
 
@@ -51,6 +52,7 @@ export async function openAIInvoke(
     Object.assign(body, config.extraBody);
   }
 
+  onRequest?.(new URL(url).hostname);
   const res = await fetch(url, {
     method: "POST",
     headers: {
@@ -67,6 +69,7 @@ export async function openAIInvoke(
 
   const data = await res.json();
   const content = data?.choices?.[0]?.message?.content ?? "";
+  if (typeof content !== "string" || !content.trim()) throw new Error("模型返回空内容，未通过调用验证");
   const finishReason = data?.choices?.[0]?.finish_reason ?? null;
 
   return { content, finishReason };

@@ -173,3 +173,15 @@ sql_generated/
 
 # 上传的历史日历文件不进仓库
 assets/history/
+
+# Handoff: local secrets, certificates and workspace/runtime artifacts
+.env.*
+!.env.example
+*.crt
+*.cer
+*.pem
+*.key
+*.pfx
+*.p12
+.pnpm-store/
+.workbuddy/

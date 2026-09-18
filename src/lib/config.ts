@@ -1,6 +1,14 @@
 import "server-only";
 import { supabase } from "@/lib/db";
 
+// Only these general settings are listed/updated by the system configuration form.
+// Model credentials and ingest tokens remain behind their existing dedicated paths.
+export const GENERAL_CONFIG_KEYS = [
+  "calendar.window_days", "clue.auto_approve_threshold", "clue.review_threshold",
+  "review.word_count_threshold", "review.auto_approve_threshold", "review.review_threshold",
+  "cron.news_lead", "cron.weekly_briefing", "cron.dynamic_node_discover", "cron.daily_review",
+] as const;
+
 export interface AppConfig {
   calendarWindowDays: number;
   clueAutoThreshold: number;

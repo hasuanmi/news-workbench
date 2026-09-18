@@ -40,7 +40,6 @@ export async function GET(req: NextRequest) {
     .from("calendar_event")
     .select("id, event_name, event_type, original_date, event_date, event_year, anniversary_base_year, importance, date_status, event_month, review_status")
     .eq("enabled", true)
-    .eq("review_status", "approved")
     .is("deleted_at", null);
 
   const upcoming: {
@@ -102,6 +101,7 @@ export async function GET(req: NextRequest) {
   const { data: leads, error: ldErr } = await db
     .from("news_clue")
     .select("id, clue_type, series_name, media_id, first_found_at, review_status, summary")
+    .eq("is_test", false)
     .eq("clue_type", "new_column")
     .in("review_status", ["confirmed", "pending"])
     .order("first_found_at", { ascending: false })
@@ -141,6 +141,7 @@ export async function GET(req: NextRequest) {
     show_leads: showLeads,
     home_days: homeDays,
     upcoming,
+    calendar_warning: evErr ? "新闻节点暂时无法加载，请检查新闻日历数据连接。" : null,
     latest_leads: latestLeads,
   });
 }

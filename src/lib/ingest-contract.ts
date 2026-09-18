@@ -26,6 +26,8 @@ export const INGEST_MAX_ARTICLES_TOTAL = 1000;
  * media_name 仅用于展示与日志，不参与业务关联（业务一律以 source_id 关联 media_source）。
  */
 export interface IngestArticleDto {
+  is_test?: boolean;
+  test_run_id?: string | null;
   /** 必填：数据源 ID（来自 GET /api/ingest/queue） */
   source_id: string;
   /** 选填：媒体名称，仅展示/日志用，不参与业务关联 */
@@ -201,6 +203,8 @@ export function normalizeArticle(input: unknown): {
 
   // 组装回 DTO（兼容 camelCase 旧字段名映射）
   const dto: IngestArticleDto = {
+    is_test: o.is_test === true,
+    test_run_id: asTrimmedString(o.test_run_id, 64),
     source_id: sourceId,
     media_name: asTrimmedString(o.media_name ?? o.mediaName, 128),
     title,

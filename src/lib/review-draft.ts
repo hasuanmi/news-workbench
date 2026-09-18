@@ -109,7 +109,7 @@ export async function resolveComparisonMedia(mediaIds?: string[]): Promise<{
     .from("media")
     .select("id, media_name")
     .eq("enabled", true)
-    .in("media_name", names);
+    .in("media_name", names.flatMap(name => name === "广州日报" ? [name, "广州日报报业集团"] : [name]));
   return {
     mediaIds: (rows ?? []).map((m) => m.id),
     mediaNames: (rows ?? []).map((m) => m.media_name),
@@ -165,10 +165,8 @@ export async function buildConditionsFromRules(partial: {
 
 // ============ 新华社来源识别 ============
 
-const XINHUA_PATTERNS = [/新华社\s*\d+/, /新华社(?!社)/, /新华社[^\s。，,]{0,8}电/, /Xinhua/i];
-
 export function isXinhuaArticle(a: ReviewArticle): { isXinhua: boolean; span: string | null } {
-  const source = [a.title, a.snippet, a.section ?? ""].join(" ");
+  const source = [a.title, a.snippet, a.section ?? "", a.source_evidence ?? ""].join(" ");
   const match = source.match(/(新华社[^\s。，,]{0,20})/);
   return { isXinhua: Boolean(match), span: match?.[1] ?? null };
 }
@@ -190,11 +188,12 @@ function buildDraftMessages(
   articles: ReviewArticle[],
   gzMediaNames: string[],
   conditions: ReviewConditions,
+  gzCoverageTitles: string[] = [],
 ): ChatMessage[] {
   const picks = articles
     .map(
       (a, i) =>
-        `[${i}] 媒体：${a.media_name}｜标题：${a.title}｜字数：${a.word_count}${a.section ? `｜版面：${a.section}` : ""}｜摘要：${a.snippet}｜链接：${a.url}`,
+        `[${i}] 媒体：${a.media_name}｜标题：${a.title}｜字数：${a.word_count}${a.section ? `｜版面：${a.section}` : ""}｜摘要：${a.snippet}｜来源证据：${a.source_evidence ?? "未发现明确新华社署名，不得推断"}｜链接：${a.url}`,
     )
     .join("\n");
 
@@ -218,13 +217,15 @@ function buildDraftMessages(
 规则：
 1. same_topic：同一选题有多家媒体（≥2）报道才分组；每组给出 article_indexes（对应输入序号），并简要说明各媒体角度差异。最多 ${5} 组。
 2. peer_highlights：其他媒体有重点报道、但 ${gzMediaNames.join("、") || "广州日报"} 当天没有明显对应报道的内容；每篇给出 media/index/why_noteworthy。最多 ${5} 条。
+   字数不达选稿阈值不代表未报道。必须同时核对下方广州日报全部已采集标题。仅能说本轮已采集数据未见，不能宣称全网、全部纸报的绝对独有。
 3. xinhua_background_indexes：多家媒体只是转载新华社同一通稿、无各自原创采编的稿子归入此列——作为当天共同重大新闻背景展示，不参与各媒体比较。识别依据：来源含"新华社""新华社记者""新华社××电"或原始来源字段。若某家媒体在通稿基础上增加了本地采访/本地案例/原创数据/原创延伸，则不要归入此列，而应放入对应 same_topic 中比较其新增原创部分。
-4. 所有 index 均取自输入序号；同一篇文章可同时出现在 same_topic 与 xinhua_background（作为背景背景同时展示）。
+4. 所有 index 均取自输入序号；纯新华社转载仅作为背景，不得进入同题原创比较或同行独有。
 5. 普通日常报道不要选入；必须基于给定文章，禁止编造链接和标题。`;
 
   const user = `评报日期：${dateStr}
 参与媒体：${[...new Set(articles.map((a) => a.media_name))].join("、")}
 共 ${articles.length} 篇待选文章：
+广州日报当日全部已采集标题（包含未达到选稿字数阈值的文章）：${gzCoverageTitles.join("；") || "暂无，覆盖不足不能判断绝对独有"}
 
 ${picks}
 
@@ -237,7 +238,7 @@ ${conditions.customRequirement ? `本次要求：${conditions.customRequirement}
   ];
 }
 
-function safeParseJson(raw: string): Record<string, any> {
+function safeParseJson(raw: string): Record<string, unknown> {
   const m = raw.match(/\{[\s\S]*\}/);
   if (!m) throw new Error("AI 返回无法解析为 JSON");
   let s = m[0].replace(/[\x00-\x08\x0B\x0C\x0E-\x1F]/g, "");
@@ -265,7 +266,23 @@ function toDraftArticle(a: ReviewArticle, suffix = ""): DraftArticle {
 
 /** 阶段1：筛选 + AI 分组，返回选稿结果（未落库） */
 export async function buildDraft(conditions: ReviewConditions, dateStr: string, articles: ReviewArticle[], gzMediaNames: string[]): Promise<DraftPayload> {
-  const messages = buildDraftMessages(dateStr, articles, gzMediaNames, conditions);
+  const { data: gzMedia, error: mediaError } = await supabase().from("media").select("id").in("media_name", gzMediaNames);
+  if (mediaError) throw new Error(`查询广州日报覆盖范围失败: ${mediaError.message}`);
+  const { data: coverage, error: coverageError } = gzMedia?.length
+    ? await supabase().from("article").select("title").eq("is_test", false).in("media_id", gzMedia.map(m => m.id))
+      .gte("publish_time", `${dateStr}T00:00:00+08:00`).lte("publish_time", `${dateStr}T23:59:59+08:00`)
+    : { data: [], error: null };
+  if (coverageError) throw new Error(`查询广州日报当日标题失败: ${coverageError.message}`);
+  const titles = (coverage ?? []).map(a => a.title);
+  const titleKey = (title: string) => title.replace(/[_｜|].*(?:网|报).*$/, "").replace(/[\s\p{P}]/gu, "");
+  const hasGzHeadline = (title: string) => {
+    const key = titleKey(title);
+    return key.length >= 12 && titles.some(t => {
+      const other = titleKey(t);
+      return other.length >= 12 && (other.includes(key) || key.includes(other));
+    });
+  };
+  const messages = buildDraftMessages(dateStr, articles, gzMediaNames, conditions, titles);
   const raw = await unifiedInvoke(messages, { temperature: 0.2 });
   const parsed = safeParseJson(raw);
 
@@ -278,22 +295,23 @@ export async function buildDraft(conditions: ReviewConditions, dateStr: string, 
   const same_topic: SameTopicGroup[] = (Array.isArray(parsed.same_topic) ? parsed.same_topic : [])
     .filter((g) => Array.isArray(g?.article_indexes))
     .slice(0, 5)
-    .map((g: any, idx: number) => ({
+    .map((g, idx: number) => ({
       id: `st-${idx}`,
       theme: String(g.theme ?? `同题${idx + 1}`),
       articles: g.article_indexes
         .map((i: unknown) => articleAt(index(i)))
         .filter((a: ReviewArticle | null): a is ReviewArticle => Boolean(a))
+        .filter((a: ReviewArticle) => !isXinhuaReprint(a))
         .map((a: ReviewArticle) => toDraftArticle(a)),
       angle_note: String(g.angle_note ?? ""),
     }))
-    .filter((g: SameTopicGroup) => g.articles.length >= 1);
+    .filter((g: SameTopicGroup) => new Set(g.articles.map(a => a.media)).size >= 2);
 
   const peer_highlights: PeerHighlight[] = (Array.isArray(parsed.peer_highlights) ? parsed.peer_highlights : [])
     .slice(0, 5)
-    .map((p: any) => {
+    .map((p) => {
       const a = articleAt(index(p?.index));
-      if (!a) return null;
+      if (!a || isXinhuaReprint(a) || hasGzHeadline(a.title)) return null;
       return {
         media: a.media_name,
         article_id: a.id,
@@ -310,6 +328,7 @@ export async function buildDraft(conditions: ReviewConditions, dateStr: string, 
     : [])
     .map((i: unknown) => articleAt(index(i)))
     .filter((a: ReviewArticle | null): a is ReviewArticle => Boolean(a))
+    .filter((a: ReviewArticle) => isXinhuaReprint(a))
     .map((a: ReviewArticle) => toDraftArticle(a, "（新华社通稿/共同背景）"));
 
   return { same_topic, peer_highlights, xinhua_background, excluded_article_ids: [] };
@@ -343,12 +362,13 @@ export async function saveDraft(params: {
   };
 
   if (existing.data?.id) {
-    const { data } = await db
+    const { data, error } = await db
       .from("review_draft")
-      .update({ draft: draftPayload, status: "selected", updated_at: new Date().toISOString() })
+      .update({ draft: draftPayload, status: "selected", is_test: false, test_run_id: null, updated_at: new Date().toISOString() })
       .eq("id", existing.data.id)
       .select()
       .single();
+    if (error) throw new Error(`更新选稿失败: ${error.message}`);
     return data as DraftRow;
   }
 
@@ -370,11 +390,13 @@ export async function saveDraft(params: {
 
 export async function loadDraftByDate(report_date: string): Promise<DraftRow | null> {
   const db = supabase();
-  const { data } = await db
+  const { data, error } = await db
     .from("review_draft")
     .select("*")
     .eq("report_date", report_date)
+    .eq("is_test", false)
     .maybeSingle();
+  if (error) throw new Error(`读取选稿失败: ${error.message}`);
   if (!data) return null;
   let draft: DraftPayload;
   try {
@@ -393,10 +415,11 @@ export async function loadDraftByDate(report_date: string): Promise<DraftRow | n
 
 export async function updateDraftExclusions(report_date: string, excluded: string[]): Promise<void> {
   const db = supabase();
-  await db
+  const { error } = await db
     .from("review_draft")
     .update({ excluded_article_ids: JSON.stringify(excluded), updated_at: new Date().toISOString() })
     .eq("report_date", report_date);
+  if (error) throw new Error(`更新选稿失败: ${error.message}`);
 }
 
 /** 获取带规则层的完整选稿数据（供生成阶段复用已确认稿件） */
@@ -409,10 +432,10 @@ export async function getDraftWithArticles(report_date: string): Promise<{
   const row = await loadDraftByDate(report_date);
   if (!row) return null;
   const rd = row.draft as DraftPayload;
-  const cond = (rd as any).conditions as Partial<ReviewConditions> | undefined;
+  const cond = (rd as DraftPayload & { conditions?: Partial<ReviewConditions> }).conditions;
   const { mediaIds, mediaNames } = await resolveComparisonMedia(
-    Array.isArray((rd as any).conditions?.mediaIds) && (rd as any).conditions.mediaIds.length
-      ? (rd as any).conditions.mediaIds
+    Array.isArray(cond?.mediaIds) && cond.mediaIds.length
+      ? cond.mediaIds
       : undefined,
   );
   const conditions: ReviewConditions = {

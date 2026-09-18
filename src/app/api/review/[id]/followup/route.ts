@@ -47,6 +47,7 @@ export async function POST(req: NextRequest, ctx: { params: Promise<{ id: string
   const { data: review, error } = await db
     .from("daily_review")
     .select("report_date, sections, final_summary")
+    .eq("is_test", false)
     .eq("id", id)
     .single();
   if (error || !review) {
@@ -137,7 +138,7 @@ export async function POST(req: NextRequest, ctx: { params: Promise<{ id: string
           modules: regeneratedModules,
           finalSummary,
           changeNote: `重新生成评报：${input}`,
-          createdBy: "admin",
+          createdBy: auth.session.sub,
         });
         push(sse({ phase: "saved", id: saved.id, version: saved.version }));
         push(sse({ phase: "done", version: saved.version }));

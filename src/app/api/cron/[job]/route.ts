@@ -1,11 +1,11 @@
 import { NextRequest } from "next/server";
 import { verifySessionToken, SESSION_COOKIE } from "@/lib/session";
-import { runJob, type JobName } from "@/lib/scheduler";
+import { runJob, getSchedulerConfig, type JobName } from "@/lib/scheduler";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
-const JOB_NAMES: JobName[] = ["clue_identify", "weekly_briefing", "daily_review"];
+const JOB_NAMES: JobName[] = ["calendar_recommend", "clue_identify", "weekly_briefing", "daily_review"];
 
 /**
  * 鉴权：两种方式任一即可
@@ -45,7 +45,7 @@ async function handler(req: NextRequest, ctx: { params: Promise<{ job: string }>
   }
 
   if (req.method === "GET") {
-    return Response.json({ success: true, job, ok: true });
+    return Response.json({ success: true, job, ok: true, enabled:(await getSchedulerConfig())[job as JobName].enabled });
   }
 
   // 外部定时器触发为自动（受 enabled 开关约束）；带 admin cookie 的也按自动处理，

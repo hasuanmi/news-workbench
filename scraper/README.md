@@ -279,7 +279,7 @@ media-scraper                         news-workbench
 - `src/storage/database/shared/schema.ts` 的 `article` 表已扩展丰富字段（栏目名/版面号/版名/头版/整版/跨版/系列名/专题名/专题链接/图片/来源类型/抓取方式/首次发现时间/业务标记）。
 - 对应迁移脚本：`sql/0002_article_rich_fields.sql`（在 Supabase SQL Editor 或 `drizzle-kit push` 执行）。
 - `src/lib/ingest.ts` 的 `IngestArticle` 接口与入库逻辑已支持上述丰富字段（camelCase）。
-- 鉴权 token 默认 `newsdesk-ingest-2026`（主项目 `app_config.ingest.api_token` 或 `.env` 的 `INGEST_API_TOKEN` 可轮换）。
+- 鉴权 token 默认 `your-random-ingest-token`（主项目 `app_config.ingest.api_token` 或 `.env` 的 `INGEST_API_TOKEN` 可轮换）。
 
 ### 2. 本服务侧新增模块
 - `app/core/ingest_client.py`：`IngestClient`（拉队列 / 回推文章，Bearer 鉴权）。
@@ -290,7 +290,7 @@ media-scraper                         news-workbench
 ```ini
 INGEST_ENABLED=true                       # 开启常驻 worker
 MAIN_API_BASE=https://your-news-workbench.com   # 主项目 base URL
-INGEST_API_TOKEN=newsdesk-ingest-2026    # 与主项目 INGEST_API_TOKEN 一致
+INGEST_API_TOKEN=your-random-ingest-token    # 与主项目 INGEST_API_TOKEN 一致
 POLL_INTERVAL=120                        # 轮询间隔（秒）
 WORKER_PER_SOURCE=5                      # 每源抽样篇数
 ```

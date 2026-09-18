@@ -1,0 +1,36 @@
+# ===== Python 虚拟环境 =====
+venv/
+.venv/
+__pycache__/
+*.pyc
+
+# ===== 运行时数据 / 日志 =====
+data/
+logs/
+*.log
+*.db
+*.sqlite
+.env
+.env.*
+!.env.example
+*.crt
+*.cer
+*.pem
+*.key
+*.pfx
+*.p12
+
+# ===== 临时验证 / 测试脚本与产物（非交付物）=====
+test6.py
+test6_out.json
+run_poc.py
+poc_report.py
+poc_report.json
+media_rows.json
+batch_result.json
+scan_media.py
+scan_report.md
+scan_report.json
+svc.log
+mock_received.json
+verify_ootb.json

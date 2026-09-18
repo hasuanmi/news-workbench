@@ -7,7 +7,7 @@ import {
   getJobRuntimeStatuses,
   JOB_DEFINITIONS,
 } from "@/lib/scheduler";
-import CronExpressionParser from "cron-parser";
+import { getLocalTriggers } from "@/lib/local-triggers";
 
 export const runtime = "nodejs";
 
@@ -22,22 +22,15 @@ export async function GET(req: NextRequest) {
 
   // 是否配了触发密钥：有 CRON_SECRET/CRON_TOKEN 才算具备被外部定时触发的前提
   const cronSecretSet = !!(process.env.CRON_SECRET || process.env.CRON_TOKEN);
-  // 是否有任何一次真实的定时触发记录（manual=false 无法从 task_log 区分，只能看是否有外部调用迹象）。
-  // 由于当前架构是「外部 crontab 调用 /api/cron/{job}」，enable 开关不代表真正在跑——
-  // 只有 CRON_SECRET 配置 + 外部定时器存在才算「已自动运行」。这里如实暴露配置前提。
-  const autoScheduled = cronSecretSet;
+  // 查询真实 Windows 任务；配置密钥或 cron 表达式不能证明触发器已安装。
+  const triggers = await getLocalTriggers();
+  const autoScheduled = Object.values(triggers).some(trigger => trigger.enabled);
 
-  const now = new Date();
   const jobs = JOB_DEFINITIONS.map((d) => {
     const st = statuses[d.name] ?? {};
     let nextRunAt: string | null = null;
-    try {
-      const cron = cfg[d.name].cron || d.defaultCron;
-      const interval = CronExpressionParser.parse(cron, { currentDate: now });
-      nextRunAt = interval.next().toDate().toISOString();
-    } catch {
-      nextRunAt = null;
-    }
+    const trigger=triggers[d.name];
+    if(trigger?.enabled && cfg[d.name].enabled)nextRunAt=trigger.nextTriggerAt;
     return {
       name: d.name,
       title: d.title,
@@ -51,6 +44,8 @@ export async function GET(req: NextRequest) {
       lastProcessedCount: st.lastProcessedCount ?? null,
       lastError: st.lastError ?? null,
       nextRunAt,
+      autoScheduled: !!(trigger?.enabled && cfg[d.name].enabled),
+      trigger: trigger ? {...trigger,provider:"Windows Task Scheduler",dependency:d.name==="clue_identify"?"08:30开始三家媒体抓取，完成后立即识别；实际识别时间随抓取耗时变化":null} : null,
     };
   });
 
@@ -62,8 +57,8 @@ export async function GET(req: NextRequest) {
     autoScheduled,
     /** 环境是否为沙箱/开发环境（正式部署需外部配置 cron） */
     env: process.env.COZE_PROJECT_ENV || "dev",
-    message: autoScheduled
-      ? "已配置触发密钥与外部定时器后即可自动运行（见 DEPLOY.md 定时任务）。"
+    message: autoScheduled ? "已核实 Windows 真实任务：每天07:30日历推荐，08:30启动三家真实媒体抓取、完成后识别新栏目（北京时间）。本机须开机并登录。每周简报和每日评报未安装自动触发器。" : cronSecretSet
+      ? "触发密钥已配置；外部定时器是否运行尚未验证。请先手动执行验收，再配置并验证外部定时调用。"
       : "尚未自动运行：当前未配置触发密钥（CRON_SECRET/CRON_TOKEN），系统不会自行定时执行；仅支持后台手动「立即执行」。正式部署后请在服务器配置 crontab 调用 /api/cron/{job}（详见 DEPLOY.md 定时任务）。",
   });
 }

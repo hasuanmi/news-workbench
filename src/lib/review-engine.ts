@@ -87,6 +87,7 @@ export interface ReviewArticle {
   section: string | null;
   is_key_report: boolean;
   snippet: string;
+  source_evidence?: string | null;
 }
 
 // ============ 配置读取 ============
@@ -120,8 +121,8 @@ export async function fetchReviewArticles(conditions: ReviewConditions): Promise
 }> {
   const db = supabase();
   const dateStr = new Date(conditions.date).toISOString().split("T")[0];
-  const start = `${dateStr}T00:00:00`;
-  const end = `${dateStr}T23:59:59`;
+  const start = `${dateStr}T00:00:00+08:00`;
+  const end = `${dateStr}T23:59:59+08:00`;
 
   // 目标媒体：显式传入优先；为空则取 monitor_review 启用媒体
   let mediaIds = conditions.mediaIds.filter(Boolean);
@@ -152,6 +153,7 @@ export async function fetchReviewArticles(conditions: ReviewConditions): Promise
   let query = db
     .from("article")
     .select("*")
+    .eq("is_test", false)
     .in("media_id", mediaIds)
     .gte("publish_time", start)
     .lte("publish_time", end)
@@ -160,16 +162,9 @@ export async function fetchReviewArticles(conditions: ReviewConditions): Promise
   const { data: rows, error } = await query;
   if (error) throw new Error(`查询文章失败: ${error.message}`);
 
-  // 规则层过滤：字数阈值（Mock 短文自动放宽到 100 字，保证可联调）
+  // 真实选稿严格遵守后台字数阈值，不因样本不足自动放宽。
   const threshold = conditions.minWordCount;
-  let filtered = (rows ?? []).filter((a) => (a.word_count ?? 0) >= threshold);
-  if (filtered.length === 0 && (rows ?? []).length > 0) {
-    const maxWc = Math.max(...(rows ?? []).map((a) => a.word_count ?? 0));
-    if (maxWc < threshold) {
-      // 数据整体不达阈值（如 Mock 短文）：放宽取字数 >=100 的，避免任务直接失败
-      filtered = (rows ?? []).filter((a) => (a.word_count ?? 0) >= 100);
-    }
-  }
+  const filtered = (rows ?? []).filter((a) => (a.word_count ?? 0) >= threshold);
 
   // content_hash 去重已由唯一索引保证；这里按标题+媒体再去一次重
   const seen = new Set<string>();
@@ -189,6 +184,7 @@ export async function fetchReviewArticles(conditions: ReviewConditions): Promise
       section: a.section,
       is_key_report: a.is_key_report,
       snippet: (a.content ?? "").replace(/\s+/g, " ").slice(0, 220),
+      source_evidence: (a.content ?? "").match(/(?:来源\s*[:：]\s*新华社[^\n]{0,40}|新华社[^\s。，,]{0,15}电)/)?.[0] ?? null,
     });
   }
 
@@ -207,11 +203,12 @@ function buildAnalysisMessages(
   conditions: ReviewConditions,
   rules: GenerationRules,
   gzMediaNames: string[],
+  selection?: { peer_highlights: Array<{ url: string }>; xinhua_background: Array<{ url: string }> },
 ): ChatMessage[] {
   const articleLines = articles
     .map(
       (a, i) =>
-        `[${i + 1}] 媒体：${a.media_name}｜标题：${a.title}｜字数：${a.word_count}${a.section ? `｜版面：${a.section}` : ""}｜摘要：${a.snippet}｜链接：${a.url}`,
+        `[${i + 1}] 媒体：${a.media_name}｜标题：${a.title}｜字数：${a.word_count}${a.section ? `｜版面：${a.section}` : ""}｜摘要：${a.snippet}｜新华社来源证据：${a.source_evidence ?? "未发现明确署名"}｜链接：${a.url}`,
     )
     .join("\n");
 
@@ -250,11 +247,15 @@ JSON 结构：
 - 同题观察最多 ${rules.same_topic_max} 个主题，每个主题对比 ${2} 家以上媒体
 - 同行亮点最多 ${rules.peer_highlights_max} 条
 - peer_highlights 只放：${gzMediaNames.length > 0 ? gzMediaNames.join("、") : "广州日报"} 没有重点覆盖、但其他媒体做了重点的报道
-- 所有内容必须基于给定文章，禁止编造链接和标题`;
+- 所有内容必须基于给定文章，禁止编造链接和标题
+- 未提供版面编号、头版、整版等事实时，只评网站文章，不得推断纸报头条、显要位置、版面排布或版式
+- 纯新华社转载只作为共同背景，不能进入原创差异比较或同行独有；不得将缺少署名证据的文章推断为新华社通稿
+- 如提供本期选稿校验结果，同行亮点必须取自其 peer_highlights。仅能判断本轮已采集数据，不得宣称完整纸报或全网独有`;
 
   const user = `评报日期：${dateStr}
 参与媒体：${[...new Set(articles.map((a) => a.media_name))].join("、")}
 共 ${articles.length} 篇符合条件文章：
+${selection ? `本期选稿已校验的同行亮点与新华社背景：${JSON.stringify(selection)}` : ""}
 
 ${articleLines}
 
@@ -293,10 +294,14 @@ export async function analyzeStructure(
   conditions: ReviewConditions,
   rules: GenerationRules,
   gzMediaNames: string[],
+  selection?: { peer_highlights: Array<{ url: string }>; xinhua_background: Array<{ url: string }> },
 ): Promise<StructuredAnalysis> {
-  const messages = buildAnalysisMessages(dateStr, articles, conditions, rules, gzMediaNames);
+  const messages = buildAnalysisMessages(dateStr, articles, conditions, rules, gzMediaNames, selection);
   const raw = await unifiedInvoke(messages, { temperature: 0.3 });
   const parsed = safeParseJson(raw);
+  const sourceUrls = new Set(articles.map(a => a.url));
+  const reprintUrls = new Set(selection?.xinhua_background.map(a => a.url) ?? articles.filter(a => a.source_evidence && !/采访|现场|了解到|我们走访|数据显示|统计|独家|本地|探访|记者走访|新增|原创/.test(`${a.title} ${a.snippet}`)).map(a => a.url));
+  const peerUrls = selection ? new Set(selection.peer_highlights.map(a => a.url)) : sourceUrls;
 
   const modules: ReviewModule[] = [];
 
@@ -304,7 +309,7 @@ export async function analyzeStructure(
     modules.push({
       type: "today_focus",
       summary: parsed.today_focus.summary ?? "",
-      items: (parsed.today_focus.items ?? []).map((it: any) => ({
+      items: (parsed.today_focus.items ?? []).filter((it: any) => sourceUrls.has(it.url)).map((it: any) => ({
         media: it.media,
         title: it.title,
         summary: it.summary,
@@ -318,7 +323,7 @@ export async function analyzeStructure(
       type: "same_topic",
       topics: parsed.same_topic.slice(0, rules.same_topic_max).map((t: any) => ({
         theme: t.theme,
-        comparison: (t.comparison ?? []).map((r: any) => ({
+        comparison: (t.comparison ?? []).filter((r: any) => sourceUrls.has(r.url) && !reprintUrls.has(r.url)).map((r: any) => ({
           media: r.media,
           angle: r.angle,
           highlight: r.highlight,
@@ -326,14 +331,14 @@ export async function analyzeStructure(
           url: r.url,
         })),
         analysis: t.analysis,
-      })),
+      })).filter((t: any) => new Set(t.comparison.map((r: any) => r.media)).size >= 2),
     });
   }
 
   if (rules.modules.peer_highlights && Array.isArray(parsed.peer_highlights)) {
     modules.push({
       type: "peer_highlights",
-      items: parsed.peer_highlights.slice(0, rules.peer_highlights_max).map((p: any) => ({
+      items: parsed.peer_highlights.filter((p: any) => peerUrls.has(p.url) && !reprintUrls.has(p.url)).slice(0, rules.peer_highlights_max).map((p: any) => ({
         media: p.media,
         title: p.title,
         summary: p.summary,
@@ -347,7 +352,7 @@ export async function analyzeStructure(
     modules.push({
       type: "gz_daily",
       summary: parsed.gz_daily.summary ?? "",
-      items: (parsed.gz_daily.items ?? []).map((it: any) => ({
+      items: (parsed.gz_daily.items ?? []).filter((it: any) => sourceUrls.has(it.url)).map((it: any) => ({
         media: it.media,
         title: it.title,
         summary: it.summary,
@@ -372,6 +377,7 @@ function buildFinalMessages(
   const system = `你是资深报纸评报主笔，基于已完成的结构化分析，撰写当天的最终评报。
 用中文、连贯的自然语言（不要列表、不要 JSON、不要标题符号堆砌），分段输出。
 内容包含四部分：今日共同重点、同题报道差异、同行亮点（其他媒体有而广州日报没有重点覆盖的）、广州日报可借鉴之处。
+只依据已提供文章和结构，不添加事实。未提供纸报版面证据时不得描述纸报头条、显要位置或版面排布。同行有无仅指本轮已采集样本；纯转载不作为原创比较。
 语言风格：${rules.language_style}。
 总字数控制在 ${rules.max_word_count} 字以内。只输出评报正文。`;
 
@@ -439,6 +445,8 @@ export async function saveDailyReview(params: {
       .from("daily_review")
       .update({
         sections: JSON.stringify(sections),
+        is_test: false,
+        test_run_id: null,
         final_summary: params.finalSummary,
         review_status: "pending",
         version: newVersion,

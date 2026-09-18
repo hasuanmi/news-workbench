@@ -1,6 +1,6 @@
 /**
  * 初始化默认内部账号（幂等）
- * 默认密码：newsdesk2026，首次登录后建议在系统管理中修改（M2 补改密功能）
+ * 默认密码：your-admin-password，首次登录后建议在系统管理中修改（M2 补改密功能）
  */
 import "dotenv/config";
 import { getSupabaseClient } from "../src/storage/database/supabase-client";
@@ -13,7 +13,9 @@ const USERS = [
 
 async function main() {
   const db = getSupabaseClient();
-  const passwordHash = hashPassword("newsdesk2026");
+  const password=process.env.SEED_USER_PASSWORD;
+  if(!password)throw new Error('Set SEED_USER_PASSWORD before initializing accounts');
+  const passwordHash = hashPassword(password);
 
   for (const u of USERS) {
     const { data: existing } = await db
@@ -48,7 +50,7 @@ async function main() {
       }
     }
   }
-  console.log("默认密码: newsdesk2026");
+  console.log("账号密码来自 SEED_USER_PASSWORD，不输出真实值");
 }
 
 main().catch((err) => {

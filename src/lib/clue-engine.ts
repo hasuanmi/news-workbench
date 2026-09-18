@@ -108,6 +108,7 @@ ${userContext}
 // ============ AI 调用与解析 ============
 
 export interface ClueAnalysisOptions {
+  onRequest?: (host:string) => void;
   clueTypes?: string[];
   topics?: string[];
   customRequirement?: string;
@@ -121,20 +122,10 @@ export async function analyzeArticle(
 
   let raw: string;
   try {
-    raw = await unifiedInvoke(messages, { temperature: 0.1 });
+    raw = await unifiedInvoke(messages, { temperature: 0.1, onRequest: options?.onRequest });
   } catch (err) {
-    console.error("线索识别 AI 调用失败:", err);
-    return {
-      is_clue: false,
-      clue_type: null,
-      series_name: null,
-      series_key: null,
-      topic: null,
-      tags: [],
-      summary: "AI 调用失败",
-      confidence: 0,
-      reason: `AI 调用异常: ${err instanceof Error ? err.message : String(err)}`,
-    };
+    // 调用失败不能伪装为“不是新栏目”，否则流水线会错误标记已处理。
+    throw new Error(`线索识别 AI 调用失败: ${err instanceof Error ? err.message : String(err)}`);
   }
 
   return parseClueResponse(raw);
@@ -160,11 +151,12 @@ function parseClueResponse(raw: string): ClueAnalysis {
   // 提取 JSON（AI 可能包裹在 ```json ... ``` 中）
   const jsonMatch = raw.match(/\{[\s\S]*\}/);
   if (!jsonMatch) {
-    return fallbackAnalysis("AI 返回无法解析为 JSON", raw);
+    throw new Error("线索识别 AI 返回无法解析为 JSON");
   }
 
   try {
     const parsed = JSON.parse(jsonMatch[0]);
+    if (typeof parsed.is_clue !== "boolean") throw new Error("is_clue 必须为布尔值");
     const isClue = Boolean(parsed.is_clue);
     const clueType = normalizeClueType(parsed.clue_type);
     return {
@@ -180,22 +172,8 @@ function parseClueResponse(raw: string): ClueAnalysis {
       reason: typeof parsed.reason === "string" ? parsed.reason.slice(0, 200) : "",
     };
   } catch {
-    return fallbackAnalysis("JSON 解析失败", raw);
+    throw new Error("线索识别 AI JSON 解析或格式校验失败");
   }
-}
-
-function fallbackAnalysis(reason: string, raw: string): ClueAnalysis {
-  return {
-    is_clue: false,
-    clue_type: null,
-    series_name: null,
-    series_key: null,
-    topic: null,
-    tags: [],
-    summary: "",
-    confidence: 0,
-    reason: `${reason}: ${raw.slice(0, 100)}`,
-  };
 }
 
 // ============ 置信度路由 ============
@@ -225,7 +203,7 @@ async function getConfidenceThresholds(): Promise<{ auto: number; review: number
  */
 async function recordClueArticle(clueId: string, article: ArticleForClue): Promise<void> {
   const db = supabase();
-  await db.from("news_clue_article").upsert(
+  const { error } = await db.from("news_clue_article").upsert(
     {
       clue_id: clueId,
       article_id: article.id,
@@ -236,12 +214,13 @@ async function recordClueArticle(clueId: string, article: ArticleForClue): Promi
     },
     { onConflict: "clue_id,article_id" },
   );
+  if (error) throw new Error(`保存线索原文关联失败: ${error.message}`);
 }
 
 export async function saveClue(
   article: ArticleForClue,
   analysis: ClueAnalysis,
-): Promise<{ clueId: string; action: "created" | "updated" | "skipped"; clue?: any }> {
+): Promise<{ clueId: string; action: "created" | "updated" | "skipped"; clue?: Record<string, unknown> }> {
   // V1: 所有线索都设为 pending，由用户手动确认
   const status = analysis.is_clue ? "pending" : "rejected";
 
@@ -253,6 +232,7 @@ export async function saveClue(
       .from("news_clue")
       .select("id")
       .eq("media_id", article.media_id)
+      .eq("is_test", false)
       .eq("series_key", analysis.series_key)
       .maybeSingle();
 

@@ -23,6 +23,7 @@ export interface CalEvent {
   planning_hint?: unknown;
   source?: string | null;
   source_name?: string | null;
+  source_type?: string | null;
   tags?: unknown;
 }
 
@@ -38,6 +39,7 @@ export interface FloatingEvent {
   background?: string | null;
   planning_hint?: unknown;
   source?: string | null;
+  source_type?: string | null;
   tags?: unknown;
 }
 
@@ -60,6 +62,7 @@ export interface CalDetail {
   tags: string[];
   source_name: string | null;
   source?: string | null;
+  source_type?: string | null;
   date_status?: string | null;
   event_month?: number | null;
   category?: { code: string; category_name: string; color: string } | null;

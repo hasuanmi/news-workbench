@@ -7,6 +7,7 @@ import { CalendarDays, Radar, ArrowRight } from "lucide-react";
 import { PageSkeleton } from "@/components/common/page-skeleton";
 import { EmptyState } from "@/components/common/empty-state";
 import { PageHeader } from "@/components/common/page-header";
+import { ErrorState } from "@/components/common/error-state";
 
 interface UpcomingNode {
   id: string;
@@ -29,6 +30,7 @@ interface HomePreview {
   home_days: number;
   upcoming: UpcomingNode[];
   latest_leads: LeadsItem[];
+  calendar_warning?: string | null;
 }
 
 const IMPORTANCE_STYLE: Record<string, string> = {
@@ -57,7 +59,10 @@ export function DashboardHome() {
 
   useEffect(() => {
     fetch("/api/home/preview")
-      .then((r) => (r.ok ? r.json() : null))
+      .then((r) => {
+        if (!r.ok) throw new Error("首页预览加载失败");
+        return r.json();
+      })
       .then((d) => d && setPreview(d))
       .catch(() => setError("首页预览加载失败"));
   }, []);
@@ -82,8 +87,12 @@ export function DashboardHome() {
             </Link>
           </CardHeader>
           <CardContent className="space-y-1">
-            {!preview ? (
+            {error ? (
+              <ErrorState title="首页预览加载失败" message={error} className="py-6" />
+            ) : !preview ? (
               <PageSkeleton lines={3} cards={0} withHeader={false} className="py-2" />
+            ) : preview.calendar_warning ? (
+              <ErrorState title="新闻节点加载失败" message={preview.calendar_warning} className="py-6" />
             ) : preview.upcoming.length > 0 ? (
               preview.upcoming.slice(0, preview.show_upcoming).map((n) => (
                 <Link
@@ -134,7 +143,9 @@ export function DashboardHome() {
             </Link>
           </CardHeader>
           <CardContent className="space-y-1">
-            {!preview ? (
+            {error ? (
+              <ErrorState title="首页预览加载失败" message={error} className="py-6" />
+            ) : !preview ? (
               <PageSkeleton lines={3} cards={0} withHeader={false} className="py-2" />
             ) : preview.latest_leads.length > 0 ? (
               preview.latest_leads.slice(0, preview.show_leads).map((l) => (

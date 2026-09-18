@@ -61,5 +61,6 @@ export async function POST(req: NextRequest) {
     display_rules: displayRules,
   }));
 
-  return NextResponse.json({ success: true, clues, stats: result.stats });
+  const success = result.errors.length === 0;
+  return NextResponse.json({ ...result, success, clues, stats: {...result.stats,processed:result.processed,cluesFound:result.cluesFound}, errors: result.errors }, { status: success ? 200 : 500 });
 }

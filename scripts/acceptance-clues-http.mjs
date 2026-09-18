@@ -1,0 +1,35 @@
+// Isolated Mock fixtures through article-v1 HTTP, then real AI and persistence.
+import fs from 'node:fs';
+import {randomUUID} from 'node:crypto';
+import dotenv from 'dotenv';
+for(const file of ['.env.local','.env'])if(fs.existsSync(file))dotenv.config({path:file,quiet:true});
+const base=process.env.BASE_URL||'http://127.0.0.1:3001';
+const runId=randomUUID();
+const journal={run_id:runId,results:[]};
+const record=(name,ok,evidence)=>{journal.results.push({name,status:ok?'PASS':'FAIL',evidence}); console.log(`${ok?'PASS':'FAIL'} ${name}`);fs.writeFileSync(`logs/acceptance/clues-${runId}.json`,JSON.stringify(journal,null,2));};
+const dbheaders={apikey:process.env.SUPABASE_SERVICE_ROLE_KEY,Authorization:`Bearer ${process.env.SUPABASE_SERVICE_ROLE_KEY}`};
+const cfg=await(await fetch(`${process.env.SUPABASE_URL}/rest/v1/app_config?select=value&key=eq.ingest.api_token`,{headers:dbheaders})).json();
+const token=cfg[0]?.value||process.env.INGEST_API_TOKEN;
+const queue=await(await fetch(`${base}/api/ingest/queue`,{headers:{Authorization:`Bearer ${token}`}})).json();
+const source=queue.sources.find(row=>row.media_name==='南方日报'&&row.source_type==='website');
+const media=await(await fetch(`${process.env.SUPABASE_URL}/rest/v1/media?select=id&media_name=eq.${encodeURIComponent('南方日报')}`,{headers:dbheaders})).json();
+const login=await fetch(`${base}/api/auth/login`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({username:'admin',password:process.env.AUDIT_PASSWORD})});
+const cookie=login.headers.get('set-cookie')?.split(';')[0];if(!cookie||!source||!media[0])throw new Error('Fixture setup failed');
+const headers={Cookie:cookie,'Content-Type':'application/json'};
+const request=async(route,body)=>{const r=await fetch(base+route,{method:body?'POST':'GET',headers,body:body?JSON.stringify(body):undefined,signal:AbortSignal.timeout(120000)});return{status:r.status,data:await r.json()};};
+const at=new Date(Date.now()+60000).toISOString();
+const tag=runId.slice(0,8);
+const names=[`验收湾区创新${tag}`,`验收城市观察${tag}`];
+const articles=names.map((name,i)=>({title:`【Mock验收】${name}开栏语`,url:`https://example.test/acceptance/${runId}/${i}`,external_id:`clue-${runId}-${i}`,publish_time:at,content:`【Mock验收数据，不是真实报道】编者的话：南方日报今日全新推出固定栏目“${name}”，这是首次开栏，自今日起每周一期，连续关注科技企业创新与城市公共服务。开栏语明确说明该栏目此前从未推出。`+'本期由记者专访湾区创业团队，介绍研发成果及公共服务创新案例。'.repeat(15),column_name:name,section:'验收Mock',source_type:'website'}));
+articles.push({title:`【Mock验收】旧栏目日常报道${tag}`,url:`https://example.test/acceptance/${runId}/old`,external_id:`clue-${runId}-old`,publish_time:at,content:'【Mock验收数据】本栏目于2018年创办，已连续刊发八年。今天只是原有栏目日常稿件，没有新栏目、开栏或新系列。'+'记者走访社区介绍日常公共服务。'.repeat(30),section:'验收Mock'});
+articles.forEach(article=>article.source_id=source.source_id);
+const ing=await fetch(`${base}/api/ingest/articles`,{method:'POST',headers:{'Content-Type':'application/json',Authorization:`Bearer ${token}`},body:JSON.stringify({schema_version:'article-v1',results:[{source_id:source.source_id,success:true,articles}]})});const ingData=await ing.json();record('线索Mock HTTP入库',ing.ok&&ingData.inserted===3,{http:ing.status,...ingData});
+const filter={timeRange:'custom',customStart:at,customEnd:at,mediaScope:'custom',customMediaIds:[media[0].id],clueTypes:['new_column']};
+const identified=await request('/api/admin/leads/identify',filter);record('实际AI识别并持久化',identified.status===200&&identified.data.clues?.filter(row=>names.includes(row.series_name)).length===2,{http:identified.status,stats:identified.data.stats,errors:identified.data.errors});
+const query=`/api/leads?scope=all&mediaId=${media[0].id}&pageSize=100`;
+const all=await request(query);const clues=all.data.clues?.filter(row=>names.includes(row.series_name))||[];
+record('关联文章、原文URL与新鲜度',clues.length===2&&clues.every(row=>row.articles?.some(a=>a.url?.includes(runId))),{ids:clues.map(c=>c.id),count:clues.length});
+record('旧栏目不入线索',!all.data.clues?.some(row=>row.series_name?.includes(tag)&&!names.includes(row.series_name)),{});
+const repeated=await request('/api/admin/leads/identify',filter);const after=await request(query);record('重复识别不新增同栏目',repeated.status===200&&after.data.clues?.filter(row=>names.includes(row.series_name)).length===2,{});
+for(const [index,action] of ['confirm','ignore'].entries())if(clues[index]){const r=await request(`/api/admin/leads/${clues[index].id}/review`,{action,reason:'Mock端到端验收记录'});const saved=await request(query);record(action==='confirm'?'确认新栏目持久化':'不是新栏目持久化',r.status===200&&saved.data.clues?.find(c=>c.id===clues[index].id)?.review_status===(action==='confirm'?'confirmed':'ignored'),{http:r.status,id:clues[index].id});}
+console.log(JSON.stringify({run_id:runId,passed:journal.results.filter(r=>r.status==='PASS').length,failed:journal.results.filter(r=>r.status==='FAIL').length}));

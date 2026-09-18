@@ -83,7 +83,7 @@ DEFAULT_LLM_API_KEY=your-key
 DEFAULT_LLM_MODEL=doubao-pro-32k
 
 # 外部抓取服务 token
-INGEST_API_TOKEN=newsdesk-ingest-2026
+INGEST_API_TOKEN=your-random-ingest-token
 
 # 对外域名
 NEXT_PUBLIC_SITE_URL=https://news.your-domain.com
@@ -240,12 +240,12 @@ Content-Type: application/json
 
 ### 鉴权令牌
 
-默认 `newsdesk-ingest-2026`，可在后台「系统配置」页面修改（key: `ingest.api_token`），或直接修改 `.env` 中的 `INGEST_API_TOKEN`。
+默认 `your-random-ingest-token`，可在后台「系统配置」页面修改（key: `ingest.api_token`），或直接修改 `.env` 中的 `INGEST_API_TOKEN`。
 
 ## 步骤七：验证部署
 
 1. 访问 `https://news.your-domain.com`，应跳转到登录页
-2. 使用 `admin / newsdesk2026` 登录
+2. 使用 `admin / your-admin-password` 登录
 3. 进入「系统管理 → 媒体与数据源」，点击「模拟外部推送」验证 ingest 链路
 4. 进入「新闻日历」，点击任意节点查看 AI 选题建议（需 AI 模型已配置）
 5. 检查日志无报错：`pm2 logs news-workbench` 或 `docker logs news-workbench`

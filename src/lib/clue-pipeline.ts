@@ -7,6 +7,9 @@
 
 import { supabase } from "@/lib/db";
 import { analyzeArticle, saveClue, type ArticleForClue } from "@/lib/clue-engine";
+import { randomUUID } from "node:crypto";
+import fs from "node:fs";
+import path from "node:path";
 
 export interface PipelineFilter {
   timeRange?: "24h" | "3d" | "7d" | "custom";
@@ -20,6 +23,9 @@ export interface PipelineFilter {
 }
 
 export interface PipelineResult {
+  run_id?: string;
+  executed?: boolean;
+  summary?: { pendingArticles: number; mediaCount: number; deepseekCalls: number; calls: { articleId: string; articles: number; status: string }[] };
   total: number;
   processed: number;
   cluesFound: number;
@@ -27,12 +33,37 @@ export interface PipelineResult {
   confirmed: number;
   ignored: number;
   errors: string[];
-  clues?: any[];
-  stats?: any;
+  clues?: Record<string, unknown>[];
+  stats?: { pending: number; confirmed: number; ignored: number };
 }
 
 export async function runCluePipeline(filter?: PipelineFilter): Promise<PipelineResult> {
+  const startedAt = new Date().toISOString();
   const db = supabase();
+  const runId=randomUUID();
+  const calls: {articleId:string;articles:number;status:string}[]=[];
+  let mediaCount=0;
+  const finish=async(result:PipelineResult)=>{
+    result.run_id=runId;result.executed=calls.length>0;
+    result.summary={pendingArticles:result.total,mediaCount,deepseekCalls:calls.filter(c=>c.status.startsWith('deepseek:')).length,calls};
+    const endedAt=new Date().toISOString();
+    const record={...result,started_at:startedAt,ended_at:endedAt,filter};
+    const directory=path.join(process.cwd(),'logs/clue-runs');fs.mkdirSync(directory,{recursive:true});
+    const {error}=await db.from('task_log').insert({workflow_name:'clue_identify',source_count:result.total,success_count:result.processed,failure_count:result.errors.length,new_data_count:result.cluesFound,status:result.errors.length?'completed_with_errors':result.executed?'completed':'skipped',error_message:result.errors.length?result.errors.slice(0,5).join('; '):null,start_time:startedAt,end_time:endedAt});
+    if(error)result.errors.push(`执行日志保存失败: ${error.message}`);
+    for(const file of [`${runId}.json`,'latest.json']){const temp=path.join(directory,`${file}.${runId}.tmp`);fs.writeFileSync(temp,JSON.stringify(record,null,2));fs.renameSync(temp,path.join(directory,file));}
+    return result;
+  };
+  // Fail before AI calls or processed flags when required persistence is absent.
+  const schemaChecks = await Promise.all([
+    db.from("news_clue").select("recent_article_at").limit(1),
+    db.from("news_clue_article").select("id").limit(1),
+  ]);
+  const schemaErrors = schemaChecks.flatMap(check => check.error ? [check.error.message] : []);
+  if (schemaErrors.length) return finish({
+    total: 0, processed: 0, cluesFound: 0, pending: 0, confirmed: 0, ignored: 0,
+    errors: schemaErrors, clues: [], stats: { pending: 0, confirmed: 0, ignored: 0 },
+  });
 
   // 未显式传时间范围时（如定时任务），从配置 clue.identify_rules.default_time_range 读默认窗口，
   // 保证历史系列不会因为库里存在旧文章而反复进入今日待确认。
@@ -76,6 +107,7 @@ export async function runCluePipeline(filter?: PipelineFilter): Promise<Pipeline
   let query = db
     .from("article")
     .select("id, title, content, media_id, publish_time, url")
+    .eq("is_test", false)
     .eq("clue_processed", false)
     .order("publish_time", { ascending: false })
     .limit(100);
@@ -88,7 +120,9 @@ export async function runCluePipeline(filter?: PipelineFilter): Promise<Pipeline
   }
 
   // 媒体范围筛选
-  if (effectiveFilter?.mediaScope && effectiveFilter.mediaScope !== "all") {
+  if (effectiveFilter?.customMediaIds?.length) {
+    query = query.in("media_id", effectiveFilter.customMediaIds);
+  } else if (effectiveFilter?.mediaScope && effectiveFilter.mediaScope !== "all") {
     const { data: mediaRows } = await db
       .from("media")
       .select("id")
@@ -97,22 +131,21 @@ export async function runCluePipeline(filter?: PipelineFilter): Promise<Pipeline
     if (mediaIds.length > 0) {
       query = query.in("media_id", mediaIds);
     }
-  } else if (effectiveFilter?.customMediaIds && effectiveFilter.customMediaIds.length > 0) {
-    query = query.in("media_id", effectiveFilter.customMediaIds);
   }
 
   const { data: articles, error } = await query;
   if (error) {
     console.error("查询未处理文章失败:", error);
-    return { total: 0, processed: 0, cluesFound: 0, pending: 0, confirmed: 0, ignored: 0, errors: [error.message], clues: [], stats: { pending: 0, confirmed: 0, ignored: 0 } };
+    return finish({ total: 0, processed: 0, cluesFound: 0, pending: 0, confirmed: 0, ignored: 0, errors: [error.message], clues: [], stats: { pending: 0, confirmed: 0, ignored: 0 } });
   }
 
   if (!articles || articles.length === 0) {
-    return { total: 0, processed: 0, cluesFound: 0, pending: 0, confirmed: 0, ignored: 0, errors: [], clues: [], stats: { pending: 0, confirmed: 0, ignored: 0 } };
+    return finish({ total: 0, processed: 0, cluesFound: 0, pending: 0, confirmed: 0, ignored: 0, errors: [], clues: [], stats: { pending: 0, confirmed: 0, ignored: 0 } });
   }
 
   // 2. 批量查媒体名称
   const mediaIds = [...new Set(articles.map((a) => a.media_id))];
+  mediaCount=mediaIds.length;
   const { data: mediaRows } = await db
     .from("media")
     .select("id, media_name")
@@ -144,12 +177,17 @@ export async function runCluePipeline(filter?: PipelineFilter): Promise<Pipeline
     };
 
     try {
+      let provider='';
       const analysis = await analyzeArticle(articleForClue, {
         clueTypes: effectiveFilter?.clueTypes,
         topics: effectiveFilter?.topics,
         customRequirement: effectiveFilter?.customRequirement,
+        onRequest:host=>{provider=host;calls.push({articleId:article.id,articles:1,status:host==='api.deepseek.com'?'deepseek:started':`${host}:started`});},
       });
+      const call=calls.find(c=>c.articleId===article.id);if(call)call.status=provider==='api.deepseek.com'?'deepseek:success':`${provider}:success`;
       const { action, clue } = await saveClue(articleForClue, analysis);
+      const { error: markError } = await db.from("article").update({ clue_processed: true }).eq("id", article.id);
+      if (markError) throw new Error(`标记文章处理状态失败: ${markError.message}`);
 
       result.processed++;
       if (analysis.is_clue && action !== "skipped") {
@@ -158,11 +196,11 @@ export async function runCluePipeline(filter?: PipelineFilter): Promise<Pipeline
         if (clue && result.clues) result.clues.push(clue);
       }
     } catch (err) {
+      const call=calls.find(c=>c.articleId===article.id);if(call?.status.endsWith(':started'))call.status=call.status.replace(':started',':failed');
       result.errors.push(`${article.title}: ${err instanceof Error ? err.message : String(err)}`);
     }
 
-    // 标记已处理（无论是否识别为线索）
-    await db.from("article").update({ clue_processed: true }).eq("id", article.id);
+    // 失败不标记为已处理，修复后可以重试。
   }
 
   // 获取统计
@@ -174,17 +212,5 @@ export async function runCluePipeline(filter?: PipelineFilter): Promise<Pipeline
   };
 
   // 4. 记录 task_log
-  await db.from("task_log").insert({
-    workflow_name: "clue_identify",
-    source_count: result.total,
-    success_count: result.processed,
-    failure_count: result.errors.length,
-    new_data_count: result.cluesFound,
-    status: result.errors.length > 0 ? "completed_with_errors" : "completed",
-    error_message: result.errors.length > 0 ? result.errors.slice(0, 5).join("; ") : null,
-    start_time: new Date(Date.now() - result.total * 2000).toISOString(),
-    end_time: new Date().toISOString(),
-  });
-
-  return result;
+  return finish(result);
 }

@@ -1,0 +1,56 @@
+# 媒体数据源配置（每日评报 6 家 + 后续扩展）
+# 新增媒体：在 scrapers/ 加一个 scraper 文件（继承 BaseScraper），
+# 在 registry._REGISTRY 注册 key，并在此追加一条配置即可。
+sources:
+  # ===== 每日评报（广州同城 6 家）=====
+  - media: 广州日报
+    business: [daily_review]
+    enabled: true
+    source_type: 官方网站
+    scraper: gzdaily
+    entry_urls:
+      - https://www.dayoo.com/
+      - https://news.dayoo.com/
+
+  - media: 南方日报
+    business: [daily_review, news_lead]
+    enabled: true
+    source_type: 官方网站
+    scraper: southcn
+    entry_urls:
+      - https://www.southcn.com/
+
+  - media: 南方都市报
+    business: [daily_review]
+    enabled: true
+    source_type: 官方网站
+    scraper: oeeee
+    entry_urls:
+      - https://www.oeeee.com/
+
+  - media: 新快报
+    business: [daily_review]
+    enabled: true
+    source_type: 官方网站
+    scraper: xkb
+    entry_urls:
+      - http://www.xkb.com.cn/
+      - http://epaper.xkb.com.cn/
+
+  - media: 羊城晚报
+    business: [daily_review]
+    enabled: true
+    source_type: 官方网站
+    scraper: ycwb
+    entry_urls:
+      - http://www.ycwb.com/
+      - http://epaper.ycwb.com/
+
+  - media: 信息时报
+    business: [daily_review]
+    enabled: true
+    source_type: 官方网站
+    scraper: xxsb
+    entry_urls:
+      - http://www.xxsb.com/
+      - http://epaper.xxsb.com/

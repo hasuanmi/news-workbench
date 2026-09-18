@@ -23,6 +23,7 @@ interface Job {
   lastProcessedCount: number | null;
   lastError: string | null;
   nextRunAt: string | null;
+  autoScheduled: boolean;
 }
 
 interface JobLog {
@@ -39,6 +40,7 @@ interface JobLog {
 }
 
 const JOB_TITLES: Record<string, string> = {
+  calendar_recommend: "日历 AI 推荐",
   clue_identify: "新闻线索识别",
   weekly_briefing: "每周简报",
   daily_review: "每日评报",
@@ -157,8 +159,8 @@ export default function SchedulerAdminPage() {
         <header>
           <h1 className="font-serif text-2xl font-bold">定时任务状态</h1>
           <p className="text-sm text-[var(--muted-foreground)] mt-1">
-            查看新闻线索识别、每周简报、每日评报的自动调度状态。已启用并配好触发密钥 + 服务器 crontab
-            后才会真正自动运行；否则仅支持在此「立即执行」人工测试。
+            查看新闻日历推荐、新闻线索识别、每周简报和每日评报的执行记录。
+            自动状态和下次时间以实际触发器为准；「立即执行」用于手动补跑。
           </p>
         </header>
 
@@ -168,10 +170,10 @@ export default function SchedulerAdminPage() {
             <span className="text-lg leading-none mt-0.5">{autoScheduled ? "✅" : "⚠️"}</span>
             <div>
               {autoScheduled ? (
-                <p className="font-medium text-slate-700">已自动运行：触发密钥已配置，配合服务器 crontab 即会定时触发。</p>
+                <p className="font-medium text-slate-700">真实自动触发器已安装：已核对 Windows 任务记录，执行结果以下方日志为准。</p>
               ) : (
                 <p className="font-medium text-[var(--warning)]">
-                  尚未自动运行：系统当前<b>不会</b>自行定时执行抓取 / 线索识别 / 评报生成，仅支持后台手动「立即执行」。
+                  自动运行尚未验证：系统本身不会启动定时器。请先使用「立即执行」验收，再核对外部定时调用。
                 </p>
               )}
               <p className="mt-1 text-slate-500">{serverMessage}</p>
@@ -218,7 +220,7 @@ export default function SchedulerAdminPage() {
                     <div>
                       <div className="text-sm font-medium">{job.title}</div>
                       <Badge variant={job.enabled ? "default" : "secondary"} className="mt-1 text-[10px]">
-                        {job.enabled ? "已启用" : "已停用"}
+                        {!job.enabled ? "已停用" : job.autoScheduled ? "真实自动触发已安装" : "仅支持手动触发"}
                       </Badge>
                     </div>
                   </div>
@@ -229,6 +231,7 @@ export default function SchedulerAdminPage() {
                         执行时间：
                         <Input
                           value={job.cron}
+                          disabled={job.autoScheduled}
                           onChange={(e) => updateJob(job.name, { cron: e.target.value })}
                           className="h-7 text-xs font-mono w-36 inline-flex"
                           placeholder="分 时 日 月 周"

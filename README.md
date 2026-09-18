@@ -71,7 +71,7 @@ pnpm tsx scripts/seed-users.ts
 pnpm tsx scripts/import-data.ts
 ```
 
-默认账号：`admin / newsdesk2026`（管理员）、`editor / newsdesk2026`（编辑）。
+默认账号：`admin / your-admin-password`（管理员）、`editor / your-admin-password`（编辑）。
 
 ### 5. 启动开发服务器
 
@@ -120,7 +120,7 @@ python -m app.main                            # 监听 8000
 ```ini
 INGEST_ENABLED=true
 MAIN_API_BASE=http://localhost:3000
-INGEST_API_TOKEN=newsdesk-ingest-2026
+INGEST_API_TOKEN=your-random-ingest-token
 ```
 
 ```bash

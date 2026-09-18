@@ -24,12 +24,14 @@ const DELETE_REASON_MAP: Record<string, string> = {
  * 软删除：必须选择删除原因；原节点信息/来源/删除时间保留，供后续 AI 推荐参考。
  * 同时支持 DELETE 方法与 PATCH + delete_reason 两种入口。
  */
-async function softDelete(req: NextRequest, id: string) {
+async function softDelete(req: NextRequest, id: string, parsedBody?: Record<string, unknown>) {
   const auth = await requireAdmin(req);
   if ("error" in auth) return auth.error;
-  const body = await req.json().catch(() => ({}));
+  const body = parsedBody ?? await req.json().catch(() => ({}));
   const rawReason = String(body.delete_reason ?? "").trim();
-  const deleteReason = DELETE_REASON_MAP[rawReason] ?? "other";
+  const deleteReason = DELETE_REASON_MAP[rawReason] ??
+    (Object.values(DELETE_REASON_MAP).includes(rawReason) ? rawReason : null);
+  if (!deleteReason) return NextResponse.json({ error: "请选择有效删除原因" }, { status: 400 });
 
   const { error } = await supabase()
     .schema("public")
@@ -41,7 +43,8 @@ async function softDelete(req: NextRequest, id: string) {
       enabled: false,
       updated_at: new Date().toISOString(),
     })
-    .eq("id", id);
+    .eq("id", id)
+    .is("deleted_at", null);
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
 
   // 记录 AI 审核日志供后续推荐参考
@@ -72,7 +75,7 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
 
   // 软删除入口：PATCH + delete_reason
   if ("delete_reason" in body) {
-    return softDelete(req, id);
+    return softDelete(req, id, body);
   }
 
   const allowed = [
@@ -88,6 +91,7 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
     "event_date",
     "anniversary_base_year",
     "source",
+    "source_type",
     "event_year",
     "event_month",
     "date_status",
@@ -96,11 +100,22 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
   for (const k of allowed) {
     if (k in body) update[k] = body[k] === "" ? null : body[k];
   }
+  if ("background" in body) update.description = String(body.background ?? "").trim() || null;
+  update.updated_at = new Date().toISOString();
+  if ("source_type" in body || "source" in body) {
+    const sourceAliases: Record<string, string> = { historical_migration: "history_migrate", ai_supplement: "ai_recommend", manual: "user_add", pasted_text: "user_paste" };
+    const type = "source_type" in body ? body.source_type : Object.keys(sourceAliases).find(key => sourceAliases[key] === body.source);
+    if (!Object.hasOwn(sourceAliases, type ?? "")) return NextResponse.json({ error: "无效来源标签" }, { status: 400 });
+    update.source_type = type;
+    update.source = sourceAliases[type];
+  }
   if (body.event_type === "fixed" && body.original_date) {
+    update.event_type = "fixed";
     update.original_date = body.original_date;
     update.event_date = null;
   }
   if (body.event_type === "dynamic" && body.event_date) {
+    update.event_type = "dynamic";
     update.event_date = body.event_date;
     update.original_date = null;
   }
@@ -110,6 +125,7 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
     .from("calendar_event")
     .update(update)
     .eq("id", id)
+    .is("deleted_at", null)
     .select()
     .single();
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
@@ -125,7 +141,7 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
     "event_year" in update ||
     "event_month" in update ||
     "date_status" in update;
-  if (HAS_KEY_CHANGE && data?.id) void enqueueEnrich(data.id, { force: true });
+  if (HAS_KEY_CHANGE && data?.id && data.enabled === true) void enqueueEnrich(data.id, { force: true });
 
   return NextResponse.json({ item: data });
 }

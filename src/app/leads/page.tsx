@@ -18,6 +18,8 @@ export default function LeadsPage() {
   const [error, setError] = useState<string | null>(null);
   const [info, setInfo] = useState<string | null>(null);
   const [scope, setScope] = useState<Scope>("active");
+  const [runSummary,setRunSummary]=useState<any>(null);
+  const loadRunSummary=useCallback(async()=>{try{const r=await fetch('/api/leads/run-summary');if(r.ok)setRunSummary(await r.json());}catch{}},[]);
 
   // 页面挂载时加载窗口内的今日待确认 + 已确认线索
   const loadClues = useCallback(async (sc: Scope) => {
@@ -28,6 +30,7 @@ export default function LeadsPage() {
       if (!res.ok) throw new Error("加载线索失败");
       const data = await res.json();
       setClues(data.clues || []);
+      if (data.evidence_warning) setError(data.evidence_warning);
     } catch (e) {
       setError(e instanceof Error ? e.message : "加载线索失败");
     } finally {
@@ -38,6 +41,7 @@ export default function LeadsPage() {
   useEffect(() => {
     loadClues(scope);
   }, [scope, loadClues]);
+  useEffect(()=>{loadRunSummary();const timer=setInterval(loadRunSummary,15000);return()=>clearInterval(timer);},[loadRunSummary]);
 
   const handleIdentify = async (filter: LeadsFilterType) => {
     setLoading(true);
@@ -63,6 +67,8 @@ export default function LeadsPage() {
       const data = await res.json();
       // 识别后重新拉取窗口内列表（保证依据/新鲜度一致），而不是直接用返回的去重结果
       await loadClues("active");
+      await loadRunSummary();
+      if(data.executed===false&&data.total===0){const message='本轮未执行识别：待处理文章0篇';setInfo(message);toast.info(message);return;}
       const processed = data.stats?.processed ?? data.processed;
       const found = data.stats?.cluesFound ?? data.cluesFound;
       if (processed !== undefined) {
@@ -113,6 +119,15 @@ export default function LeadsPage() {
 
         {/* 条件区 */}
         <LeadsFilter onIdentify={handleIdentify} loading={loading} />
+        {runSummary&&<div className="mb-4 rounded-md border p-3 text-sm space-y-1" aria-label="运行摘要">
+          <p>运行摘要：接入媒体 {runSummary.connectedMediaCount} 家（{runSummary.mediaNames.join('、')}）</p>
+          <p>最近抓取：{({success:'成功',failed:'失败',running:'运行中',interrupted:'已中断',skipped:'已跳过',unknown:'暂无记录'} as Record<string,string>)[runSummary.scrape.status]??runSummary.scrape.status}；抓取文章 {runSummary.scrape.articles} 篇；成功推送媒体 {runSummary.scrape.successfulMedia} 家</p>
+          {runSummary.scrape.startedAt&&<p>抓取开始：{new Date(runSummary.scrape.startedAt).toLocaleString('zh-CN',{timeZone:'Asia/Shanghai'})}（北京时间）</p>}
+          <p>当前待识别（最近24小时／全部媒体）：{runSummary.pendingArticles24h??'查询失败'}；最近一轮 DeepSeek 调用：{runSummary.identification?.deepseekCalls??'暂无记录'} 次</p>
+          {runSummary.identification&&<p>最近一轮输入：{runSummary.identification.pendingArticles} 篇／{runSummary.identification.mediaCount} 家媒体；运行 ID：{runSummary.identification.runId}</p>}
+          {runSummary.pendingError&&<p className="text-red-700">待识别数量查询失败：{runSummary.pendingError}</p>}
+          {runSummary.scrape.error&&<p className="text-red-700">抓取错误：{runSummary.scrape.error}</p>}
+        </div>}
 
         {/* 视图切换：今日待确认 / 历史线索库 */}
         <div className="flex items-center gap-2 mb-4">
@@ -182,7 +197,7 @@ export default function LeadsPage() {
         ) : (
           <EmptyState
             className="py-14"
-            title={scope === "active" ? "今天暂未发现新栏目" : "历史线索库暂无已确认线索"}
+            title={scope === "active" ? (runSummary?.identification?.executed===false&&runSummary?.identification?.pendingArticles===0&&runSummary?.identification?.errors?.length===0 ? "本轮未执行识别：待处理文章0篇" : "当前暂无新栏目线索") : "历史线索库暂无已确认线索"}
             description={
               scope === "active"
                 ? "可在条件区选择 24 小时 / 3 天 / 7 天时间窗口后点击「开始识别」。"

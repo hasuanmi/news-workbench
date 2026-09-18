@@ -17,6 +17,7 @@ import "server-only";
 import { supabase } from "@/lib/db";
 import { invalidateConfigCache } from "@/lib/config";
 import { runCluePipeline } from "@/lib/clue-pipeline";
+import { updateCalendarRecommendations } from "@/lib/calendar-auto";
 import {
   getWeeklyClues,
   generateWeeklyBriefing,
@@ -30,7 +31,7 @@ import {
   type ReviewConditions,
 } from "@/lib/review-engine";
 
-export type JobName = "clue_identify" | "weekly_briefing" | "daily_review";
+export type JobName = "calendar_recommend" | "clue_identify" | "weekly_briefing" | "daily_review";
 
 export interface JobDefinition {
   name: JobName;
@@ -40,11 +41,12 @@ export interface JobDefinition {
 }
 
 export const JOB_DEFINITIONS: JobDefinition[] = [
+  { name: "calendar_recommend", title: "新闻日历 AI 推荐", description: "每天检索未来30～90天；历史规律与已取证权威页面，去重直接进入正式日历", defaultCron: "30 7 * * *" },
   {
     name: "clue_identify",
     title: "新闻线索 AI 识别",
-    description: "扫描未处理的采集文章，AI 识别新栏目 / 系列报道 / 专题 / 特色策划并入库",
-    defaultCron: "0 9 * * *",
+    description: "三家真实媒体抓取完成后，扫描近3天未处理文章识别新栏目、保存原文关联；08:30为抓取开始时间",
+    defaultCron: "30 8 * * *",
   },
   {
     name: "weekly_briefing",
@@ -71,7 +73,8 @@ type JobConfigMap = Record<JobName, JobConfig>;
 
 function defaultConfig(): JobConfigMap {
   return {
-    clue_identify: { enabled: true, cron: "0 9 * * *" },
+    calendar_recommend: { enabled: true, cron: "30 7 * * *" },
+    clue_identify: { enabled: true, cron: "30 8 * * *" },
     weekly_briefing: { enabled: true, cron: "0 10 * * 1" },
     daily_review: { enabled: true, cron: "30 10 * * *" },
   };
@@ -144,6 +147,7 @@ export async function runJob(job: JobName, manual = false): Promise<JobResult> {
   if (running.has(job)) {
     return { job, success: false, summary: "任务正在执行中，跳过本次触发", error: "already running" };
   }
+  running.add(job);
 
   // task_log 兜底：若已有 running 记录（上次异常中断），允许继续；此处先开一条
   const db = supabase();
@@ -158,11 +162,11 @@ export async function runJob(job: JobName, manual = false): Promise<JobResult> {
     .single();
 
   if (logErr) {
+    running.delete(job);
     return { job, success: false, summary: "无法创建任务日志", error: logErr.message };
   }
   const logId = logRow.id;
 
-  running.add(job);
   const finish = async (
     ok: boolean,
     patch: {
@@ -182,10 +186,18 @@ export async function runJob(job: JobName, manual = false): Promise<JobResult> {
   };
 
   try {
+    if (job === "calendar_recommend") {
+      const result = await updateCalendarRecommendations();
+      await finish(true, { status: "success", source_count: result.sourceCount, new_data_count: result.inserted, success_count: result.inserted, failure_count: result.errors.length, ...(result.errors.length ? {error_message: result.errors.join("；").slice(0,2000)} : {}) });
+      return { job, success: true, summary: `权威来源 ${result.sourceCount} 页，新增 ${result.inserted}、补全 ${result.enriched}、重复 ${result.duplicates}、取证未通过 ${result.rejected}`, detail: result };
+    }
     if (job === "clue_identify") {
-      const r = await runCluePipeline();
-      await finish(true, {
-        status: "success",
+      const {data: media,error} = await db.from("media").select("id").eq("enabled",true).in("media_name",["广州日报","广州日报报业集团","南方日报","南方都市报"]);
+      if(error || !media?.length)throw new Error(error?.message??"未配置三家真实监测媒体");
+      const r = await runCluePipeline({timeRange:"3d",mediaScope:"custom",customMediaIds:media.map(m=>m.id),clueTypes:["new_column"]});
+      const ok = r.errors.length === 0;
+      await finish(ok, {
+        status: ok ? "success" : "failed",
         source_count: r.total,
         success_count: r.processed,
         new_data_count: r.cluesFound,
@@ -194,8 +206,8 @@ export async function runJob(job: JobName, manual = false): Promise<JobResult> {
       });
       return {
         job,
-        success: true,
-        summary: `扫描 ${r.total} 篇，处理 ${r.processed} 篇，发现线索 ${r.cluesFound} 条`,
+        success: ok,
+        summary: r.total===0&&r.errors.length===0?'本轮未执行识别：待处理文章0篇':`扫描 ${r.total} 篇，处理 ${r.processed} 篇，发现线索 ${r.cluesFound} 条`,
         detail: r as unknown as Record<string, unknown>,
       };
     }
@@ -333,6 +345,7 @@ export interface JobRuntimeStatus {
 export async function getJobRuntimeStatuses(): Promise<Record<JobName, JobRuntimeStatus>> {
   const logs = await getRecentJobLogs(100);
   const byJob: Record<JobName, JobRuntimeStatus> = {
+    calendar_recommend: emptyStatus("calendar_recommend"),
     clue_identify: emptyStatus("clue_identify"),
     weekly_briefing: emptyStatus("weekly_briefing"),
     daily_review: emptyStatus("daily_review"),
@@ -345,13 +358,13 @@ export async function getJobRuntimeStatuses(): Promise<Record<JobName, JobRuntim
       job.lastRunStatus = log.status;
       job.lastLogId = log.id;
       job.lastProcessedCount =
-        log.new_data_count ?? log.success_count ?? log.source_count ?? null;
+        log.success_count ?? log.source_count ?? log.new_data_count ?? null;
       if (log.status === "failed") job.lastError = log.error_message;
     }
-    if (!job.lastSuccessAt && log.status === "success") {
+    if (!job.lastSuccessAt && ["success", "completed"].includes(log.status)) {
       job.lastSuccessAt = log.start_time;
       if (job.lastProcessedCount === null) {
-        job.lastProcessedCount = log.new_data_count ?? log.success_count ?? null;
+        job.lastProcessedCount = log.success_count ?? log.source_count ?? log.new_data_count ?? null;
       }
     }
   }

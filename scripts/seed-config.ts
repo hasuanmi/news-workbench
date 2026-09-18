@@ -72,7 +72,7 @@ async function main() {
     { key: "review.selection_rules", value: { min_word_count: 2000, highlight_flags: ["front_page", "full_page", "cross_page", "series", "special"], dimensions: ["topic", "timeliness", "angle", "depth", "presentation"], scan_missing: true, exclude_xinhua_reprint: true }, description: "每日评报选稿默认规则：最低字数/重点稿条件/评报维度/同行遗漏扫描/新华社纯转载排除（前台不再逐次选择，后台统一维护）" },
     { key: "review.xinhua_recognize", value: true, description: "识别新华社通稿来源（新华社/新华社记者/新华社××电/原始来源）" },
     { key: "crawl.request_interval_ms", value: 10000, description: "单数据源抓取最小间隔(毫秒)" },
-    { key: "ingest.api_token", value: "newsdesk-ingest-2026", description: "外部抓取服务接入令牌（/api/ingest/* 鉴权，可随时轮换）" },
+    { key: "ingest.api_token", value: process.env.INGEST_API_TOKEN || "", description: "外部抓取服务接入令牌（/api/ingest/* 鉴权，可随时轮换）" },
     { key: "clue.display_rules", value: { enable_actions: true, sort_by: "first_found_desc", group_by: "none", summary_max_length: 200, reason_max_length: 150, show_articles: true, show_freshness: true, fields: { show_clue_type: true, show_clue_name: true, show_summary: true, show_reason: true, show_tags: true, show_article_count: true, show_first_found: true, show_last_seen: true, show_confidence: true, show_articles: true, show_freshness: true } }, description: "新闻线索卡片展示规则（含关联原文与新鲜度开关）" },
     { key: "clue.identify_rules", value: { default_time_range: "24h", pending_freshness_days: 3, require_article_evidence: true }, description: "新闻线索识别规则：默认时间窗口(24h/3d/7d)、待确认线索新鲜度门槛(天)、待确认是否必须有可核验原文" },
     { key: "calendar.enrich", value: { enabled: true, authority_sites: "gov.cn,www.gov.cn,news.cn,xinhuanet.com,people.com.cn,cctv.com,gd.gov.cn,gz.gov.cn,12371.cn,qstheory.cn", max_sources: 6, max_retries: 3 }, description: "节点自动补全配置：联网检索优先权威站点(中国政府网/新华社/人民日报/央视/粤穗政府等)、每节点最大参考来源数、失败自动重试上限次数；信息未变化不重复调用" },
@@ -82,7 +82,7 @@ async function main() {
     if (error) throw new Error(`配置写入失败 ${cfg.key}: ${error.message}`);
   }
   console.log(`✓ 全局配置 ${configs.length} 条`);
-  console.log("提示：账号由 scripts/seed-users.ts 初始化（admin/editor，密码 newsdesk2026）");
+  console.log("提示：账号由 scripts/seed-users.ts 初始化（admin/editor，密码 your-admin-password）");
 }
 
 main()

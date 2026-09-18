@@ -13,11 +13,12 @@
  */
 
 import "server-only";
+import { createHash } from "node:crypto";
 import { supabase } from "@/lib/db";
 import { invalidateConfigCache } from "@/lib/config";
 import type { NormalizedArticle } from "@/lib/ingest-contract";
 
-export const DEFAULT_INGEST_TOKEN = "newsdesk-ingest-2026";
+export const DEFAULT_INGEST_TOKEN = process.env.INGEST_API_TOKEN || "";
 const INGEST_TOKEN_CONFIG_KEY = "ingest.api_token";
 
 /**
@@ -25,6 +26,8 @@ const INGEST_TOKEN_CONFIG_KEY = "ingest.api_token";
  * 不依赖具体爬虫。由对外契约 IngestArticleDto（snake_case）归一化映射而来。
  */
 export interface IngestArticle {
+  isTest?: boolean;
+  testRunId?: string | null;
   title: string;
   url: string;
   externalId?: string | null;
@@ -59,7 +62,7 @@ export interface IngestResult {
   errors: string[];
 }
 
-/** 读取外部抓取服务鉴权 token（配置驱动，找不到时用默认值） */
+/** 保留数据库令牌优先；未配置时读取本地环境变量，再兼容旧默认值。 */
 export async function getIngestToken(): Promise<string> {
   const { data } = await supabase()
     .schema("public")
@@ -69,7 +72,7 @@ export async function getIngestToken(): Promise<string> {
     .maybeSingle();
   const v = (data as { value?: unknown } | null)?.value;
   if (typeof v === "string" && v.trim().length > 0) return v.trim();
-  return DEFAULT_INGEST_TOKEN;
+  return process.env.INGEST_API_TOKEN?.trim() || DEFAULT_INGEST_TOKEN;
 }
 
 /** 恒定时间比较，避免 token 计时侧信道 */
@@ -88,8 +91,7 @@ export async function verifyIngestToken(token: string | null | undefined): Promi
 
 function sha256Hex(input: string): string {
   // Node 运行时（API Route），可用 node:crypto
-  const crypto = require("node:crypto");
-  return crypto.createHash("sha256").update(input, "utf8").digest("hex");
+  return createHash("sha256").update(input, "utf8").digest("hex");
 }
 
 /** 内容去重哈希：同一 URL 视为同一篇；无 URL 时用标题+正文 */
@@ -242,6 +244,8 @@ export async function ingestArticles(
         title: art.title.slice(0, 500),
         url: art.url,
         external_id: art.externalId ?? null,
+        is_test: art.isTest === true || /(^|\/\/)([^/]+\.)?example\.test([/:]|$)|(^|\/\/)mock-ingest\.local([/:]|$)/i.test(art.url) || /^mock-|^clue-/.test(art.externalId ?? ""),
+        test_run_id: (art.testRunId ?? (/example\.test|mock-ingest\.local/i.test(art.url) ? art.externalId ?? "mock-url" : null))?.slice(0, 64) ?? null,
         publish_time: publishTime,
         crawl_time: crawlTime,
         content_hash: hash,
@@ -285,6 +289,8 @@ export async function ingestArticles(
 export function toIngestArticle(a: NormalizedArticle): IngestArticle {
   const d = a.dto;
   return {
+    isTest: d.is_test,
+    testRunId: d.test_run_id,
     title: a.title,
     url: a.url,
     externalId: a.externalId,

@@ -12,6 +12,10 @@ import type { CalDetail } from "./calendar-types";
 const regionLabel = (r?: string) => (r === "local" ? "广东/广州" : "国内/国际");
 
 const SOURCE_LABEL: Record<string, string> = {
+  historical_migration: "历史迁移",
+  ai_supplement: "AI 推荐",
+  manual: "用户新增",
+  pasted_text: "用户粘贴",
   ai_recommend: "AI 推荐",
   history_migrate: "历史迁移",
   user_add: "用户新增",
@@ -128,7 +132,7 @@ export function CalendarDetailPanel({
   };
 
   const tags: string[] = detail?.tags ?? [];
-  const source = detail?.source ?? null;
+  const source = detail?.source_type ?? detail?.source ?? null;
   const sourceLabel = source ? SOURCE_LABEL[source] ?? source : null;
 
   const enrich = detail?.enrich ?? null;

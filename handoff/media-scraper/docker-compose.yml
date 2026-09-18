@@ -1,0 +1,21 @@
+services:
+  media-scraper:
+    build:
+      context: .
+      # 需要抓取 JS 渲染站点时改为 true（会安装 playwright + chromium）
+      args:
+        WITH_PLAYWRIGHT: "false"
+    container_name: media-scraper
+    restart: always
+    ports:
+      - "8000:8000"
+    # 需要自定义配置时，先 cp .env.example .env，再取消下面两行注释
+    # env_file:
+    #   - .env
+    environment:
+      # 留空 = 不鉴权；设置后所有 /api/* 需带 X-API-Key 请求头
+      API_KEY: ${API_KEY:-}
+      PLAYWRIGHT_FALLBACK: ${PLAYWRIGHT_FALLBACK:-true}
+    volumes:
+      - ./data:/app/data
+      - ./logs:/app/logs

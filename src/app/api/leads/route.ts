@@ -51,6 +51,7 @@ export async function GET(req: NextRequest) {
   let query = db
     .from("news_clue")
     .select("*", { count: "exact" })
+    .eq("is_test", false)
     .order("first_found_at", { ascending: false });
 
   // 状态范围
@@ -131,12 +132,14 @@ export async function GET(req: NextRequest) {
   let articleMap = new Map<string, any[]>();
   // 收集关联文章里出现的全部媒体 id（关联文章可能跨媒体）
   const articleMediaIdSet = new Set<string>();
+  let evidenceWarning: string | null = null;
   if (clueIds.length > 0) {
-    const { data: links } = await db
+    const { data: links, error: linksError } = await db
       .from("news_clue_article")
       .select("clue_id, article_id, title, url, publish_time, media_id")
       .in("clue_id", clueIds)
       .order("publish_time", { ascending: false, nullsFirst: false });
+    if (linksError) evidenceWarning = "关联原文暂时无法加载，请检查线索关联表结构与数据连接。";
 
     const grouped = (links ?? []).reduce<Map<string, any[]>>((acc, l) => {
       const arr = acc.get(l.clue_id) ?? [];
@@ -221,6 +224,7 @@ export async function GET(req: NextRequest) {
     page,
     pageSize,
     identify_rules: identifyRules,
+    evidence_warning: evidenceWarning,
     clues: paged,
   });
 }

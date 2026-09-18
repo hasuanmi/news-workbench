@@ -11,7 +11,7 @@ export async function GET(req: NextRequest) {
   const importance = sp.get("importance"); // S / A / B / null
   const keyword = sp.get("keyword")?.trim();
   const includePast = sp.get("include_past") === "1";
-  const all = sp.get("all") === "1"; // 后台用：返回未审核/停用的原始数据
+  const all = sp.get("all") === "1"; // 管理兼容：返回未删除的原始数据
 
   const db = supabase();
   let query = db
@@ -24,11 +24,11 @@ export async function GET(req: NextRequest) {
   if (all) {
     // 后台列表不过滤状态
   } else {
-    query = query.eq("enabled", true).eq("review_status", "approved");
+    query = query.eq("enabled", true);
   }
   if (category) query = query.eq("category_id", category);
   if (importance) query = query.eq("importance", importance);
-  if (region === "local") query = query.eq("region", "local");
+  if (region === "local") query = query.in("region", ["local", "guangdong", "guangzhou"]);
   if (region === "national") query = query.eq("region", "national");
 
   const { data, error } = await query;
@@ -57,6 +57,11 @@ export async function GET(req: NextRequest) {
   const cfg = await getAppConfig();
   const today = new Date();
   today.setUTCHours(0, 0, 0, 0);
+  const rangeDays = view === "month" ? 30 : view === "week" ? 7 : cfg.calendarWindowDays;
+  const windowMonths = new Set<number>();
+  for (let day = 0; day <= rangeDays; day++) {
+    windowMonths.add(new Date(today.getTime() + day * 86400000).getUTCMonth() + 1);
+  }
 
   if (all) {
     return NextResponse.json({ items: filtered, total: filtered.length });
@@ -74,6 +79,7 @@ export async function GET(req: NextRequest) {
   // 时间待定节点（month_known / unknown）：无具体日期，单独以"待定"区呈现
   const floating = events
     .filter((e) => e.date_status === "month_known" || e.date_status === "unknown")
+    .filter((e) => view === "all" || e.date_status === "unknown" || windowMonths.has(e.event_month))
     .filter((e) => e.event_name?.includes(keyword ?? "") || !keyword)
     .map((e) => ({
       id: e.id,
@@ -86,6 +92,7 @@ export async function GET(req: NextRequest) {
       background: (e as { background?: string | null }).background ?? null,
       planning_hint: (e as { planning_hint?: unknown }).planning_hint ?? null,
       source: (e as { source?: string | null }).source ?? null,
+      source_type: e.source_type ?? null,
       tags: (e as { tags?: unknown }).tags ?? null,
     }));
 
@@ -104,11 +111,12 @@ export async function GET(req: NextRequest) {
         background: (raw as { background?: string | null } | undefined)?.background ?? null,
         planning_hint: (raw as { planning_hint?: unknown } | undefined)?.planning_hint ?? null,
         source: (raw as { source?: string | null } | undefined)?.source ?? null,
+        source_type: raw?.source_type ?? null,
         tags: (raw as { tags?: unknown } | undefined)?.tags ?? null,
       };
     }),
     floating,
     total: occurrences.length,
-    windowDays: cfg.calendarWindowDays,
+    windowDays: rangeDays,
   });
 }

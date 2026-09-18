@@ -3,6 +3,7 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { ExternalLink } from "lucide-react";
+import { ReportText } from "@/components/common/report-text";
 import type { ReviewModule } from "@/lib/review-types";
 
 interface ReviewResultProps {
@@ -70,13 +71,7 @@ export function ReviewResult({ modules, finalSummary, displayRules }: ReviewResu
           </CardHeader>
           <CardContent>
             <div className="prose prose-sm max-w-none dark:prose-invert">
-              {finalSummary.split("\n").map((para, i) =>
-                para.trim() ? (
-                  <p key={i} className="text-foreground/90 leading-relaxed mb-3">
-                    {para}
-                  </p>
-                ) : null
-              )}
+              <ReportText text={finalSummary} />
             </div>
           </CardContent>
         </Card>

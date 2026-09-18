@@ -25,6 +25,7 @@ import { CalendarEditPanel } from "./calendar-edit-panel";
 import { CalendarDeleteDialog } from "./calendar-delete-dialog";
 import type { CalCategory, CalEvent, FloatingEvent } from "./calendar-types";
 import { PageSkeleton } from "@/components/common/page-skeleton";
+import { ErrorState } from "@/components/common/error-state";
 
 type ViewMode = "list" | "month";
 
@@ -47,6 +48,7 @@ export function CalendarShell() {
   const [items, setItems] = useState<CalListEvent[]>([]);
   const [floating, setFloating] = useState<FloatingEvent[]>([]);
   const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState<string | null>(null);
 
   // 选中与视图
   const [selectedId, setSelectedId] = useState<string | null>(null);
@@ -68,16 +70,22 @@ export function CalendarShell() {
   // 拉取分类与节点
   const load = useCallback(async () => {
     setLoading(true);
+    setLoadError(null);
     try {
       const [catRes, evRes] = await Promise.all([
         fetch("/api/calendar/categories"),
-        fetch("/api/calendar?view=next30"),
+        fetch("/api/calendar?view=month"),
       ]);
       const catData = await catRes.json();
       const evData = await evRes.json();
+      if (!catRes.ok || !evRes.ok) {
+        throw new Error("新闻日历数据暂时无法加载，请重试；如持续失败，请检查数据库结构与连接。");
+      }
       setCategories(Array.isArray(catData.items) ? catData.items : []);
       setItems(Array.isArray(evData.items) ? evData.items : []);
       setFloating(Array.isArray(evData.floating) ? evData.floating : []);
+    } catch (error) {
+      setLoadError(error instanceof Error ? error.message : "新闻日历加载失败，请重试。");
     } finally {
       setLoading(false);
     }
@@ -91,7 +99,8 @@ export function CalendarShell() {
   const filtered = useMemo(() => {
     return items.filter((e) => {
       if (catFilter !== "all" && e.category?.id !== catFilter) return false;
-      if (regionFilter !== "all" && e.region !== regionFilter) return false;
+      if (regionFilter === "local" && !["local", "guangdong", "guangzhou"].includes(e.region ?? "")) return false;
+      if (regionFilter !== "all" && regionFilter !== "local" && e.region !== regionFilter) return false;
       if (importanceFilter !== "all" && e.importance !== importanceFilter) return false;
       if (keyword && !e.event_name.includes(keyword)) return false;
       return true;
@@ -102,7 +111,8 @@ export function CalendarShell() {
   const monthFiltered = useMemo(() => {
     return items.filter((e) => {
       if (catFilter !== "all" && e.category?.id !== catFilter) return false;
-      if (regionFilter !== "all" && e.region !== regionFilter) return false;
+      if (regionFilter === "local" && !["local", "guangdong", "guangzhou"].includes(e.region ?? "")) return false;
+      if (regionFilter !== "all" && regionFilter !== "local" && e.region !== regionFilter) return false;
       if (importanceFilter !== "all" && e.importance !== importanceFilter) return false;
       return true;
     });
@@ -248,13 +258,15 @@ export function CalendarShell() {
 
         {/* 摘要条 */}
         <div className="border-b border-[var(--border)] bg-[var(--muted)]/30 px-4 py-2 text-sm text-[var(--muted-foreground)]">
-          {loading ? "加载中…" : `未来 30 天共 ${filtered.length} 个节点`}
+          {loading ? "加载中…" : loadError ? "节点加载失败" : `未来 30 天共 ${filtered.length} 个节点`}
         </div>
 
         {/* 主内容区：不设内部滚动，页面自然撑开滚动 */}
         <div className="flex-1 p-4">
           {loading ? (
             <PageSkeleton lines={4} cards={2} withHeader={false} className="py-4" />
+          ) : loadError ? (
+            <ErrorState title="新闻日历加载失败" message={loadError} onRetry={load} />
           ) : view === "list" ? (
             <CalendarListView
               items={filtered}

@@ -1,0 +1,4 @@
+# 可选依赖：用于抓取 JS 渲染（首页为空壳）的站点，约 20 家媒体需要
+# 安装完本文件的包后，还必须下载浏览器内核：
+#     playwright install chromium
+playwright==1.49.1

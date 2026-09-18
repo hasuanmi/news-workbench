@@ -17,6 +17,7 @@ export async function GET(req: NextRequest) {
     .select("id, report_date, review_status, version, final_summary, created_at, updated_at", {
       count: "exact",
     })
+    .eq("is_test", false)
     .order("report_date", { ascending: false });
 
   if (date) query = query.eq("report_date", date);

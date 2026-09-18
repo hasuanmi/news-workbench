@@ -50,6 +50,7 @@ export const calendarCategory = pgTable(
     id: varchar("id", { length: 36 }).primaryKey().default(sql`gen_random_uuid()`),
     code: varchar("code", { length: 16 }).notNull().unique(),
     category_name: varchar("category_name", { length: 64 }).notNull(),
+    color: varchar("color", { length: 16 }).default("#6b6257"),
     description: text("description"),
     sort_order: integer("sort_order").notNull().default(0),
     enabled: boolean("enabled").notNull().default(true),
@@ -87,7 +88,8 @@ export const calendarEvent = pgTable(
     source_candidate_id: varchar("source_candidate_id", { length: 36 }), // 溯源到哪个候选节点
     // ===== 来源标签 + 软删除（弱化审核、直接维护） =====
     // source: ai_recommend | history_migrate | user_add | user_paste
-    source: varchar("source", { length: 24 }).notNull().default("user_add"),
+    source: varchar("source", { length: 24 }), // 旧来源别名，兼容接口
+    source_type: varchar("source_type", { length: 32 }), // historical_migration | ai_supplement | manual | pasted_text
     deleted_at: timestamp("deleted_at", { withTimezone: true }), // 软删除时间，非空=已删除（保留原节点供 AI 参考）
     delete_reason: varchar("delete_reason", { length: 32 }), // 删除原因：not_important/one_off/weak/weak_local/inaccurate/duplicate/expired/other
     deleted_by: varchar("deleted_by", { length: 36 }),
@@ -119,6 +121,18 @@ export const calendarEvent = pgTable(
     index("calendar_event_deleted_idx").on(table.deleted_at),
   ]
 );
+
+// 服务端历史溯源；前台仍只读取 calendar_event。
+export const calendarHistoryEventRef = pgTable("calendar_history_event_ref", {
+  history_node_id: varchar("history_node_id", { length: 36 }).primaryKey(),
+  calendar_event_id: varchar("calendar_event_id", { length: 36 }).notNull().references(() => calendarEvent.id),
+  import_run_id: varchar("import_run_id", { length: 36 }).notNull(),
+  match_method: varchar("match_method", { length: 32 }).notNull(),
+  linked_at: timestamp("linked_at", { withTimezone: true }).notNull().defaultNow(),
+}, table => [
+  index("calendar_history_event_ref_event_idx").on(table.calendar_event_id),
+  index("calendar_history_event_ref_run_idx").on(table.import_run_id),
+]);
 
 // ============ 媒体与数据源 ============
 export const media = pgTable(
@@ -204,6 +218,8 @@ export const reviewDimension = pgTable(
 export const newsClue = pgTable(
   "news_clue",
   {
+    is_test: boolean("is_test").notNull().default(false),
+    test_run_id: varchar("test_run_id", { length: 64 }),
     id: varchar("id", { length: 36 }).primaryKey().default(sql`gen_random_uuid()`),
     article_id: varchar("article_id", { length: 36 }).references(() => article.id),
     media_id: varchar("media_id", { length: 36 })
@@ -284,6 +300,8 @@ export const newsTopic = pgTable(
 export const dailyReview = pgTable(
   "daily_review",
   {
+    is_test: boolean("is_test").notNull().default(false),
+    test_run_id: varchar("test_run_id", { length: 64 }),
     id: varchar("id", { length: 36 }).primaryKey().default(sql`gen_random_uuid()`),
     report_date: date("report_date", { mode: "string" }).notNull().unique(),
     key_topics: jsonb("key_topics"),
@@ -332,6 +350,8 @@ export const dailyReviewRevision = pgTable(
 export const reviewDraft = pgTable(
   "review_draft",
   {
+    is_test: boolean("is_test").notNull().default(false),
+    test_run_id: varchar("test_run_id", { length: 64 }),
     id: varchar("id", { length: 36 }).primaryKey().default(sql`gen_random_uuid()`),
     report_date: date("report_date", { mode: "string" }).notNull().unique(),
     media_ids: jsonb("media_ids"), // 参与媒体 id 列表
@@ -419,6 +439,8 @@ export const aiAuditLog = pgTable(
 export const article = pgTable(
   "article",
   {
+    is_test: boolean("is_test").notNull().default(false),
+    test_run_id: varchar("test_run_id", { length: 64 }),
     id: varchar("id", { length: 36 }).primaryKey().default(sql`gen_random_uuid()`),
     media_id: varchar("media_id", { length: 36 }).notNull(),
     source_id: varchar("source_id", { length: 36 }).notNull(),
@@ -465,7 +487,7 @@ export const article = pgTable(
 // ============================================================================
 // 新闻日历重构：历史日历（资料库） → 候选节点（待审） → 正式日历（可用）
 // 设计要点：
-//   1. AI 生成的任何节点一律先进候选池，绝不直写 calendar_event
+//   1. 旧候选池仅兼容历史数据；正式日历唯一数据源是 calendar_event，来源不构成审核门槛。
 //   2. 时间未定用 date_status 表达（confirmed / month_known / unknown），
 //      绝不把待定节点虚构成某月 1 日
 //   3. 历史年份、目标年份全部动态配置，不写死

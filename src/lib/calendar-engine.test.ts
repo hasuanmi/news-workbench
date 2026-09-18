@@ -73,7 +73,31 @@ test("buildCalendar：未来14天窗口 + 已过节点不出现", () => {
   assert.ok(names.includes("未来节点"));
   assert.ok(!names.includes("已过节点"));
   assert.ok(!names.includes("未启用"));
-  assert.ok(!names.includes("待审核"));
+  assert.ok(names.includes("待审核"));
+});
+
+test("旧审核状态不影响展示；停用、软删除和未启用节点不展示", () => {
+  const events: CalendarRuleEvent[] = ["pending", "approved", "rejected", "confirmed"].map(status => ({
+    id: status, event_name: status, event_type: "dynamic", event_date: "2026-09-10",
+    enabled: true, review_status: status,
+  }));
+  events.push({ ...events[0], id: "deleted", deleted_at: "2026-09-01T00:00:00Z" });
+  events.push({ ...events[0], id: "disabled", enabled: false });
+  events.push({ ...events[0], id: "unset", enabled: undefined });
+  events.push({ ...events[0], id: "undated", date_status: "unknown" });
+  assert.deepEqual(buildCalendar(events, today, "month", 30).map(item => item.event.id),
+    ["pending", "approved", "rejected", "confirmed"]);
+});
+
+test("30天视图：不受默认14天窗口影响，包含第30天且排除第31天", () => {
+  const start = new Date(Date.UTC(2026, 8, 17));
+  const events: CalendarRuleEvent[] = [
+    { id: "day15", event_name: "第15天", event_type: "dynamic", event_date: "2026-10-02", enabled: true, review_status: "approved" },
+    { id: "day30", event_name: "第30天", event_type: "dynamic", event_date: "2026-10-17", enabled: true, review_status: "approved" },
+    { id: "day31", event_name: "第31天", event_type: "dynamic", event_date: "2026-10-18", enabled: true, review_status: "approved" },
+  ];
+  assert.deepEqual(buildCalendar(events, start, "month", 14).map(item => item.event.id), ["day15", "day30"]);
+  assert.equal(buildCalendar(events, start, "next14", 14).length, 0);
 });
 
 test("动态节点：只在其实际日期年份出现", () => {

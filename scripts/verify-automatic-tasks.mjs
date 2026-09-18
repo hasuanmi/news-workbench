@@ -1,0 +1,27 @@
+// Read-only verification of actual scheduler records and persisted calendar recommendations.
+import fs from 'node:fs';
+import dotenv from 'dotenv';
+import {createClient} from '@supabase/supabase-js';
+dotenv.config({path:'.env.local',quiet:true});
+dotenv.config({path:'.env',quiet:true});
+const db=createClient(process.env.SUPABASE_URL,process.env.SUPABASE_SERVICE_ROLE_KEY,{auth:{persistSession:false}});
+const calendar=JSON.parse(fs.readFileSync('logs/scheduler/calendar_recommend-latest.json','utf8'));
+const media=JSON.parse(fs.readFileSync('logs/scheduler/media_then_clues-latest.json','utf8'));
+const recommendationRuns=fs.readdirSync('logs/scheduler').filter(f=>/^[0-9a-f-]{36}\.json$/.test(f)).map(f=>JSON.parse(fs.readFileSync(`logs/scheduler/${f}`,'utf8'))).filter(r=>r.job==='calendar_recommend'&&r.status==='success');
+const ids=[...new Set(recommendationRuns.flatMap(r=>r.steps.flatMap(s=>s.result?.detail?.ids||[])))];
+const {data:rows,error}=await db.from('calendar_event').select('id,event_name,event_type,original_date,event_date,enabled,deleted_at,review_status,source_type,ai_background,ai_why,source_url,ai_sources').in('id',ids);
+if(error)throw new Error(error.message);
+const {data:events,error:allError}=await db.from('calendar_event').select('id,event_name,event_type,original_date,event_date,enabled,deleted_at');
+if(allError)throw new Error(allError.message);
+const key=r=>`${r.event_name.normalize('NFKC').replace(/[\s\p{P}]/gu,'')}|${r.event_type==='fixed'?r.original_date?.slice(5):r.event_date}`;
+const duplicates=rows.filter(r=>events.filter(e=>key(e)===key(r)).length>1).map(r=>r.id);
+const documentedPassword=fs.readFileSync('AGENTS.md','utf8').match(/默认账号：`admin \/ ([^`]+)`/)?.[1];
+const login=await fetch('http://localhost:3001/api/auth/login',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({username:'admin',password:process.env.AUDIT_PASSWORD||documentedPassword})});
+const cookie=login.headers.get('set-cookie')?.split(';')[0];if(!cookie)throw new Error('Login failed');
+const response=await fetch('http://localhost:3001/api/admin/scheduler',{headers:{Cookie:cookie}});
+const scheduler=await response.json();
+const front=await fetch('http://localhost:3001/api/calendar?all=1',{headers:{Cookie:cookie}});
+const frontBody=await front.text();
+const journal={checked_at:new Date().toISOString(),calendarRun:calendar.run_id,mediaRun:media.run_id,calendar:rows.map(r=>({id:r.id,name:r.event_name,date:r.original_date||r.event_date,enabled:r.enabled,deleted:r.deleted_at,review_status:r.review_status,source_type:r.source_type,background:!!r.ai_background,reason:!!r.ai_why,url:r.source_url,sourceEvidence:!!r.ai_sources})),duplicateIds:duplicates,calendarHttp:front.status,visibleNewIds:rows.filter(r=>frontBody.includes(r.id)).length,schedulerHttp:response.status,scheduler};
+fs.writeFileSync('logs/scheduler/verification.json',JSON.stringify(journal,null,2));
+console.log(JSON.stringify(journal,null,2));

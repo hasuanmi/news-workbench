@@ -146,12 +146,13 @@ export async function unifiedInvoke(
   options?: {
     temperature?: number;
     model?: string;
+    onRequest?: (host:string) => void;
   },
 ): Promise<string> {
   const config = resolveConfig();
   if (config) {
     try {
-      const res = await openAIInvoke(config, messages);
+      const res = await openAIInvoke(config, messages, options?.onRequest);
       return res.content;
     } catch (err) {
       console.error("自定义模型调用失败，尝试回退:", err);

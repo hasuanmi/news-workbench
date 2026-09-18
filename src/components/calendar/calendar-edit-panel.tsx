@@ -81,7 +81,7 @@ export function CalendarEditPanel({ categories, editing, onClose, onSaved }: Pro
         region,
         category_id: categoryId || null,
         background,
-        enabled: true,
+        enabled: editing?.enabled ?? true,
       };
       if (eventType === "fixed") payload.original_date = date;
       else payload.event_date = date;

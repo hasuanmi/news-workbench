@@ -13,6 +13,8 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
     .from("calendar_event")
     .select("*")
     .eq("id", id)
+    .eq("enabled", true)
+    .is("deleted_at", null)
     .maybeSingle();
   if (error) return new Response(JSON.stringify({ error: error.message }), { status: 500 });
   if (!ev) return new Response(JSON.stringify({ error: "节点不存在" }), { status: 404 });
