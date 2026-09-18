@@ -11,10 +11,30 @@ async def main():
     media=sys.argv[1];limit=int(sys.argv[2]) if len(sys.argv)>2 else 5
     client=IngestClient();queue=await client.get_queue()
     names={'广州日报':'广州日报报业集团','南方日报':'南方日报','南方都市报':'南方都市报'}
-    source=next((s for s in queue if (s.get('media_name') or s.get('mediaName'))==names[media] and (s.get('source_type') or s.get('sourceType'))=='website'),None)
+    rev={v:k for k,v in names.items()}  # 全名->短名（sources.yaml 用短名）
+    # 解析队列中的 source：直接按 media_name，或按别名（短名->全名）
+    source=None
+    for cand in queue:
+        mn=cand.get('media_name') or cand.get('mediaName')
+        if mn==media:
+            source=cand; break
+    if not source:
+        full=names.get(media)
+        if full:
+            for cand in queue:
+                mn=cand.get('media_name') or cand.get('mediaName')
+                if mn==full:
+                    source=cand; break
     if not source:raise RuntimeError('No matching website source in ingest queue')
     source_id=source.get('source_id') or source.get('sourceId')
-    scraper=get_scrapers(media=media)[0][1]
+    # 解析 scraper：直接按 media，或按别名（全名->短名）；未配置专属解析器时回退 generic
+    scrapers=get_scrapers(media=media)
+    if not scrapers:
+        short=rev.get(media)
+        if short:
+            scrapers=get_scrapers(media=short)
+    if not scrapers:raise RuntimeError('No scraper registered for '+media)
+    scraper=scrapers[0][1]
     report={'media':media,'source_id':source_id,'started_at':datetime.now(timezone.utc).isoformat(),'attempted':0,'articles':[],'failures':[]}
     payload=[]
     try: stubs=_filter_stubs(await scraper.list_articles())

@@ -34,22 +34,40 @@ try{
   else {
   if(job==='media_then_clues'){
     const scraper=path.resolve(root,'../media-scraper');const python=path.join(scraper,'.venv/Scripts/python.exe');
-    let pushed=0;
-    for(const media of ['广州日报','南方日报','南方都市报']){
-      journal.phase=`fetch:${media}`;const step={name:'media_fetch',media,status:'running',started_at:new Date().toISOString()};journal.steps.push(step);save();
-      try {
-      const filesBefore=new Set(fs.readdirSync(path.join(scraper,'logs/real-poc')));
-      const log=fs.openSync(path.join(folder,'media-fetch.log'),'a');
-      let code;try{code=await new Promise((resolve,reject)=>{const child=spawn(python,['poc_ingest_real.py',media,'10','--scheduled'],{cwd:scraper,windowsHide:true,stdio:['ignore',log,log]});const timer=setTimeout(()=>{child.kill();reject(new Error(`${media} timed out`));},600000);child.on('error',e=>{clearTimeout(timer);reject(e);});child.on('exit',code=>{clearTimeout(timer);resolve(code);});});}finally{fs.closeSync(log);}
-      const added=fs.readdirSync(path.join(scraper,'logs/real-poc')).filter(f=>!filesBefore.has(f)&&f.startsWith(media+'-')).sort().at(-1);
-      const report=added?JSON.parse(fs.readFileSync(path.join(scraper,'logs/real-poc',added),'utf8')):null;
-      const ok=code===0&&report?.ingest?.success===true&&report.ingest.failed===0;
-      Object.assign(step,{status:ok?'success':'failed',ended_at:new Date().toISOString(),code,ok,report:added,articles:report?.successful_bodies??0,ingest:report?.ingest,failures:report?.failures??[]});save();if(ok)pushed++;
-      } catch(error){Object.assign(step,{status:'failed',ok:false,error:error.message,ended_at:new Date().toISOString()});save();}
+    // 配置驱动：读取当前启用且类型为 website 的抓取队列（media_source），不再硬编码媒体名单。
+    // 监测范围由 media.monitor_clue=true 决定；本任务只负责「把队列里该抓的都抓一遍」。
+    const qResp=await fetch(`${base}/api/ingest/queue`,{headers,signal:AbortSignal.timeout(20000)});
+    if(!qResp.ok)throw new Error(`拉取抓取队列失败 HTTP ${qResp.status}`);
+    const queue=(await qResp.json()).sources||[];
+    const targets=queue.filter(s=>(s.sourceType||s.source_type)==='website' && s.enabled!==false);
+    if(!targets.length)throw new Error('抓取队列为空（无启用 website 源）');
+    const perMedia=[]; let pushed=0;
+    const CONC=Math.max(1,Number(process.env.SCRAPE_CONCURRENCY||4));   // 并发上限，避免 135 家无限并发
+    const TIMEOUT_MS=Number(process.env.SCRAPE_PER_SOURCE_MS||600000); // 单源超时（默认 10 分钟）
+    async function runOne(src){
+      const mediaName=src.mediaName||src.media_name;
+      const step={name:'media_fetch',media:mediaName,status:'running',started_at:new Date().toISOString()};journal.steps.push(step);save();
+      const attempt=async()=>{
+        const filesBefore=new Set(fs.readdirSync(path.join(scraper,'logs/real-poc')));
+        const log=fs.openSync(path.join(folder,'media-fetch.log'),'a');
+        let code;
+        try{code=await new Promise((resolve,reject)=>{const child=spawn(python,['poc_ingest_real.py',mediaName,'10','--scheduled'],{cwd:scraper,windowsHide:true,stdio:['ignore',log,log]});const timer=setTimeout(()=>{child.kill();reject(new Error(`${mediaName} 超时`));},TIMEOUT_MS);child.on('error',e=>{clearTimeout(timer);reject(e);});child.on('exit',c=>{clearTimeout(timer);resolve(c);});});}finally{fs.closeSync(log);}
+        const added=fs.readdirSync(path.join(scraper,'logs/real-poc')).filter(f=>!filesBefore.has(f)&&f.startsWith(mediaName+'-')).sort().at(-1);
+        const report=added?JSON.parse(fs.readFileSync(path.join(scraper,'logs/real-poc',added),'utf8')):null;
+        const ok=code===0&&report?.ingest?.success===true&&report.ingest.failed===0;
+        return {ok,code,report,added};
+      };
+      let res; try{res=await attempt();}catch(e){try{res=await attempt();}catch(e2){res={ok:false,error:e2.message};}} // 失败重试 1 次
+      const ok=!!res.ok; const report=res.report;
+      Object.assign(step,{status:ok?'success':'failed',ended_at:new Date().toISOString(),code:res.code,ok,report:res.added,articles:report?.successful_bodies??0,ingest:report?.ingest,failures:report?.failures??[],error:res.error});save();
+      perMedia.push({media:mediaName,ok,articles:report?.successful_bodies??0}); if(ok)pushed++;
     }
-    if(!pushed)throw new Error('No media completed successful HTTP ingest; identification not triggered');
+    // 并发池：每批最多 CONC 个，跑完一批再下一批
+    for(let i=0;i<targets.length;i+=CONC){ await Promise.all(targets.slice(i,i+CONC).map(runOne)); }
+    journal.perMedia=perMedia;
+    journal.scrapedTotal=targets.length; journal.scrapedOk=pushed;
+    if(!pushed)throw new Error('没有任何媒体完成成功抓取；未触发线索识别');
     await execute('clue_identify');
-    if(pushed<3)throw new Error(`Only ${pushed}/3 media pushed; real successful articles were identified`);
   }else await execute('calendar_recommend');
   journal.status='success';
   }

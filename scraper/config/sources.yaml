@@ -1,8 +1,8 @@
-# 媒体数据源配置（每日评报 6 家 + 后续扩展）
-# 新增媒体：在 scrapers/ 加一个 scraper 文件（继承 BaseScraper），
-# 在 registry._REGISTRY 注册 key，并在此追加一条配置即可。
+# 媒体数据源配置（自动采集驱动：run-daily-task / worker 均读取本队列）
+# 新增媒体：在 scrapers/ 加 scraper（或复用 generic），在 registry 注册，并在此追加一条即可。
+# 监测范围由 media.monitor_clue=true 决定；本文件仅描述「如何抓取」。
 sources:
-  # ===== 每日评报（广州同城 6 家）=====
+  # ===== 每日评报（广州同城 6 家，专属解析器）=====
   - media: 广州日报
     business: [daily_review]
     enabled: true
@@ -54,3 +54,390 @@ sources:
     entry_urls:
       - http://www.xxsb.com/
       - http://epaper.xxsb.com/
+
+  # ===== 监测名单扩展（generic 通用解析器，按页面结构最小解析）=====
+  - media: 上观新闻
+    business: [news_lead]
+    enabled: true
+    source_type: 官方网站
+    scraper: generic
+    entry_urls:
+      - https://www.shobserver.com/
+  - media: 东莞广播电视台
+    business: [news_lead]
+    enabled: true
+    source_type: 官方网站
+    scraper: generic
+    entry_urls:
+      - https://www.sun0769.com/
+  - media: 东莞日报社
+    business: [news_lead]
+    enabled: true
+    source_type: 官方网站
+    scraper: generic
+    entry_urls:
+      - https://www.dgrb.com.cn/
+  - media: 中国文化报
+    business: [news_lead]
+    enabled: true
+    source_type: 官方网站
+    scraper: generic
+    entry_urls:
+      - https://www.ccdy.cn/
+  - media: 中国航天报
+    business: [news_lead]
+    enabled: true
+    source_type: 官方网站
+    scraper: generic
+    entry_urls:
+      - https://www.spacechina.com/
+  - media: 中国青年报
+    business: [news_lead]
+    enabled: true
+    source_type: 官方网站
+    scraper: generic
+    entry_urls:
+      - https://www.cyol.com/
+  - media: 云南日报
+    business: [news_lead]
+    enabled: true
+    source_type: 官方网站
+    scraper: generic
+    entry_urls:
+      - https://www.yndaily.com/
+  - media: 人民日报
+    business: [news_lead]
+    enabled: true
+    source_type: 官方网站
+    scraper: generic
+    entry_urls:
+      - https://www.people.com.cn/
+  - media: 内蒙古广播电视台
+    business: [news_lead]
+    enabled: true
+    source_type: 官方网站
+    scraper: generic
+    entry_urls:
+      - https://www.nmtv.cn/
+  - media: 内蒙古日报
+    business: [news_lead]
+    enabled: true
+    source_type: 官方网站
+    scraper: generic
+    entry_urls:
+      - https://www.nmgnews.com.cn/
+  - media: 北京广播电视台
+    business: [news_lead]
+    enabled: true
+    source_type: 官方网站
+    scraper: generic
+    entry_urls:
+      - https://www.brtv.org.cn/
+  - media: 十堰日报社
+    business: [news_lead]
+    enabled: true
+    source_type: 官方网站
+    scraper: generic
+    entry_urls:
+      - https://www.10yan.com/
+  - media: 华龙网
+    business: [news_lead]
+    enabled: true
+    source_type: 官方网站
+    scraper: generic
+    entry_urls:
+      - https://www.cqnews.net/
+  - media: 吉林广播电视台
+    business: [news_lead]
+    enabled: true
+    source_type: 官方网站
+    scraper: generic
+    entry_urls:
+      - https://www.jlntv.cn/
+  - media: 吉林日报
+    business: [news_lead]
+    enabled: true
+    source_type: 官方网站
+    scraper: generic
+    entry_urls:
+      - https://www.jlrb.com.cn/
+  - media: 大众日报
+    business: [news_lead]
+    enabled: true
+    source_type: 官方网站
+    scraper: generic
+    entry_urls:
+      - https://www.dzwww.com/
+  - media: 大连新闻传媒集团
+    business: [news_lead]
+    enabled: true
+    source_type: 官方网站
+    scraper: generic
+    entry_urls:
+      - https://www.dlrm.com/
+  - media: 天山网
+    business: [news_lead]
+    enabled: true
+    source_type: 官方网站
+    scraper: generic
+    entry_urls:
+      - https://www.ts.cn/
+  - media: 天津海河传媒中心（天津广播电视台）
+    business: [news_lead]
+    enabled: true
+    source_type: 官方网站
+    scraper: generic
+    entry_urls:
+      - https://www.tjrm.cn/
+  - media: 宁夏日报报业集团
+    business: [news_lead]
+    enabled: true
+    source_type: 官方网站
+    scraper: generic
+    entry_urls:
+      - https://www.nxnews.net/
+  - media: 宜春市广播电视台
+    business: [news_lead]
+    enabled: true
+    source_type: 官方网站
+    scraper: generic
+    entry_urls:
+      - https://www.ycnews.cn/
+  - media: 山东广播电视台
+    business: [news_lead]
+    enabled: true
+    source_type: 官方网站
+    scraper: generic
+    entry_urls:
+      - https://www.iqilu.com/
+  - media: 常州广播电视台
+    business: [news_lead]
+    enabled: true
+    source_type: 官方网站
+    scraper: generic
+    entry_urls:
+      - https://www.cznews.cn/
+  - media: 常德市广播电视台
+    business: [news_lead]
+    enabled: true
+    source_type: 官方网站
+    scraper: generic
+    entry_urls:
+      - https://www.cdyy.com/
+  - media: 广东广播电视台
+    business: [news_lead]
+    enabled: true
+    source_type: 官方网站
+    scraper: generic
+    entry_urls:
+      - https://www.tvs.cn/
+  - media: 广西广播电视台
+    business: [news_lead]
+    enabled: true
+    source_type: 官方网站
+    scraper: generic
+    entry_urls:
+      - https://www.gxtv.cn/
+  - media: 广西日报
+    business: [news_lead]
+    enabled: true
+    source_type: 官方网站
+    scraper: generic
+    entry_urls:
+      - https://www.gxnews.com.cn/
+  - media: 徐州广播电视台
+    business: [news_lead]
+    enabled: true
+    source_type: 官方网站
+    scraper: generic
+    entry_urls:
+      - https://www.cnxz.com.cn/
+  - media: 新疆广播电视台
+    business: [news_lead]
+    enabled: true
+    source_type: 官方网站
+    scraper: generic
+    entry_urls:
+      - https://www.xjtvs.com.cn/
+  - media: 新疆日报
+    business: [news_lead]
+    enabled: true
+    source_type: 官方网站
+    scraper: generic
+    entry_urls:
+      - https://www.ts.cn/
+  - media: 昆明日报
+    business: [news_lead]
+    enabled: true
+    source_type: 官方网站
+    scraper: generic
+    entry_urls:
+      - https://www.kunming.cn/
+  - media: 江西日报
+    business: [news_lead]
+    enabled: true
+    source_type: 官方网站
+    scraper: generic
+    entry_urls:
+      - https://www.jxxw.com.cn/
+  - media: 河南广播电视台
+    business: [news_lead]
+    enabled: true
+    source_type: 官方网站
+    scraper: generic
+    entry_urls:
+      - https://www.hntv.tv/
+  - media: 浙江广播电视集团
+    business: [news_lead]
+    enabled: true
+    source_type: 官方网站
+    scraper: generic
+    entry_urls:
+      - https://www.zjol.com.cn/
+  - media: 海南日报
+    business: [news_lead]
+    enabled: true
+    source_type: 官方网站
+    scraper: generic
+    entry_urls:
+      - https://www.hinews.cn/
+  - media: 深圳广播电影电视集团
+    business: [news_lead]
+    enabled: true
+    source_type: 官方网站
+    scraper: generic
+    entry_urls:
+      - https://www.sznews.com/
+  - media: 湖北广播电视台
+    business: [news_lead]
+    enabled: true
+    source_type: 官方网站
+    scraper: generic
+    entry_urls:
+      - https://www.cnhubei.com/
+  - media: 湖南广播电视台
+    business: [news_lead]
+    enabled: true
+    source_type: 官方网站
+    scraper: generic
+    entry_urls:
+      - https://www.hunantv.com/
+  - media: 湖州市新闻传媒中心
+    business: [news_lead]
+    enabled: true
+    source_type: 官方网站
+    scraper: generic
+    entry_urls:
+      - https://www.hzgdw.cn/
+  - media: 潍坊日报社
+    business: [news_lead]
+    enabled: true
+    source_type: 官方网站
+    scraper: generic
+    entry_urls:
+      - https://www.wfnews.com.cn/
+  - media: 珠海广播电视台
+    business: [news_lead]
+    enabled: true
+    source_type: 官方网站
+    scraper: generic
+    entry_urls:
+      - https://www.zhtv.com/
+  - media: 甘肃广播电视总台
+    business: [news_lead]
+    enabled: true
+    source_type: 官方网站
+    scraper: generic
+    entry_urls:
+      - https://www.gstv.com.cn/
+  - media: 盐阜大众报报业集团
+    business: [news_lead]
+    enabled: true
+    source_type: 官方网站
+    scraper: generic
+    entry_urls:
+      - https://www.ycrb.cn/
+  - media: 石家庄日报
+    business: [news_lead]
+    enabled: true
+    source_type: 官方网站
+    scraper: generic
+    entry_urls:
+      - https://www.sjzdaily.com.cn/
+  - media: 福建日报
+    business: [news_lead]
+    enabled: true
+    source_type: 官方网站
+    scraper: generic
+    entry_urls:
+      - https://www.fjdaily.com/
+  - media: 福建省广播影视集团
+    business: [news_lead]
+    enabled: true
+    source_type: 官方网站
+    scraper: generic
+    entry_urls:
+      - https://www.fjsen.com/
+  - media: 西藏广播电视台
+    business: [news_lead]
+    enabled: true
+    source_type: 官方网站
+    scraper: generic
+    entry_urls:
+      - https://www.xzrtv.com/
+  - media: 西藏日报
+    business: [news_lead]
+    enabled: true
+    source_type: 官方网站
+    scraper: generic
+    entry_urls:
+      - https://www.xzdaily.com.cn/
+  - media: 解放日报
+    business: [news_lead]
+    enabled: true
+    source_type: 官方网站
+    scraper: generic
+    entry_urls:
+      - https://www.jfdaily.com/
+  - media: 贵州日报
+    business: [news_lead]
+    enabled: true
+    source_type: 官方网站
+    scraper: generic
+    entry_urls:
+      - https://www.gznews.com.cn/
+  - media: 辽宁广播电视台
+    business: [news_lead]
+    enabled: true
+    source_type: 官方网站
+    scraper: generic
+    entry_urls:
+      - https://www.lntv.cn/
+  - media: 辽宁日报
+    business: [news_lead]
+    enabled: true
+    source_type: 官方网站
+    scraper: generic
+    entry_urls:
+      - https://www.lnrb.com.cn/
+  - media: 郑州报业集团
+    business: [news_lead]
+    enabled: true
+    source_type: 官方网站
+    scraper: generic
+    entry_urls:
+      - https://www.zynews.cn/
+  - media: 黑龙江广播电视台
+    business: [news_lead]
+    enabled: true
+    source_type: 官方网站
+    scraper: generic
+    entry_urls:
+      - https://www.hljtv.com/
+  - media: 黔南广播电视台
+    business: [news_lead]
+    enabled: true
+    source_type: 官方网站
+    scraper: generic
+    entry_urls:
+      - https://www.qntv.cn/

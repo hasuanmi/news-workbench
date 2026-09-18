@@ -8,6 +8,7 @@ from app.scrapers.southcn import SouthcnScraper
 from app.scrapers.xkb import XkbScraper
 from app.scrapers.ycwb import YcwbScraper
 from app.scrapers.xxsb import XxsbScraper
+from app.scrapers.generic import GenericScraper
 
 _REGISTRY = {
     "gzdaily": GzdailyScraper,
@@ -16,6 +17,7 @@ _REGISTRY = {
     "xkb": XkbScraper,
     "ycwb": YcwbScraper,
     "xxsb": XxsbScraper,
+    "generic": GenericScraper,
 }
 
 
