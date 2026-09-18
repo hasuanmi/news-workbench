@@ -30,20 +30,20 @@ class GenericScraper(BaseScraper):
     entry_urls = []
 
     async def list_articles(self):
-        from app.core.fetcher import fetch
+        from app.scrapers.base import fetch_list_links
 
         out = []
         for url in self.entry_urls:
             try:
-                html, _ = await fetch(url)
+                host = urlparse(url).netloc.lower()
+                links, _method = await fetch_list_links(
+                    url, min_cn=6, allowed_hosts=[host], media=self.media)
             except Exception as e:
                 from app.core.logger import logger
 
                 logger.warning(f"[generic] 列表页失败 {url}: {e}")
                 continue
-            soup = BeautifulSoup(html, "lxml")
-            host = urlparse(url).netloc.lower()
-            out += collect_links(soup, url, min_cn=6, allowed_hosts=[host])
+            out += links
         seen, uniq = set(), []
         for s in out:
             if s["url"] not in seen:

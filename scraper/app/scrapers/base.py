@@ -2,7 +2,11 @@ import re
 from abc import ABC, abstractmethod
 from dataclasses import dataclass, field, asdict
 from datetime import datetime
-from typing import List, Optional
+import asyncio
+import json
+import os
+import time
+from typing import List, Optional, Tuple
 
 from bs4 import BeautifulSoup
 from urllib.parse import urljoin, urlparse
@@ -137,6 +141,74 @@ def collect_links(soup: BeautifulSoup, base_url: str, min_cn: int = 6,
             }
         )
     return out
+
+
+# ---------- 列表页 Playwright 兜底（HTTP 优先，仅当实抽链接不足时兜底） ----------
+_LIST_LOG_PATH = os.path.join(os.path.dirname(os.path.dirname(__file__)), "logs", "list_method_log.jsonl")
+_list_pw_sem = None
+
+
+def _list_pw_sem():
+    global _list_pw_sem
+    if _list_pw_sem is None:
+        _list_pw_sem = asyncio.Semaphore(2)
+    return _list_pw_sem
+
+
+def _record_list_method(media, url, method, http_links, pw_links):
+    try:
+        os.makedirs(os.path.dirname(_LIST_LOG_PATH), exist_ok=True)
+        with open(_LIST_LOG_PATH, "a", encoding="utf-8") as f:
+            f.write(json.dumps({
+                "ts": time.time(), "media": media, "url": url,
+                "method": method, "http_links": http_links, "pw_links": pw_links,
+            }, ensure_ascii=False) + "\n")
+    except Exception:
+        pass
+
+
+async def fetch_list_links(url: str, min_cn: int = 6,
+                           allowed_hosts: Optional[List[str]] = None,
+                           min_links: int = 3, media: str = "") -> Tuple[list, str]:
+    """列表页抓取：默认 HTTP；仅当 collect_links 实抽文章链接数 < min_links 时，
+    用 Playwright 兜底（domcontentloaded + 2.5s，Semaphore(2) 限并发，1 次重试）。
+    返回 (links, method)。method ∈ {http, playwright}。
+    判据用『实抽链接数』而非 fetcher._is_real，避免 SPA 空壳页骗过 _is_real 而漏触发。"""
+    html, fetch_method = await fetch(url, pw_wait_until="domcontentloaded", pw_extra_wait=2500)
+    host = urlparse(url).netloc.lower()
+    hosts = allowed_hosts or [host]
+    links = collect_links(BeautifulSoup(html, "lxml"), url, min_cn=min_cn, allowed_hosts=hosts)
+    if len(links) >= min_links:
+        _record_list_method(media, url, fetch_method, len(links), len(links))
+        return links, fetch_method
+    if fetch_method == "playwright":
+        _record_list_method(media, url, "playwright", len(links), len(links))
+        return links, "playwright"
+    from app.core import settings
+    if not settings.playwright_enabled():
+        _record_list_method(media, url, "http", len(links), 0)
+        return links, "http"
+    sem = _list_pw_sem()
+    html2 = None
+    links2 = []
+    last_err = None
+    for attempt in range(2):
+        try:
+            async with sem:
+                html2, _m = await fetch(url, force_playwright=True,
+                                       pw_wait_until="domcontentloaded", pw_extra_wait=2500)
+            links2 = collect_links(BeautifulSoup(html2, "lxml"), url, min_cn=min_cn, allowed_hosts=hosts)
+            break
+        except Exception as e:
+            last_err = e
+            logger.warning(f"[base] 列表页 PW 兜底第{attempt + 1}次失败 {url}: {e}")
+    if html2 is not None and len(links2) > len(links):
+        _record_list_method(media, url, "playwright", len(links), len(links2))
+        return links2, "playwright"
+    if last_err is not None:
+        logger.warning(f"[base] 列表页 PW 兜底最终失败 {url}: {last_err}")
+    _record_list_method(media, url, "http", len(links), len(links2))
+    return links, "http"
 
 
 _COLUMN_SELECTORS = (

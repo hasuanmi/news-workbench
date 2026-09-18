@@ -48,14 +48,23 @@ class GenericScraper(BaseScraper):
         self.media = urlparse(source_url).netloc
         self.source_type = source_type
         self.entry_urls = [source_url]
+        self.list_method = None
 
     async def list_articles(self):
-        from app.core.fetcher import fetch
+        from app.scrapers.base import fetch_list_links
 
-        html, _ = await fetch(self.entry_urls[0])
-        soup = self._soup(html)
-        host = urlparse(self.entry_urls[0]).netloc.lower()
-        return collect_links(soup, self.entry_urls[0], allowed_hosts=[host])
+        url = self.entry_urls[0]
+        host = urlparse(url).netloc.lower()
+        try:
+            links, method = await fetch_list_links(
+                url, min_cn=6, allowed_hosts=[host], media=self.media)
+            self.list_method = method
+        except Exception as e:
+            from app.core.logger import logger
+
+            logger.warning(f"[worker] 列表页失败 {url}: {e}")
+            links = []
+        return links
 
     async def parse_detail(self, url, html):
         soup = self._soup(html)
@@ -176,7 +185,7 @@ async def dispatch_source(source: dict) -> dict:
         except Exception as e:
             logger.warning(f"[worker] 详情失败 {st.get('url')}: {e}")
 
-    logger.info(f"[worker] {source_id} 抓得 {len(articles)} 篇（候选 {len(stubs)}）")
+    logger.info(f"[worker] {source_id} 列表方式={getattr(scraper, 'list_method', None)} 抓得 {len(articles)} 篇（候选 {len(stubs)}）")
     return {"sourceId": source_id, "success": True, "articles": articles}
 
 

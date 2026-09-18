@@ -91,7 +91,7 @@ async def _http_get(url: str) -> httpx.Response:
     return r
 
 
-async def _fetch_playwright(url: str) -> str:
+async def _fetch_playwright(url: str, wait_until: str = "networkidle", extra_wait: int = 1500) -> str:
     try:
         from playwright.async_api import async_playwright
     except Exception as e:  # playwright 未安装
@@ -101,8 +101,8 @@ async def _fetch_playwright(url: str) -> str:
         browser = await p.chromium.launch(headless=True)
         page = await browser.new_page(user_agent=cfg.user_agent)
         try:
-            await page.goto(url, wait_until="networkidle", timeout=cfg.fetch_timeout * 1000)
-            await page.wait_for_timeout(1500)
+            await page.goto(url, wait_until=wait_until, timeout=cfg.fetch_timeout * 1000)
+            await page.wait_for_timeout(extra_wait)
             return await page.content()
         finally:
             await browser.close()
@@ -123,8 +123,12 @@ def _warn_playwright_once():
     )
 
 
-async def fetch(url: str, force_playwright: bool = False) -> Tuple[str, str]:
-    """返回 (html, method)。method ∈ {http, playwright}。"""
+async def fetch(url: str, force_playwright: bool = False, pw_wait_until: str = "networkidle", pw_extra_wait: int = 1500) -> Tuple[str, str]:
+    """返回 (html, method)。method ∈ {http, playwright}。
+
+    pw_wait_until / pw_extra_wait 仅用于列表页等需要更稳妥等待策略的场景
+    （重 JS 列表页常因长轮询/埋点永不 networkidle 而超时，列表级传 domcontentloaded + 2500）。
+    """
     cfg = settings.get_settings()
 
     def _is_real(html: str) -> bool:
@@ -158,4 +162,4 @@ async def fetch(url: str, force_playwright: bool = False) -> Tuple[str, str]:
             logger.warning(f"[fetch] http 内容不足/疑似空壳，改用 playwright: {url}")
         except Exception as e:
             logger.warning(f"[fetch] http 失败，准备 playwright: {url} -> {e}")
-    return await _fetch_playwright(url), "playwright"
+    return await _fetch_playwright(url, wait_until=pw_wait_until, extra_wait=pw_extra_wait), "playwright"
