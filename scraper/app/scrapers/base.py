@@ -155,6 +155,26 @@ def _list_pw_sem():
     return _list_pw_sem
 
 
+# 详情级限流：正文过短时用浏览器复渲染，全量 run_once 下若不限并发，
+# 会一次起几十个 Chromium 把资源打满导致任务挂死。只限制 Playwright 兜底，
+# 不影响普通 HTTP 抓取。保守值 3（与列表级 2 相加后同时最多约 5 个浏览器）。
+_detail_pw_sem = None
+_DETAIL_PW_CONCURRENCY = 3
+
+
+def _detail_pw_sem():
+    global _detail_pw_sem
+    if _detail_pw_sem is None:
+        try:
+            from app.core import settings
+            cap = getattr(settings.get_settings(), "detail_pw_concurrency",
+                          _DETAIL_PW_CONCURRENCY) or _DETAIL_PW_CONCURRENCY
+        except Exception:
+            cap = _DETAIL_PW_CONCURRENCY
+        _detail_pw_sem = asyncio.Semaphore(cap)
+    return _detail_pw_sem
+
+
 def _record_list_method(media, url, method, http_links, pw_links):
     try:
         os.makedirs(os.path.dirname(_LIST_LOG_PATH), exist_ok=True)
@@ -310,7 +330,9 @@ class BaseScraper(ABC):
         # 正文过短（典型为 JS 渲染的空壳页）→ 若允许则改用 Playwright 兜底
         if len(art.content or "") < 200 and settings.playwright_enabled():
             try:
-                html2, method2 = await fetch(url, force_playwright=True)
+                # 详情级浏览器兜底限并发（只限 Playwright，不影响普通 HTTP 抓取）
+                async with _detail_pw_sem():
+                    html2, method2 = await fetch(url, force_playwright=True)
                 art2 = await self.parse_detail(url, html2)
                 if len(art2.content or "") > len(art.content or ""):
                     art = art2

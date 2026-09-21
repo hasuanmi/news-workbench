@@ -14,6 +14,7 @@ const journal={run_id:randomUUID(),pid:process.pid,job,status:'running',phase:'s
 const save=()=>{for(const name of [`${job}-latest.json`,`${journal.run_id}.json`]){const temp=path.join(folder,`${name}.${journal.run_id}.tmp`);fs.writeFileSync(temp,JSON.stringify(journal,null,2));fs.renameSync(temp,path.join(folder,name));}};save();
 const secret=process.env.CRON_SECRET||process.env.CRON_TOKEN;
 const base=process.env.LOCAL_MAIN_API_BASE||`http://127.0.0.1:${process.env.PORT||3001}`;
+const cleanEnv=(baseEnv=process.env)=>{const e={...baseEnv};for(const k of ['HTTP_PROXY','HTTPS_PROXY','http_proxy','https_proxy','ALL_PROXY','all_proxy'])delete e[k];return e;};
 const headers={Authorization:`Bearer ${secret}`,'Content-Type':'application/json'};
 async function ready(){try{const r=await fetch(base+'/api/ingest/health',{headers,signal:AbortSignal.timeout(10000)});return r.ok;}catch{return false;}}
 async function execute(name){journal.phase=name;const step={name,status:'running',started_at:new Date().toISOString()};journal.steps.push(step);save();try{const response=await fetch(`${base}/api/cron/${name}`,{method:'POST',headers,signal:AbortSignal.timeout(1800000)});const result=await response.json();Object.assign(step,{ended_at:new Date().toISOString(),http:response.status,result,status:response.ok&&result.success?'success':'failed'});save();if(!response.ok||!result.success)throw new Error(result.error||result.summary||`HTTP ${response.status}`);}catch(e){Object.assign(step,{status:'failed',error:e.message,ended_at:new Date().toISOString()});save();throw e;}}
@@ -22,13 +23,13 @@ try{
   journal.phase='main_health';save();
   if(!await ready()){
     const log=fs.openSync(path.join(folder,'main-server.log'),'a');
-    const child=spawn(process.execPath,['scripts/run-local.mjs','start'],{cwd:root,detached:true,windowsHide:true,stdio:['ignore',log,log],env:process.env});child.unref();fs.closeSync(log);
+    const child=spawn(process.execPath,['scripts/run-local.mjs','start'],{cwd:root,detached:true,windowsHide:true,stdio:['ignore',log,log],env:cleanEnv()});child.unref();fs.closeSync(log);
     let healthy=false;for(let i=0;i<30;i++){await new Promise(r=>setTimeout(r,2000));if(await ready()){healthy=true;break;}}
     if(!healthy)throw new Error('Local main app not ready; see main-server.log');
   }
   const target=job==='media_then_clues'?'clue_identify':'calendar_recommend';
   journal.phase='task_switch';save();
-  const enabledResponse=await fetch(`${base}/api/cron/${target}`,{headers,signal:AbortSignal.timeout(20000)});
+  const enabledResponse=await fetch(`${base}/api/cron/${target}`,{headers,signal:AbortSignal.timeout(60000)});
   if(!enabledResponse.ok)throw new Error(`Read task switch HTTP ${enabledResponse.status}`);
   if((await enabledResponse.json()).enabled===false){journal.status='skipped';}
   else {
@@ -36,7 +37,7 @@ try{
     const scraper=path.resolve(root,'../media-scraper');const python=path.join(scraper,'.venv/Scripts/python.exe');
     // 配置驱动：读取当前启用且类型为 website 的抓取队列（media_source），不再硬编码媒体名单。
     // 监测范围由 media.monitor_clue=true 决定；本任务只负责「把队列里该抓的都抓一遍」。
-    const qResp=await fetch(`${base}/api/ingest/queue`,{headers,signal:AbortSignal.timeout(20000)});
+    const qResp=await fetch(`${base}/api/ingest/queue`,{headers,signal:AbortSignal.timeout(60000)});
     if(!qResp.ok)throw new Error(`拉取抓取队列失败 HTTP ${qResp.status}`);
     const queue=(await qResp.json()).sources||[];
     const targets=queue.filter(s=>(s.sourceType||s.source_type)==='website' && s.enabled!==false);
