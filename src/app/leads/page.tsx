@@ -7,6 +7,7 @@ import { ClueCard, type Clue } from "@/components/leads/clue-card";
 import { EmptyState } from "@/components/common/empty-state";
 import { PageSkeleton } from "@/components/common/page-skeleton";
 import { PageHeader } from "@/components/common/page-header";
+import { RunSummaryCard } from "@/components/leads/run-summary-card";
 import { toast } from "sonner";
 
 type Scope = "active" | "history";
@@ -119,15 +120,7 @@ export default function LeadsPage() {
 
         {/* 条件区 */}
         <LeadsFilter onIdentify={handleIdentify} loading={loading} />
-        {runSummary&&<div className="mb-4 rounded-md border p-3 text-sm space-y-1" aria-label="运行摘要">
-          <p>运行摘要：接入媒体 {runSummary.connectedMediaCount} 家（{runSummary.mediaNames.join('、')}）</p>
-          <p>最近抓取：{({success:'成功',failed:'失败',running:'运行中',interrupted:'已中断',skipped:'已跳过',unknown:'暂无记录'} as Record<string,string>)[runSummary.scrape.status]??runSummary.scrape.status}；抓取文章 {runSummary.scrape.articles} 篇；成功推送媒体 {runSummary.scrape.successfulMedia} 家</p>
-          {runSummary.scrape.startedAt&&<p>抓取开始：{new Date(runSummary.scrape.startedAt).toLocaleString('zh-CN',{timeZone:'Asia/Shanghai'})}（北京时间）</p>}
-          <p>当前待识别（最近24小时／全部媒体）：{runSummary.pendingArticles24h??'查询失败'}；最近一轮 DeepSeek 调用：{runSummary.identification?.deepseekCalls??'暂无记录'} 次</p>
-          {runSummary.identification&&<p>最近一轮输入：{runSummary.identification.pendingArticles} 篇／{runSummary.identification.mediaCount} 家媒体；运行 ID：{runSummary.identification.runId}</p>}
-          {runSummary.pendingError&&<p className="text-red-700">待识别数量查询失败：{runSummary.pendingError}</p>}
-          {runSummary.scrape.error&&<p className="text-red-700">抓取错误：{runSummary.scrape.error}</p>}
-        </div>}
+        {runSummary&&<RunSummaryCard data={runSummary} />}
 
         {/* 视图切换：今日待确认 / 历史线索库 */}
         <div className="flex items-center gap-2 mb-4">

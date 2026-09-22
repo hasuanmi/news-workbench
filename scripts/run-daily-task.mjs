@@ -13,9 +13,11 @@ if(fs.existsSync(latest)){const previous=JSON.parse(fs.readFileSync(latest,'utf8
 const journal={run_id:randomUUID(),pid:process.pid,job,status:'running',phase:'starting',trigger:process.argv.includes('--task')?'Windows Task Scheduler':'manual CLI',started_at:new Date().toISOString(),steps:[]};
 const save=()=>{for(const name of [`${job}-latest.json`,`${journal.run_id}.json`]){const temp=path.join(folder,`${name}.${journal.run_id}.tmp`);fs.writeFileSync(temp,JSON.stringify(journal,null,2));fs.renameSync(temp,path.join(folder,name));}};save();
 const secret=process.env.CRON_SECRET||process.env.CRON_TOKEN;
+const ingestToken=process.env.INGEST_API_TOKEN||process.env.CRON_SECRET;
 const base=process.env.LOCAL_MAIN_API_BASE||`http://127.0.0.1:${process.env.PORT||3001}`;
 const cleanEnv=(baseEnv=process.env)=>{const e={...baseEnv};for(const k of ['HTTP_PROXY','HTTPS_PROXY','http_proxy','https_proxy','ALL_PROXY','all_proxy'])delete e[k];return e;};
 const headers={Authorization:`Bearer ${secret}`,'Content-Type':'application/json'};
+const ingestHeaders={Authorization:`Bearer ${ingestToken}`,'Content-Type':'application/json'};
 async function ready(){try{const r=await fetch(base+'/api/ingest/health',{headers,signal:AbortSignal.timeout(10000)});return r.ok;}catch{return false;}}
 async function execute(name){journal.phase=name;const step={name,status:'running',started_at:new Date().toISOString()};journal.steps.push(step);save();try{const response=await fetch(`${base}/api/cron/${name}`,{method:'POST',headers,signal:AbortSignal.timeout(1800000)});const result=await response.json();Object.assign(step,{ended_at:new Date().toISOString(),http:response.status,result,status:response.ok&&result.success?'success':'failed'});save();if(!response.ok||!result.success)throw new Error(result.error||result.summary||`HTTP ${response.status}`);}catch(e){Object.assign(step,{status:'failed',error:e.message,ended_at:new Date().toISOString()});save();throw e;}}
 try{
@@ -35,9 +37,13 @@ try{
   else {
   if(job==='media_then_clues'){
     const scraper=path.resolve(root,'../media-scraper');const python=path.join(scraper,'.venv/Scripts/python.exe');
+    // 抓取子进程必须走代理才能访问外网新闻站；但 localhost:3001 的 ingest 回推要走直连，
+    // 故显式注入 HTTP(S)_PROXY 并设 NO_PROXY=localhost,127.0.0.1（主服务本身不代理，避免 502）。
+    const SCRAPER_PROXY=process.env.SCRAPER_PROXY||'http://127.0.0.1:7897';
+    const scraperEnv={...process.env,HTTP_PROXY:SCRAPER_PROXY,HTTPS_PROXY:SCRAPER_PROXY,http_proxy:SCRAPER_PROXY,https_proxy:SCRAPER_PROXY,NO_PROXY:'localhost,127.0.0.1'};
     // 配置驱动：读取当前启用且类型为 website 的抓取队列（media_source），不再硬编码媒体名单。
     // 监测范围由 media.monitor_clue=true 决定；本任务只负责「把队列里该抓的都抓一遍」。
-    const qResp=await fetch(`${base}/api/ingest/queue`,{headers,signal:AbortSignal.timeout(60000)});
+    const qResp=await fetch(`${base}/api/ingest/queue`,{headers:ingestHeaders,signal:AbortSignal.timeout(60000)});
     if(!qResp.ok)throw new Error(`拉取抓取队列失败 HTTP ${qResp.status}`);
     const queue=(await qResp.json()).sources||[];
     const targets=queue.filter(s=>(s.sourceType||s.source_type)==='website' && s.enabled!==false);
@@ -52,7 +58,7 @@ try{
         const filesBefore=new Set(fs.readdirSync(path.join(scraper,'logs/real-poc')));
         const log=fs.openSync(path.join(folder,'media-fetch.log'),'a');
         let code;
-        try{code=await new Promise((resolve,reject)=>{const child=spawn(python,['poc_ingest_real.py',mediaName,'10','--scheduled'],{cwd:scraper,windowsHide:true,stdio:['ignore',log,log]});const timer=setTimeout(()=>{child.kill();reject(new Error(`${mediaName} 超时`));},TIMEOUT_MS);child.on('error',e=>{clearTimeout(timer);reject(e);});child.on('exit',c=>{clearTimeout(timer);resolve(c);});});}finally{fs.closeSync(log);}
+        try{code=await new Promise((resolve,reject)=>{const child=spawn(python,['poc_ingest_real.py',mediaName,'10','--scheduled'],{cwd:scraper,windowsHide:true,stdio:['ignore',log,log],env:scraperEnv});const timer=setTimeout(()=>{child.kill();reject(new Error(`${mediaName} 超时`));},TIMEOUT_MS);child.on('error',e=>{clearTimeout(timer);reject(e);});child.on('exit',c=>{clearTimeout(timer);resolve(c);});});}finally{fs.closeSync(log);}
         const added=fs.readdirSync(path.join(scraper,'logs/real-poc')).filter(f=>!filesBefore.has(f)&&f.startsWith(mediaName+'-')).sort().at(-1);
         const report=added?JSON.parse(fs.readFileSync(path.join(scraper,'logs/real-poc',added),'utf8')):null;
         const ok=code===0&&report?.ingest?.success===true&&report.ingest.failed===0;

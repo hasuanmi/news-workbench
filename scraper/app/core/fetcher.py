@@ -1,3 +1,4 @@
+import os
 import re
 from typing import Tuple
 
@@ -97,8 +98,17 @@ async def _fetch_playwright(url: str, wait_until: str = "networkidle", extra_wai
     except Exception as e:  # playwright 未安装
         raise RuntimeError("playwright 未安装，无法使用浏览器兜底") from e
     cfg = settings.get_settings()
+    # 代理透传：Playwright 不读 HTTP_PROXY 环境变量，需显式传入。
+    # 只在外网抓取时使用代理；localhost 回推走 NO_PROXY，不会被代理拦截。
+    proxy_url = (
+        os.environ.get("HTTPS_PROXY") or os.environ.get("HTTP_PROXY")
+        or os.environ.get("https_proxy") or os.environ.get("http_proxy")
+    )
+    launch_kwargs: dict = {"headless": True}
+    if proxy_url:
+        launch_kwargs["proxy"] = {"server": proxy_url}
     async with async_playwright() as p:
-        browser = await p.chromium.launch(headless=True)
+        browser = await p.chromium.launch(**launch_kwargs)
         page = await browser.new_page(user_agent=cfg.user_agent)
         try:
             await page.goto(url, wait_until=wait_until, timeout=cfg.fetch_timeout * 1000)

@@ -17,8 +17,10 @@ export async function GET(req:NextRequest){
   const db=supabase();
   const {count,error}=await db.from('article').select('id',{count:'exact',head:true}).eq('is_test',false).eq('clue_processed',false).gte('publish_time',new Date(Date.now()-86400000).toISOString());
   const mediaSteps=(scrape?.steps??[]).filter((s:{name:string})=>s.name==='media_fetch');
-  const { data: monitorMedia, error: monitorError } = await db.from('media').select('id, media_name').eq('monitor_clue', true);
-  const connectedMediaCount = monitorError ? 0 : (monitorMedia?.length ?? 0);
-  const mediaNames = monitorError ? [] : (monitorMedia ?? []).map((m: {media_name?: string}) => m.media_name).filter((n): n is string => !!n);
-  return Response.json({connectedMediaCount,mediaNames,scrape:{status:scrapeStatus,phase:scrape?.phase??null,startedAt:scrape?.started_at??null,endedAt:scrape?.ended_at??null,articles:mediaSteps.reduce((n:number,s:{articles?:number})=>n+(s.articles??0),0),successfulMedia:mediaSteps.filter((s:{ok?:boolean})=>s.ok).length,error:scrape?.error??null,osResult:triggers.clue_identify?.lastResult??null},pendingArticles24h:error?null:count,pendingError:error?.message??null,monitorError:monitorError?.message??null,identification:identification?{runId:identification.run_id,startedAt:identification.started_at,executed:identification.executed,...identification.summary,processed:identification.processed,errors:identification.errors}:null});
+  // 监测媒体总数：仅统计开启线索监测的媒体（精简摘要卡所需，不再展开 135 家名单）
+  const { count: connectedCount, error: monitorError } = await db.from('media').select('id',{count:'exact',head:true}).eq('monitor_clue', true);
+  const connectedMediaCount = monitorError ? 0 : (connectedCount ?? 0);
+  const successfulMedia=mediaSteps.filter((s:{status?:string})=>s.status==='success').length;
+  const failedMedia=mediaSteps.filter((s:{status?:string})=>s.status==='failed').length;
+  return Response.json({connectedMediaCount,scrape:{status:scrapeStatus,phase:scrape?.phase??null,startedAt:scrape?.started_at??null,endedAt:scrape?.ended_at??null,articles:mediaSteps.reduce((n:number,s:{articles?:number})=>n+(s.articles??0),0),successfulMedia,failedMedia,error:scrape?.error??null,osResult:triggers.clue_identify?.lastResult??null},pendingArticles24h:error?null:count,pendingError:error?.message??null,identification:identification?{runId:identification.run_id,startedAt:identification.started_at,executed:identification.executed,...identification.summary,processed:identification.processed,errors:identification.errors}:null});
 }
