@@ -14,7 +14,11 @@ type RunSummaryData = {
     failedMedia: number;
     error: string | null;
   };
-  pendingArticles24h: number | null;
+  pendingArticles: number | null;
+  pendingWindow?: string;
+  pendingWindowLabel?: string;
+  pendingMediaScope?: number;
+  pendingError?: string | null;
   identification?: { deepseekCalls?: number } | null;
 };
 
@@ -84,7 +88,7 @@ function formatRunTime(run: RunSummaryData["scrape"]): string {
 }
 
 export function RunSummaryCard({ data }: { data: RunSummaryData }) {
-  const { scrape, connectedMediaCount, pendingArticles24h, identification } = data;
+  const { scrape, connectedMediaCount, pendingArticles, pendingWindowLabel, pendingMediaScope, identification } = data;
   return (
     <div className="mb-4 rounded-lg border border-[#e8e2d8] bg-white p-3" aria-label="运行摘要">
       <div className="flex items-center justify-between mb-2.5">
@@ -103,7 +107,7 @@ export function RunSummaryCard({ data }: { data: RunSummaryData }) {
         <Stat label="本轮成功抓取" value={scrape.successfulMedia} />
         <Stat label="异常 / 未成功" value={scrape.failedMedia} />
         <Stat label="抓取文章" value={scrape.articles} />
-        <Stat label="待识别文章" value={pendingArticles24h ?? "—"} />
+        <Stat label="待识别文章" value={pendingArticles ?? "—"} suffix={pendingWindowLabel ? `（${pendingWindowLabel}）` : ""} />
         <Stat label="DeepSeek 调用" value={identification?.deepseekCalls ?? "—"} suffix="次" />
       </div>
 
@@ -112,6 +116,11 @@ export function RunSummaryCard({ data }: { data: RunSummaryData }) {
         <StatusBadge status={scrape.status} />
         {scrape.error && <span className="text-red-700">· {scrape.error}</span>}
       </div>
+      {pendingMediaScope !== undefined && (
+        <div className="mt-1.5 text-[11px] text-[#9a9183]">
+          待识别口径：{pendingWindowLabel} · 媒体范围 {pendingMediaScope} 家监测媒体 · is_test=false · clue_processed=false
+        </div>
+      )}
     </div>
   );
 }

@@ -18,6 +18,7 @@ import { supabase } from "@/lib/db";
 import { invalidateConfigCache } from "@/lib/config";
 import { runCluePipeline } from "@/lib/clue-pipeline";
 import { getClueMonitorMediaIds } from "@/lib/active-media";
+import { CLUE_IDENTIFY_TIME_RANGE } from "@/lib/clue-identify-config";
 import { updateCalendarRecommendations } from "@/lib/calendar-auto";
 import {
   getWeeklyClues,
@@ -197,7 +198,7 @@ export async function runJob(job: JobName, manual = false): Promise<JobResult> {
       // 不再用 clue.auto_monitor_media 把识别范围固定为 3 家；采集未覆盖≠排除出监测范围。
       const mediaIds = await getClueMonitorMediaIds();
       if (!mediaIds.length) throw new Error("线索监测名单为空（media.monitor_clue 无 true 记录）");
-      const r = await runCluePipeline({timeRange:"3d",mediaScope:"custom",customMediaIds:mediaIds,clueTypes:["new_column"]});
+      const r = await runCluePipeline({timeRange:CLUE_IDENTIFY_TIME_RANGE,mediaScope:"custom",customMediaIds:mediaIds,clueTypes:["new_column"]});
       const ok = r.errors.length === 0;
       await finish(ok, {
         status: ok ? "success" : "failed",
