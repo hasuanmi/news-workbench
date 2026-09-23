@@ -8,6 +8,7 @@ import { Label } from "@/components/ui/label";
 import { Loader2, Save } from "lucide-react";
 import { toast } from "sonner";
 import { LoadingButton } from "@/components/common/loading-button";
+import { SupabaseConfigCard } from "@/components/admin/supabase-config-card";
 
 interface ConfigItem {
   id: string;
@@ -97,6 +98,8 @@ export function AdminConfig() {
           <Save className="w-4 h-4 mr-2" /> 保存全部
         </LoadingButton>
       </header>
+
+      <SupabaseConfigCard />
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
         {groups.map((g) => (
