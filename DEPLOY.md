@@ -245,7 +245,7 @@ Content-Type: application/json
 ## 步骤七：验证部署
 
 1. 访问 `https://news.your-domain.com`，应跳转到登录页
-2. 使用 `admin / your-admin-password` 登录
+2. 使用 `admin` 与初始化时设置的 `SEED_USER_PASSWORD` 登录（`your-admin-password` 仅为占位示例，不是固定默认密码）
 3. 进入「系统管理 → 媒体与数据源」，点击「模拟外部推送」验证 ingest 链路
 4. 进入「新闻日历」，点击任意节点查看 AI 选题建议（需 AI 模型已配置）
 5. 检查日志无报错：`pm2 logs news-workbench` 或 `docker logs news-workbench`

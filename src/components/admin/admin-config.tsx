@@ -9,6 +9,7 @@ import { Loader2, Save } from "lucide-react";
 import { toast } from "sonner";
 import { LoadingButton } from "@/components/common/loading-button";
 import { SupabaseConfigCard } from "@/components/admin/supabase-config-card";
+import { LLMConfigCard } from "@/components/admin/llm-config-card";
 
 interface ConfigItem {
   id: string;
@@ -134,6 +135,7 @@ export function AdminConfig() {
           数据库连接、定时任务等决定系统本身如何运行的设置，修改前请确认影响范围。
         </p>
         <SupabaseConfigCard />
+        <LLMConfigCard />
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
           {systemGroups.map((g) => renderGroup(g))}
         </div>

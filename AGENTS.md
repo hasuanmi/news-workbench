@@ -33,7 +33,7 @@ pnpm tsx --test src/lib/calendar-engine.test.ts   # 日历规则引擎单元测�
 pnpm dev / pnpm build             # 开发 / 构建
 ```
 
-默认账号：`admin / your-admin-password`（系统管理员）、`editor / your-admin-password`（值班编辑）。
+初始化账号：`admin`（系统管理员）、`editor`（值班编辑）。密码来自执行 `scripts/seed-users.ts` 时的 `SEED_USER_PASSWORD`，`your-admin-password` 仅为占位示例。本地验收读取已有 `AUDIT_PASSWORD`；不要为登录排查重跑 seed-users（会重置已有密码）。
 
 ## 数据库
 

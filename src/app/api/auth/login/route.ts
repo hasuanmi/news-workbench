@@ -19,7 +19,14 @@ export async function POST(req: NextRequest) {
     .eq("enabled", true)
     .maybeSingle();
 
-  if (error || !user) {
+  if (error) {
+    return NextResponse.json(
+      { error: "暂时无法连接账号数据库，请稍后重试或联系管理员检查数据库连接" },
+      { status: 503 },
+    );
+  }
+
+  if (!user) {
     return NextResponse.json({ error: "账号不存在或已停用" }, { status: 401 });
   }
 

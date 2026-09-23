@@ -71,7 +71,7 @@ pnpm tsx scripts/seed-users.ts
 pnpm tsx scripts/import-data.ts
 ```
 
-默认账号：`admin / your-admin-password`（管理员）、`editor / your-admin-password`（编辑）。
+初始化账号为 `admin`（管理员）和 `editor`（编辑），密码来自执行 `scripts/seed-users.ts` 时的 `SEED_USER_PASSWORD`，没有固定默认密码。`your-admin-password` 仅为占位示例。本地验收使用已有的 `AUDIT_PASSWORD`；不要为登录排查重跑初始化脚本，否则会重置已有账号密码。
 
 ### 5. 启动开发服务器
 

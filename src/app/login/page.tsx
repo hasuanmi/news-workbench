@@ -6,7 +6,6 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Loader2 } from "lucide-react";
-import { BrandLogo } from "@/components/brand-logo";
 
 function LoginForm() {
   const router = useRouter();
@@ -42,7 +41,7 @@ function LoginForm() {
   }
 
   return (
-    <div className="relative min-h-screen overflow-hidden flex items-center justify-center px-4 py-10">
+    <div className="relative min-h-svh overflow-hidden flex flex-col items-center px-4 pt-8 pb-16 sm:pb-24">
       {/* 品牌氛围层：低透明度品牌红 / 暖金光晕（不拦截交互） */}
       <div aria-hidden className="pointer-events-none absolute inset-0">
         <div className="absolute -top-24 -right-24 h-[420px] w-[420px] rounded-full bg-[var(--brand)]/10 blur-3xl" />
@@ -50,11 +49,17 @@ function LoginForm() {
         <div className="absolute left-1/2 top-1/3 h-[300px] w-[520px] -translate-x-1/2 rounded-full bg-[var(--brand)]/[0.06] blur-3xl" />
       </div>
 
-      <div className="animate-page-in relative w-full max-w-[420px]">
-        {/* ===== 品牌区：完整官方 logo + 产品名 ===== */}
+      <div className="animate-page-in relative my-auto w-full max-w-[420px] shrink-0">
+        {/* 品牌与登录卡共同居中；SVG 画布贴合完整标志，间距不受透明留白影响。 */}
         <div className="text-center">
-          <BrandLogo variant="full" height={54} className="mx-auto" />
-          <h1 className="mt-5 font-serif text-[26px] font-bold tracking-tight text-[var(--foreground)]">
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img
+            src="/brand/logo-full.svg"
+            alt="广州日报"
+            className="mx-auto"
+            style={{ width: "220px", height: "auto", maxWidth: "100%" }}
+          />
+          <h1 className="mt-12 font-serif text-[26px] font-bold tracking-tight text-[var(--foreground)]">
             AI 新闻辅助工作台
           </h1>
           <p className="mt-1.5 text-sm text-[var(--muted-foreground)]">
@@ -63,7 +68,7 @@ function LoginForm() {
         </div>
 
         {/* ===== 轻玻璃卡 ===== */}
-        <div className="brand-glass mt-7 rounded-[20px] p-7">
+        <div className="brand-glass mt-8 rounded-[20px] p-7">
           <form onSubmit={handleSubmit} className="space-y-5">
             <div className="space-y-2">
               <Label htmlFor="username" className="text-xs text-[var(--muted-foreground)]">

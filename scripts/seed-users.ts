@@ -1,6 +1,6 @@
 /**
  * 初始化默认内部账号（幂等）
- * 默认密码：your-admin-password，首次登录后建议在系统管理中修改（M2 补改密功能）
+ * 密码必须通过 SEED_USER_PASSWORD 提供，没有固定默认密码；重跑会重置已有账号密码。
  */
 import "dotenv/config";
 import { getSupabaseClient } from "../src/storage/database/supabase-client";
