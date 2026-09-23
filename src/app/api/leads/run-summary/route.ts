@@ -2,7 +2,7 @@ import {NextRequest} from 'next/server';
 import {requireAdmin} from '@/lib/require-admin';
 import {supabase} from '@/lib/db';
 import {getLocalTriggers} from '@/lib/local-triggers';
-import {buildClueIdentifyFilter, clueTimeRangeLabel, clueTimeRangeStart, CLUE_IDENTIFY_TIME_RANGE} from '@/lib/clue-identify-config';
+import {buildClueIdentifyFilter, buildClueIdentifyQuery, clueTimeRangeLabel, CLUE_IDENTIFY_TIME_RANGE} from '@/lib/clue-identify-config';
 import fs from 'node:fs';
 import path from 'node:path';
 export const runtime='nodejs';
@@ -23,26 +23,18 @@ export async function GET(req:NextRequest){
   const successfulMedia=mediaSteps.filter((s:{status?:string})=>s.status==='success').length;
   const failedMedia=mediaSteps.filter((s:{status?:string})=>s.status==='failed').length;
 
-  // 待识别文章：与实际 clue_identify 任务使用同一份过滤条件
-  // （timeRange=3d、媒体范围=monitor_clue 名单、is_test=false、clue_processed=false、limit 100，与 runCluePipeline 完全一致）
+  // 待识别文章：与实际 clue_identify 任务使用同一份过滤条件，单独统计真实总数
+  // （count:'exact' + head:true，不受 limit 钳制，页面显示真实积压，例如“待识别文章 192 篇（近3天）”）
   const pendingFilter = await buildClueIdentifyFilter();
   const pendingWindowLabel = clueTimeRangeLabel(pendingFilter.timeRange ?? CLUE_IDENTIFY_TIME_RANGE);
-  const pendingStart = clueTimeRangeStart(pendingFilter.timeRange ?? CLUE_IDENTIFY_TIME_RANGE);
   let pendingArticles: number | null = null;
   let pendingError: string | null = null;
   try {
-    let q = db
-      .from('article')
-      .select('id')
-      .eq('is_test', false)
-      .eq('clue_processed', false)
-      .order('publish_time', { ascending: false })
-      .limit(100);
-    if (pendingStart) q = q.gte('publish_time', pendingStart.toISOString());
-    if (pendingFilter.customMediaIds?.length) q = q.in('media_id', pendingFilter.customMediaIds);
-    const { data: pendingRows, error: pErr } = await q;
-    if (pErr) pendingError = pErr.message;
-    else pendingArticles = pendingRows?.length ?? 0;
+    const { count } = (await buildClueIdentifyQuery(db, {
+      count: true,
+      mediaIds: pendingFilter.customMediaIds,
+    })) as { count: number | null };
+    pendingArticles = count ?? 0;
   } catch (e) {
     pendingError = e instanceof Error ? e.message : String(e);
   }

@@ -41,6 +41,13 @@ try{
     // 故显式注入 HTTP(S)_PROXY 并设 NO_PROXY=localhost,127.0.0.1（主服务本身不代理，避免 502）。
     const SCRAPER_PROXY=process.env.SCRAPER_PROXY||'http://127.0.0.1:7897';
     const scraperEnv={...process.env,HTTP_PROXY:SCRAPER_PROXY,HTTPS_PROXY:SCRAPER_PROXY,http_proxy:SCRAPER_PROXY,https_proxy:SCRAPER_PROXY,NO_PROXY:'localhost,127.0.0.1'};
+    // 代理预热：抓取前确认代理可用，避免首轮因代理未就绪/冷启动而大规模失败（系统性问题修复）。
+    // 历史 run 在启动后前 ~5 分钟出现 code:0/1/-1 集中失败、随后恢复，正是代理冷启动 + 并发突增所致。
+    const proxyReachable=(url)=>new Promise((resolve)=>{const c=spawn('curl',['-s','-o','NUL','-w','%{http_code}','--max-time','15','-x',SCRAPER_PROXY,url],{windowsHide:true});let out='';c.stdout.on('data',d=>out+=d);c.on('error',()=>resolve(false));c.on('exit',code=>resolve(code===0&&out.trim()==='200'));});
+    const PROXY_TEST_URLS=['https://www.baidu.com','https://www.thepaper.cn','https://www.people.com.cn'];
+    let proxyOk=false;
+    for(let i=0;i<6 && !proxyOk;i++){for(const u of PROXY_TEST_URLS){if(await proxyReachable(u)){proxyOk=true;break;}}if(!proxyOk)await new Promise(r=>setTimeout(r,5000));}
+    if(!proxyOk)throw new Error('抓取前代理未就绪（'+SCRAPER_PROXY+'）；放弃本次抓取以免浪费额度');
     // 配置驱动：读取当前启用且类型为 website 的抓取队列（media_source），不再硬编码媒体名单。
     // 监测范围由 media.monitor_clue=true 决定；本任务只负责「把队列里该抓的都抓一遍」。
     const qResp=await fetch(`${base}/api/ingest/queue`,{headers:ingestHeaders,signal:AbortSignal.timeout(60000)});
@@ -64,7 +71,17 @@ try{
         const ok=code===0&&report?.ingest?.success===true&&report.ingest.failed===0;
         return {ok,code,report,added};
       };
-      let res; try{res=await attempt();}catch(e){try{res=await attempt();}catch(e2){res={ok:false,error:e2.message};}} // 失败重试 1 次
+      // 失败重试：上限 3 次。仅对“非 0 退出 / 超时 / 进程异常”（代理或网络瞬断）做重试；
+      // 解析类 0 文章（code:0 但无正文）属稳定失败，不重试以免浪费时间。
+      let res; const MAX_ATTEMPTS=3;
+      for(let attemptNo=0; attemptNo<MAX_ATTEMPTS; attemptNo++){
+        res=await attempt();
+        if(res.ok) break;
+        const transient = res.code !== 0 || !!res.error;
+        if(!transient) break;
+        if(attemptNo < MAX_ATTEMPTS-1) await new Promise(r=>setTimeout(r, 4000*(attemptNo+1)));
+      }
+      if(!res) res={ok:false,error:'retry exhausted'};
       const ok=!!res.ok; const report=res.report;
       Object.assign(step,{status:ok?'success':'failed',ended_at:new Date().toISOString(),code:res.code,ok,report:res.added,articles:report?.successful_bodies??0,ingest:report?.ingest,failures:report?.failures??[],error:res.error});save();
       perMedia.push({media:mediaName,ok,articles:report?.successful_bodies??0}); if(ok)pushed++;

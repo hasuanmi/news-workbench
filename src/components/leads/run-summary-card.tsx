@@ -19,7 +19,12 @@ type RunSummaryData = {
   pendingWindowLabel?: string;
   pendingMediaScope?: number;
   pendingError?: string | null;
-  identification?: { deepseekCalls?: number } | null;
+  identification?: {
+    deepseekCalls?: number;
+    batchCount?: number;
+    totalProcessed?: number;
+    totalFetched?: number;
+  } | null;
 };
 
 const STATUS_LABEL: Record<string, string> = {
@@ -108,6 +113,8 @@ export function RunSummaryCard({ data }: { data: RunSummaryData }) {
         <Stat label="异常 / 未成功" value={scrape.failedMedia} />
         <Stat label="抓取文章" value={scrape.articles} />
         <Stat label="待识别文章" value={pendingArticles ?? "—"} suffix={pendingWindowLabel ? `（${pendingWindowLabel}）` : ""} />
+        <Stat label="本轮处理" value={identification?.totalFetched ?? identification?.totalProcessed ?? "—"} suffix="篇" />
+        <Stat label="识别批次" value={identification?.batchCount ?? "—"} suffix="批" />
         <Stat label="DeepSeek 调用" value={identification?.deepseekCalls ?? "—"} suffix="次" />
       </div>
 
