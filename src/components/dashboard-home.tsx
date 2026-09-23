@@ -6,8 +6,8 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { CalendarDays, Radar, ArrowRight } from "lucide-react";
 import { PageSkeleton } from "@/components/common/page-skeleton";
 import { EmptyState } from "@/components/common/empty-state";
-import { PageHeader } from "@/components/common/page-header";
 import { ErrorState } from "@/components/common/error-state";
+import { BrandLogo } from "@/components/brand-logo";
 
 interface UpcomingNode {
   id: string;
@@ -33,10 +33,11 @@ interface HomePreview {
   calendar_warning?: string | null;
 }
 
+/* 重要级标签：统一品牌红 / 暖金 / 墨灰，不再散落临时色值 */
 const IMPORTANCE_STYLE: Record<string, string> = {
-  S: "bg-[#b3392f] text-white",
-  A: "bg-[#c87f2d] text-white",
-  B: "bg-[#6b6257] text-white",
+  S: "bg-[var(--brand)] text-white",
+  A: "bg-[var(--gold)] text-white",
+  B: "bg-[var(--muted-foreground)] text-white",
 };
 
 function formatDate(iso: string): string {
@@ -56,6 +57,17 @@ function formatDateTime(iso: string): string {
 export function DashboardHome() {
   const [preview, setPreview] = useState<HomePreview | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [greeting, setGreeting] = useState("");
+  const [todayLabel, setTodayLabel] = useState("");
+
+  useEffect(() => {
+    // 问候语与日期在挂载后计算，避免服务端/客户端渲染不一致
+    const now = new Date();
+    const h = now.getHours();
+    setGreeting(h < 6 ? "凌晨好" : h < 11 ? "早上好" : h < 14 ? "中午好" : h < 18 ? "下午好" : "晚上好");
+    const week = ["日", "一", "二", "三", "四", "五", "六"][now.getDay()];
+    setTodayLabel(`${now.getMonth() + 1}月${now.getDate()}日 星期${week}`);
+  }, []);
 
   useEffect(() => {
     fetch("/api/home/preview")
@@ -68,21 +80,42 @@ export function DashboardHome() {
   }, []);
 
   return (
-    <div className="space-y-8">
-      <PageHeader
-        title="工作台首页"
-        subtitle="未来节点与最新线索一屏速览，点击进入对应模块处理。"
-      />
-      {error && <p className="text-xs text-[#b3392f] mt-2 -mt-4">{error}</p>}
+    <div className="space-y-6">
+      {/* ===== 品牌欢迎区 ===== */}
+      <section className="relative overflow-hidden rounded-[20px] border border-[var(--border)] bg-[var(--card)] px-6 py-5 [box-shadow:var(--card-shadow)]">
+        <div aria-hidden className="pointer-events-none absolute inset-0">
+          <div className="absolute -right-16 -top-20 h-56 w-56 rounded-full bg-[var(--brand)]/[0.07] blur-2xl" />
+          <div className="absolute -bottom-24 left-1/3 h-44 w-72 rounded-full bg-[var(--gold)]/[0.10] blur-2xl" />
+        </div>
+        <div className="relative flex items-center gap-4">
+          <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl bg-[var(--brand-soft)]">
+            <BrandLogo variant="mark" height={34} />
+          </div>
+          <div className="min-w-0">
+            <h1 className="font-serif text-xl font-bold leading-tight text-[var(--foreground)]">
+              广州日报 AI 新闻辅助工作台
+            </h1>
+            <p className="mt-1 text-sm text-[var(--muted-foreground)]">
+              {greeting}
+              {todayLabel ? ` · ${todayLabel}` : ""} · 未来节点与最新线索一屏速览，点击进入对应模块处理。
+            </p>
+          </div>
+        </div>
+      </section>
+
+      {error && <p className="text-xs text-[var(--destructive)] -mt-2">{error}</p>}
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* ===== 未来新闻节点 ===== */}
         <Card>
           <CardHeader className="flex-row items-center justify-between space-y-0 pb-3">
-            <CardTitle className="text-sm font-semibold text-[var(--muted-foreground)] flex items-center gap-2">
-              <CalendarDays className="w-4 h-4" /> 未来{preview?.home_days ?? 7}天新闻节点
+            <CardTitle className="text-sm font-semibold text-[var(--foreground)] flex items-center gap-2">
+              <span className="flex h-7 w-7 items-center justify-center rounded-lg bg-[var(--brand-soft)] text-[var(--brand)]">
+                <CalendarDays className="w-4 h-4" />
+              </span>
+              未来{preview?.home_days ?? 7}天新闻节点
             </CardTitle>
-            <Link href="/calendar" className="text-xs text-[#b3392f] hover:underline flex items-center gap-0.5">
+            <Link href="/calendar" className="text-xs text-[var(--brand)] hover:underline flex items-center gap-0.5">
               查看全部 <ArrowRight className="w-3 h-3" />
             </Link>
           </CardHeader>
@@ -104,7 +137,7 @@ export function DashboardHome() {
                     <span className="w-10 shrink-0 text-xs text-[var(--muted-foreground)]">
                       {formatDate(n.date)}
                     </span>
-                    <span className="text-sm font-medium truncate group-hover:text-[#b3392f]">
+                    <span className="text-sm font-medium truncate group-hover:text-[var(--brand)]">
                       {n.name}
                       {n.anniversary ? (
                         <span className="text-[var(--muted-foreground)] text-xs ml-1">
@@ -135,10 +168,13 @@ export function DashboardHome() {
         {/* ===== 最新新闻线索（新栏目） ===== */}
         <Card>
           <CardHeader className="flex-row items-center justify-between space-y-0 pb-3">
-            <CardTitle className="text-sm font-semibold text-[var(--muted-foreground)] flex items-center gap-2">
-              <Radar className="w-4 h-4" /> 最新新闻线索
+            <CardTitle className="text-sm font-semibold text-[var(--foreground)] flex items-center gap-2">
+              <span className="flex h-7 w-7 items-center justify-center rounded-lg bg-[var(--brand-soft)] text-[var(--brand)]">
+                <Radar className="w-4 h-4" />
+              </span>
+              最新新闻线索
             </CardTitle>
-            <Link href="/leads" className="text-xs text-[#b3392f] hover:underline flex items-center gap-0.5">
+            <Link href="/leads" className="text-xs text-[var(--brand)] hover:underline flex items-center gap-0.5">
               查看全部 <ArrowRight className="w-3 h-3" />
             </Link>
           </CardHeader>
@@ -155,7 +191,7 @@ export function DashboardHome() {
                   className="flex flex-col gap-0.5 px-1 py-2 rounded hover:bg-[var(--accent)] group"
                 >
                   <div className="flex items-center justify-between gap-2">
-                    <span className="text-sm font-medium truncate group-hover:text-[#b3392f]">
+                    <span className="text-sm font-medium truncate group-hover:text-[var(--brand)]">
                       {l.column_name}
                     </span>
                     <span className="text-xs text-[var(--muted-foreground)] shrink-0">

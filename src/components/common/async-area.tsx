@@ -58,7 +58,7 @@ export function AsyncArea({
       <div className={cn("relative", className)}>
         {refreshing && (
           <div className="sticky top-0 z-10 mb-2 flex items-center justify-center">
-            <span className="inline-flex items-center gap-1.5 rounded-full bg-[#1f1b16]/90 px-3 py-1 text-xs text-white shadow-sm">
+            <span className="inline-flex items-center gap-1.5 rounded-full bg-[var(--foreground)]/90 px-3 py-1 text-xs text-white shadow-sm">
               <span className="size-1.5 animate-pulse rounded-full bg-white" />
               正在更新…
             </span>

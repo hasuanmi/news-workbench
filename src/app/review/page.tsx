@@ -237,35 +237,35 @@ export default function ReviewPage() {
 
         {/* 历史侧拉/抽屉 */}
         {showHistory && (
-          <div className="bg-white border border-[#e8e2d8] rounded-lg p-4 mb-6">
+          <div className="bg-white border border-[var(--border)] rounded-lg p-4 mb-6">
             <div className="flex items-center justify-between mb-3">
-              <h2 className="text-sm font-semibold text-[#1f1b16]">历史评报</h2>
+              <h2 className="text-sm font-semibold text-[var(--foreground)]">历史评报</h2>
               <Button variant="ghost" size="sm" onClick={loadHistory} disabled={historyLoading}>
                 刷新
               </Button>
             </div>
             {historyLoading ? (
-              <p className="text-sm text-[#6b6257] py-4 text-center">加载中…</p>
+              <p className="text-sm text-[var(--muted-foreground)] py-4 text-center">加载中…</p>
             ) : history.length === 0 ? (
-              <p className="text-sm text-[#6b6257] py-4 text-center">暂无历史评报</p>
+              <p className="text-sm text-[var(--muted-foreground)] py-4 text-center">暂无历史评报</p>
             ) : (
               <div className="space-y-2 max-h-80 overflow-y-auto">
                 {history.map((h) => (
                   <button
                     key={h.id}
                     onClick={() => viewHistory(h.id)}
-                    className="w-full text-left border border-[#e8e2d8] rounded-md px-3 py-2 hover:bg-[#faf7f2] transition-colors"
+                    className="w-full text-left border border-[var(--border)] rounded-md px-3 py-2 hover:bg-[var(--background)] transition-colors"
                   >
                     <div className="flex items-center justify-between">
-                      <span className="text-sm font-medium text-[#1f1b16]">
+                      <span className="text-sm font-medium text-[var(--foreground)]">
                         {h.report_date}
-                        <span className="ml-2 text-xs text-[#6b6257]">v{h.version}</span>
+                        <span className="ml-2 text-xs text-[var(--muted-foreground)]">v{h.version}</span>
                       </span>
-                      <span className="text-xs text-[#6b6257]">
+                      <span className="text-xs text-[var(--muted-foreground)]">
                         {h.review_status === "published" ? "已发布" : h.review_status === "approved" ? "已审核" : "待审核"}
                       </span>
                     </div>
-                    <p className="text-xs text-[#6b6257] truncate mt-1">{h.summary_preview || "（无摘要）"}</p>
+                    <p className="text-xs text-[var(--muted-foreground)] truncate mt-1">{h.summary_preview || "（无摘要）"}</p>
                   </button>
                 ))}
               </div>

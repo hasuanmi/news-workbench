@@ -9,7 +9,6 @@ import {
   Radar,
   FileText,
   Settings,
-  Newspaper,
   LogOut,
   Loader2,
   Bot,
@@ -20,6 +19,7 @@ import { Badge } from "@/components/ui/badge";
 import { useState, useEffect } from "react";
 import { LLMSettingsDialog } from "@/components/llm-settings-dialog";
 import { PageTransition } from "@/components/common/page-transition";
+import { BrandLogo } from "@/components/brand-logo";
 
 const navItems = [
   { href: "/", label: "首页", icon: LayoutDashboard },
@@ -77,14 +77,14 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   return (
     <div className="min-h-screen flex">
       {/* 侧边导航 */}
-      <aside className="w-56 shrink-0 border-r border-[var(--border)] bg-[var(--card)] flex flex-col">
-        <div className="h-16 flex items-center gap-2 px-5 border-b border-[var(--border)]">
-          <div className="w-8 h-8 rounded-md bg-[var(--primary)] text-[var(--primary-foreground)] flex items-center justify-center">
-            <Newspaper className="w-4 h-4" />
-          </div>
-          <div className="leading-tight">
-            <div className="font-serif font-bold text-sm">新闻工作台</div>
-            <div className="text-[11px] text-[var(--muted-foreground)]">广州日报</div>
+      <aside className="w-60 shrink-0 border-r border-[var(--border)] bg-[var(--sidebar)] flex flex-col">
+        <div className="h-16 flex items-center gap-2.5 px-5 border-b border-[var(--border)]">
+          <BrandLogo variant="mark" height={30} />
+          <div className="leading-tight min-w-0">
+            <div className="font-serif font-bold text-sm">广州日报</div>
+            <div className="text-[11px] text-[var(--muted-foreground)] truncate">
+              AI 新闻辅助工作台
+            </div>
           </div>
         </div>
         <nav className="flex-1 p-3 space-y-1">
@@ -97,10 +97,11 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                 key={item.href}
                 href={item.href}
                 className={cn(
-                  "flex items-center gap-3 px-3 py-2 rounded-md text-sm transition-[color,background-color,transform] duration-150 active:translate-y-px focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/50",
+                  // 选中态：浅红底 + 品牌红竖条/图标/文字（不做位移与缩放，避免抖动）
+                  "relative flex items-center gap-3 px-3 py-2 rounded-lg text-sm transition-[color,background-color] duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/50",
                   active
-                    ? "bg-[var(--primary)] text-[var(--primary-foreground)] font-medium"
-                    : "text-[var(--foreground)] hover:bg-[var(--accent)]/60"
+                    ? "bg-[var(--brand-soft)] text-[var(--brand)] font-medium before:absolute before:left-0 before:top-1/2 before:-translate-y-1/2 before:h-5 before:w-[3px] before:rounded-full before:bg-[var(--brand)]"
+                    : "text-[var(--foreground)] hover:bg-[var(--accent)]/70"
                 )}
               >
                 <Icon className="w-4 h-4" />

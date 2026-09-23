@@ -75,11 +75,11 @@ export function LeadsFilter({ onIdentify, loading }: LeadsFilterProps) {
   };
 
   return (
-    <div className="bg-white border border-[#e8e2d8] rounded-lg p-6 mb-6">
+    <div className="bg-white border border-[var(--border)] rounded-lg p-6 mb-6">
       <div className="space-y-5">
         {/* 时间范围 */}
         <div>
-          <label className="text-sm font-medium text-[#1f1b16] mb-2 block">时间范围</label>
+          <label className="text-sm font-medium text-[var(--foreground)] mb-2 block">时间范围</label>
           <div className="flex flex-wrap gap-2">
             {[
               { value: "24h", label: "过去 24 小时" },
@@ -137,7 +137,7 @@ export function LeadsFilter({ onIdentify, loading }: LeadsFilterProps) {
 
         {/* 媒体范围 */}
         <div>
-          <label className="text-sm font-medium text-[#1f1b16] mb-2 block">媒体范围</label>
+          <label className="text-sm font-medium text-[var(--foreground)] mb-2 block">媒体范围</label>
           <div className="flex flex-wrap gap-2">
             {[
               { value: "all", label: "全部媒体" },
@@ -159,7 +159,7 @@ export function LeadsFilter({ onIdentify, loading }: LeadsFilterProps) {
 
         {/* 识别类型 */}
         <div>
-          <label className="text-sm font-medium text-[#1f1b16] mb-2 block">识别类型（多选）</label>
+          <label className="text-sm font-medium text-[var(--foreground)] mb-2 block">识别类型（多选）</label>
           <div className="flex flex-wrap gap-2">
             {CLUE_TYPES.map((type) => (
               <Button
@@ -176,7 +176,7 @@ export function LeadsFilter({ onIdentify, loading }: LeadsFilterProps) {
 
         {/* 重点主题 */}
         <div>
-          <label className="text-sm font-medium text-[#1f1b16] mb-2 block">重点主题（可选）</label>
+          <label className="text-sm font-medium text-[var(--foreground)] mb-2 block">重点主题（可选）</label>
           <div className="flex flex-wrap gap-2 mb-2">
             {PRESET_TOPICS.map((topic) => (
               <Button
@@ -196,7 +196,7 @@ export function LeadsFilter({ onIdentify, loading }: LeadsFilterProps) {
               onChange={(e) => setTopicInput(e.target.value)}
               onKeyDown={(e) => e.key === "Enter" && addCustomTopic()}
               placeholder="输入自定义主题，回车添加"
-              className="flex-1 px-3 py-1.5 text-sm border border-[#e8e2d8] rounded-md focus:outline-none focus:ring-2 focus:ring-[#b3392f]/20"
+              className="flex-1 px-3 py-1.5 text-sm border border-[var(--border)] rounded-md focus:outline-none focus:ring-2 focus:ring-[var(--brand)]/20"
             />
             <Button variant="outline" size="sm" onClick={addCustomTopic}>
               添加
@@ -207,10 +207,10 @@ export function LeadsFilter({ onIdentify, loading }: LeadsFilterProps) {
               {filter.topics.map((topic) => (
                 <span
                   key={topic}
-                  className="inline-flex items-center gap-1 px-2 py-0.5 text-xs bg-[#b3392f]/10 text-[#b3392f] rounded"
+                  className="inline-flex items-center gap-1 px-2 py-0.5 text-xs bg-[var(--brand)]/10 text-[var(--brand)] rounded"
                 >
                   {topic}
-                  <button onClick={() => toggleTopic(topic)} className="hover:text-[#1f1b16]">
+                  <button onClick={() => toggleTopic(topic)} className="hover:text-[var(--foreground)]">
                     ×
                   </button>
                 </span>
@@ -221,13 +221,13 @@ export function LeadsFilter({ onIdentify, loading }: LeadsFilterProps) {
 
         {/* 自定义要求 */}
         <div>
-          <label className="text-sm font-medium text-[#1f1b16] mb-2 block">自定义要求（可选）</label>
+          <label className="text-sm font-medium text-[var(--foreground)] mb-2 block">自定义要求（可选）</label>
           <textarea
             value={filter.customRequirement || ""}
             onChange={(e) => setFilter((f) => ({ ...f, customRequirement: e.target.value }))}
             placeholder="例如：优先识别最近新推出的栏目和系列，不要普通单篇新闻；重点关注 AI、城市更新和民生策划。"
             rows={3}
-            className="w-full px-3 py-2 text-sm border border-[#e8e2d8] rounded-md focus:outline-none focus:ring-2 focus:ring-[#b3392f]/20 resize-none"
+            className="w-full px-3 py-2 text-sm border border-[var(--border)] rounded-md focus:outline-none focus:ring-2 focus:ring-[var(--brand)]/20 resize-none"
           />
         </div>
 
@@ -238,7 +238,7 @@ export function LeadsFilter({ onIdentify, loading }: LeadsFilterProps) {
             loading={loading}
             loadingText="识别中…"
             disabled={filter.clueTypes.length === 0}
-            className="bg-[#b3392f] hover:bg-[#9a2f27] text-white"
+            className="bg-[var(--brand)] hover:bg-[#9a2f27] text-white"
           >
             <Sparkles className="h-4 w-4 mr-2" />
             开始识别

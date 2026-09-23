@@ -318,9 +318,9 @@ export function AdminCalendar() {
                       <Badge
                         className={cn(
                           "text-[10px]",
-                          ev.importance === "S" && "bg-[#b3392f] text-white",
-                          ev.importance === "A" && "bg-[#c87f2d] text-white",
-                          ev.importance === "B" && "bg-[#6b6257] text-white"
+                          ev.importance === "S" && "bg-[var(--brand)] text-white",
+                          ev.importance === "A" && "bg-[var(--gold)] text-white",
+                          ev.importance === "B" && "bg-[var(--muted-foreground)] text-white"
                         )}
                       >
                         {ev.importance}

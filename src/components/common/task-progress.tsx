@@ -47,11 +47,11 @@ export function TaskProgress({
   return (
     <div
       className={cn(
-        "w-full rounded-lg border border-[#e8e2d8] bg-[#faf8f4] p-4",
+        "w-full rounded-lg border border-[var(--border)] bg-[#faf8f4] p-4",
         className
       )}
     >
-      <div className="mb-3 flex items-center gap-2 text-sm font-medium text-[#1f1b16]">
+      <div className="mb-3 flex items-center gap-2 text-sm font-medium text-[var(--foreground)]">
         <span className={cn("flex items-center gap-1.5", failed && "text-destructive")}>
           {failed ? (
             "处理失败"
@@ -78,7 +78,7 @@ export function TaskProgress({
                   done
                     ? "bg-emerald-600 text-white"
                     : active
-                      ? "bg-[#1f1b16] text-white"
+                      ? "bg-[var(--foreground)] text-white"
                       : "bg-[#e5ded2] text-[#8a8275]"
                 )}
               >
@@ -87,12 +87,12 @@ export function TaskProgress({
               <span
                 className={cn(
                   "transition-colors duration-200",
-                  active ? "font-medium text-[#1f1b16]" : reached ? "text-[#1f1b16]" : "text-[#a89f8f]"
+                  active ? "font-medium text-[var(--foreground)]" : reached ? "text-[var(--foreground)]" : "text-[#a89f8f]"
                 )}
               >
                 {s.label}
               </span>
-              {active && <Loader2 className="size-3 animate-spin text-[#1f1b16]" />}
+              {active && <Loader2 className="size-3 animate-spin text-[var(--foreground)]" />}
             </li>
           );
         })}

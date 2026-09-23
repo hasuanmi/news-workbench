@@ -45,11 +45,11 @@ export function ReviewFilter({ onGenerate, loading }: ReviewFilterProps) {
   };
 
   return (
-    <div className="bg-white border border-[#e8e2d8] rounded-lg p-6 mb-6">
+    <div className="bg-white border border-[var(--border)] rounded-lg p-6 mb-6">
       <div className="space-y-5">
         {/* 日期 */}
         <div>
-          <label className="text-sm font-medium text-[#1f1b16] mb-2 block">评报日期</label>
+          <label className="text-sm font-medium text-[var(--foreground)] mb-2 block">评报日期</label>
           <Popover>
             <PopoverTrigger asChild>
               <Button variant="outline" className="w-[200px] justify-start text-left font-normal">
@@ -61,12 +61,12 @@ export function ReviewFilter({ onGenerate, loading }: ReviewFilterProps) {
               <Calendar mode="single" selected={filter.date} onSelect={(d) => d && setFilter((f) => ({ ...f, date: d }))} locale={zhCN} />
             </PopoverContent>
           </Popover>
-          <p className="text-xs text-[#6b6257] mt-2">比较媒体、最低字数、重点稿条件、评报维度、同行遗漏扫描、新华社排除等长期规则均在后台「每日评报管理」中维护，前台无需逐次选择。</p>
+          <p className="text-xs text-[var(--muted-foreground)] mt-2">比较媒体、最低字数、重点稿条件、评报维度、同行遗漏扫描、新华社排除等长期规则均在后台「每日评报管理」中维护，前台无需逐次选择。</p>
         </div>
 
         {/* 关注主题（可选） */}
         <div>
-          <label className="text-sm font-medium text-[#1f1b16] mb-2 block">关注主题（可选）</label>
+          <label className="text-sm font-medium text-[var(--foreground)] mb-2 block">关注主题（可选）</label>
           <div className="flex flex-wrap gap-2 mb-2">
             {PRESET_TOPICS.map((topic) => (
               <Button key={topic} variant={filter.topics.includes(topic) ? "default" : "outline"} size="sm" onClick={() => toggleTopic(topic)}>
@@ -81,7 +81,7 @@ export function ReviewFilter({ onGenerate, loading }: ReviewFilterProps) {
               onChange={(e) => setTopicInput(e.target.value)}
               onKeyDown={(e) => e.key === "Enter" && addCustomTopic()}
               placeholder="输入自定义主题，回车添加（不填则按后台默认全量评报）"
-              className="flex-1 px-3 py-1.5 text-sm border border-[#e8e2d8] rounded-md"
+              className="flex-1 px-3 py-1.5 text-sm border border-[var(--border)] rounded-md"
             />
             <Button variant="outline" size="sm" onClick={addCustomTopic}>
               添加
@@ -91,13 +91,13 @@ export function ReviewFilter({ onGenerate, loading }: ReviewFilterProps) {
 
         {/* 自定义要求（可选） */}
         <div>
-          <label className="text-sm font-medium text-[#1f1b16] mb-2 block">自定义要求（可选）</label>
+          <label className="text-sm font-medium text-[var(--foreground)] mb-2 block">自定义要求（可选）</label>
           <textarea
             value={filter.customRequirement || ""}
             onChange={(e) => setFilter((f) => ({ ...f, customRequirement: e.target.value }))}
             placeholder="例如：今天重点关注十五运和城市治理，尤其比较谁有一手采访、广州本地案例和更强的数据支撑。（不填则按后台默认规则执行全量评报）"
             rows={3}
-            className="w-full px-3 py-2 text-sm border border-[#e8e2d8] rounded-md resize-none"
+            className="w-full px-3 py-2 text-sm border border-[var(--border)] rounded-md resize-none"
           />
         </div>
 
@@ -106,7 +106,7 @@ export function ReviewFilter({ onGenerate, loading }: ReviewFilterProps) {
           <Button
             onClick={() => onGenerate(filter)}
             disabled={loading}
-            className="bg-[#b3392f] hover:bg-[#9a2f27] text-white"
+            className="bg-[var(--brand)] hover:bg-[#9a2f27] text-white"
           >
             <FileText className="h-4 w-4 mr-2" />
             {loading ? "选稿中..." : "开始选稿"}

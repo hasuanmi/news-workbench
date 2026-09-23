@@ -58,7 +58,7 @@ function Stat({ label, value, suffix }: { label: string; value: React.ReactNode;
   return (
     <span className="inline-flex items-baseline gap-1 whitespace-nowrap">
       <span className="text-[#8a8275]">{label}</span>
-      <span className="font-semibold text-[#1f1b16] tabular-nums">{value}</span>
+      <span className="font-semibold text-[var(--foreground)] tabular-nums">{value}</span>
       {suffix && <span className="text-[#8a8275]">{suffix}</span>}
     </span>
   );
@@ -95,12 +95,12 @@ function formatRunTime(run: RunSummaryData["scrape"]): string {
 export function RunSummaryCard({ data }: { data: RunSummaryData }) {
   const { scrape, connectedMediaCount, pendingArticles, pendingWindowLabel, pendingMediaScope, identification } = data;
   return (
-    <div className="mb-4 rounded-lg border border-[#e8e2d8] bg-white p-3" aria-label="运行摘要">
+    <div className="mb-4 rounded-lg border border-[var(--border)] bg-white p-3" aria-label="运行摘要">
       <div className="flex items-center justify-between mb-2.5">
-        <span className="text-sm font-semibold text-[#1f1b16]">运行摘要</span>
+        <span className="text-sm font-semibold text-[var(--foreground)]">运行摘要</span>
         <Link
           href="/admin/media"
-          className="inline-flex items-center gap-0.5 text-xs font-medium text-[#b3392f] hover:underline"
+          className="inline-flex items-center gap-0.5 text-xs font-medium text-[var(--brand)] hover:underline"
         >
           查看全部数据源
           <span aria-hidden>→</span>
@@ -118,7 +118,7 @@ export function RunSummaryCard({ data }: { data: RunSummaryData }) {
         <Stat label="DeepSeek 调用" value={identification?.deepseekCalls ?? "—"} suffix="次" />
       </div>
 
-      <div className="mt-2.5 flex flex-wrap items-center gap-2 border-t border-[#f0ece3] pt-2.5 text-xs text-[#6b6257]">
+      <div className="mt-2.5 flex flex-wrap items-center gap-2 border-t border-[#f0ece3] pt-2.5 text-xs text-[var(--muted-foreground)]">
         <span>最近运行：{formatRunTime(scrape)}</span>
         <StatusBadge status={scrape.status} />
         {scrape.error && <span className="text-red-700">· {scrape.error}</span>}

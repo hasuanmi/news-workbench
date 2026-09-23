@@ -94,7 +94,7 @@ const REGION_LABEL: Record<string, string> = {
 const REVIEW_BADGE: Record<string, { label: string; cls: string }> = {
   pending: { label: "待审", cls: "border-[#b8860b] text-[#b8860b]" },
   confirmed: { label: "已加入", cls: "bg-[#3f7d5c] text-white" },
-  rejected: { label: "已驳回", cls: "bg-[#b3392f] text-white" },
+  rejected: { label: "已驳回", cls: "bg-[var(--brand)] text-white" },
   merged: { label: "已合并", cls: "bg-[#5b6b8c] text-white" },
   kept: { label: "已保留", cls: "border-[#5b6b8c] text-[#5b6b8c]" },
 };
@@ -737,9 +737,9 @@ export function CandidatePool() {
                         <Badge
                           className={cn(
                             "text-[10px]",
-                            c.importance === "S" && "bg-[#b3392f] text-white",
-                            c.importance === "A" && "bg-[#c87f2d] text-white",
-                            c.importance === "B" && "bg-[#6b6257] text-white",
+                            c.importance === "S" && "bg-[var(--brand)] text-white",
+                            c.importance === "A" && "bg-[var(--gold)] text-white",
+                            c.importance === "B" && "bg-[var(--muted-foreground)] text-white",
                           )}
                         >
                           {c.importance}
@@ -1368,8 +1368,8 @@ function TimeCell({ c }: { c: Candidate }) {
     c.date_status === "confirmed"
       ? { label: "已确定", cls: "bg-[#3f7d5c] text-white" }
       : c.date_status === "month_known"
-        ? { label: "仅知月份", cls: "bg-[#c87f2d] text-white" }
-        : { label: "时间待定", cls: "bg-[#6b6257] text-white" };
+        ? { label: "仅知月份", cls: "bg-[var(--gold)] text-white" }
+        : { label: "时间待定", cls: "bg-[var(--muted-foreground)] text-white" };
   return (
     <div className="flex flex-col gap-1">
       <span className="text-[13px] leading-5 font-mono tabular-nums">{line1}</span>

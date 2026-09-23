@@ -37,7 +37,7 @@ export function EmptyState({
       <div className="flex size-12 items-center justify-center rounded-full bg-[#efe9dd] text-[#8a8275]">
         {icon ?? <Inbox className="size-6" />}
       </div>
-      <p className="text-base font-medium text-[#1f1b16]">{title}</p>
+      <p className="text-base font-medium text-[var(--foreground)]">{title}</p>
       {description && (
         <p className="max-w-sm text-sm leading-relaxed text-[#8a8275]">{description}</p>
       )}

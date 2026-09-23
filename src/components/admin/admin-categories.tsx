@@ -40,7 +40,7 @@ export function AdminCategories() {
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editing, setEditing] = useState<Category | null>(null);
   const [name, setName] = useState("");
-  const [color, setColor] = useState("#6b6257");
+  const [color, setColor] = useState("var(--muted-foreground)");
   const [code, setCode] = useState("");
   const [saving, setSaving] = useState(false);
 
@@ -59,7 +59,7 @@ export function AdminCategories() {
     setEditing(null);
     setName("");
     setCode("");
-    setColor("#6b6257");
+    setColor("var(--muted-foreground)");
     setDialogOpen(true);
   }
 

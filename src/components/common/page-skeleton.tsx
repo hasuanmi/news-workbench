@@ -38,7 +38,7 @@ export function PageSkeleton({
       {Array.from({ length: cards }).map((_, i) => (
         <Skeleton
           key={`c-${i}`}
-          className="h-24 w-full rounded-lg border border-[#eeeadd]"
+          className="h-24 w-full rounded-lg border border-[var(--border)]"
         />
       ))}
     </div>

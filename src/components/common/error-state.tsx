@@ -34,7 +34,7 @@ export function ErrorState({
       <div className="flex size-12 items-center justify-center rounded-full bg-red-100 text-destructive">
         <AlertTriangle className="size-6" />
       </div>
-      <p className="text-base font-medium text-[#1f1b16]">{title}</p>
+      <p className="text-base font-medium text-[var(--foreground)]">{title}</p>
       {message && (
         <p className="max-w-md break-words text-sm leading-relaxed text-[#8a8275]">{message}</p>
       )}

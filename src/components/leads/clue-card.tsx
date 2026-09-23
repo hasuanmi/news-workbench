@@ -75,7 +75,7 @@ const CLUE_TYPE_LABELS: Record<ClueType, string> = {
 };
 
 const CLUE_TYPE_STYLES: Record<ClueType, string> = {
-  new_column: "bg-blue-50 text-blue-700 border-blue-200",
+  new_column: "bg-[var(--brand-soft)] text-[var(--brand)] border-[var(--brand-line)]",
   series: "bg-purple-50 text-purple-700 border-purple-200",
   special_topic: "bg-amber-50 text-amber-700 border-amber-200",
   feature_plan: "bg-emerald-50 text-emerald-700 border-emerald-200",
@@ -114,14 +114,14 @@ function EvidenceRow({
             href={article.url}
             target="_blank"
             rel="noopener noreferrer"
-            className="text-sm text-[#1f1b16] hover:text-[#b3392f] hover:underline leading-snug break-words"
+            className="text-sm text-[var(--foreground)] hover:text-[var(--brand)] hover:underline leading-snug break-words"
           >
             {article.title}
           </a>
         ) : (
-          <p className="text-sm text-[#1f1b16] leading-snug break-words">{article.title}</p>
+          <p className="text-sm text-[var(--foreground)] leading-snug break-words">{article.title}</p>
         )}
-        <p className="mt-0.5 text-xs text-[#6b6257]">
+        <p className="mt-0.5 text-xs text-[var(--muted-foreground)]">
           {article.media_name || "未知媒体"}
           {time ? ` · ${time}` : ""}
         </p>
@@ -131,7 +131,7 @@ function EvidenceRow({
           href={article.url}
           target="_blank"
           rel="noopener noreferrer"
-          className="mt-0.5 shrink-0 text-[#6b6257] hover:text-[#b3392f]"
+          className="mt-0.5 shrink-0 text-[var(--muted-foreground)] hover:text-[var(--brand)]"
           title="查看原文"
         >
           <ExternalLink className="h-3.5 w-3.5" />
@@ -295,12 +295,12 @@ export function ClueCard({ clue, onConfirm, onIgnore, onView }: ClueCardProps) {
 
         {/* 关联原文（可核验依据） */}
         {fields.show_articles && clue.articles && clue.articles.length > 0 && (
-          <div className="rounded-md border border-[#e8e2d8] bg-[#faf7f2]/60">
+          <div className="rounded-md border border-[var(--border)] bg-[var(--background)]/60">
             <div className="flex items-center justify-between px-3 pt-2">
-              <span className="text-xs font-medium text-[#1f1b16]/70">
+              <span className="text-xs font-medium text-[var(--foreground)]/70">
                 关联原文 · 可核验依据
               </span>
-              <span className="text-xs text-[#6b6257]">共 {clue.articles.length} 篇</span>
+              <span className="text-xs text-[var(--muted-foreground)]">共 {clue.articles.length} 篇</span>
             </div>
 
             {/* 最近一篇始终可见 */}
@@ -313,7 +313,7 @@ export function ClueCard({ clue, onConfirm, onIgnore, onView }: ClueCardProps) {
               <>
                 <button
                   onClick={() => setExpanded(!expanded)}
-                  className="flex w-full items-center gap-1 border-t border-[#e8e2d8] px-3 py-1.5 text-xs text-[#b3392f] hover:bg-[#faf7f2]"
+                  className="flex w-full items-center gap-1 border-t border-[var(--border)] px-3 py-1.5 text-xs text-[var(--brand)] hover:bg-[var(--background)]"
                 >
                   {expanded ? (
                     <>
@@ -328,7 +328,7 @@ export function ClueCard({ clue, onConfirm, onIgnore, onView }: ClueCardProps) {
                   )}
                 </button>
                 {expanded && (
-                  <div className="space-y-2 border-t border-[#e8e2d8] px-3 py-2">
+                  <div className="space-y-2 border-t border-[var(--border)] px-3 py-2">
                     {clue.articles.slice(1).map((article) => (
                       <EvidenceRow key={article.id} article={article} />
                     ))}

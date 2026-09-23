@@ -22,6 +22,14 @@ html {
 }
 
 @theme inline {
+  /* 广州日报品牌色：供 bg-brand / text-brand / border-brand-line 等工具类使用 */
+  --color-brand: var(--brand);
+  --color-brand-deep: var(--brand-deep);
+  --color-brand-soft: var(--brand-soft);
+  --color-brand-line: var(--brand-line);
+  --color-gold: var(--gold);
+  --color-gold-soft: var(--gold-soft);
+
   --color-background: var(--background);
   --color-foreground: var(--foreground);
   --color-sidebar-ring: var(--sidebar-ring);
@@ -73,39 +81,55 @@ html {
 }
 
 :root {
-  --radius: 0.5rem;
-  /* 编辑部案头：暖纸底 + 墨色 + 朱砂红 */
-  --background: oklch(0.975 0.008 80);
-  --foreground: oklch(0.22 0.015 60);
-  --card: oklch(1 0 0);
-  --card-foreground: oklch(0.22 0.015 60);
-  --popover: oklch(1 0 0);
-  --popover-foreground: oklch(0.22 0.015 60);
-  --primary: oklch(0.48 0.13 30);
-  --primary-foreground: oklch(0.98 0.01 80);
-  --secondary: oklch(0.95 0.01 80);
-  --secondary-foreground: oklch(0.28 0.02 60);
-  --muted: oklch(0.95 0.01 80);
-  --muted-foreground: oklch(0.5 0.02 60);
-  --accent: oklch(0.95 0.01 80);
-  --accent-foreground: oklch(0.3 0.02 60);
-  --destructive: oklch(0.5 0.17 27);
-  --border: oklch(0.91 0.012 75);
-  --input: oklch(0.91 0.012 75);
-  --ring: oklch(0.48 0.13 30);
-  --chart-1: oklch(0.646 0.222 41.116);
-  --chart-2: oklch(0.6 0.118 184.704);
-  --chart-3: oklch(0.398 0.07 227.392);
-  --chart-4: oklch(0.828 0.189 84.429);
-  --chart-5: oklch(0.769 0.188 70.08);
-  --sidebar: oklch(0.985 0 0);
-  --sidebar-foreground: oklch(0.145 0 0);
-  --sidebar-primary: oklch(0.205 0 0);
-  --sidebar-primary-foreground: oklch(0.985 0 0);
-  --sidebar-accent: oklch(0.97 0 0);
-  --sidebar-accent-foreground: oklch(0.205 0 0);
-  --sidebar-border: oklch(0.922 0 0);
-  --sidebar-ring: oklch(0.708 0 0);
+  /* 卡片统一 16px 圆角：圆角令牌 0.75rem → Card 的 rounded-xl(+4px)=16px，按钮 rounded-md 保持 12px */
+  --radius: 0.75rem;
+
+  /* ===== 广州日报品牌色 =====
+     品牌红取自官方 logo 标准红（实测 logo 主色 #DE0000，H≈360 S≈100% L≈44%），
+     全站主色、选中态、CTA、链接态统一引用 --brand，禁止再散落 #b3392f 等临时值。 */
+  --brand: #DE0000;
+  --brand-deep: #B0000A;   /* 品牌红加深：hover / 强调文本 */
+  --brand-soft: #FDEDEC;   /* 浅红底：导航选中态、标签底、区块底 */
+  --brand-line: #F5C9C9;   /* 浅红描边 */
+  --gold: #C79A4B;         /* 暖金辅助（logo 银球暖调） */
+  --gold-soft: #F7EEDC;
+
+  /* 编辑部案头：浅暖米白 + 墨色 + 朱砂红 */
+  --background: #FAF7F2;
+  --foreground: #241F1C;
+  --card: #FFFFFF;
+  --card-foreground: #241F1C;
+  --popover: #FFFFFF;
+  --popover-foreground: #241F1C;
+  --primary: var(--brand);
+  --primary-foreground: #FFFFFF;
+  --secondary: #F4F1EC;
+  --secondary-foreground: #3A332E;
+  --muted: #F4F1EC;
+  --muted-foreground: #7A6F66;
+  --accent: #F4F1EC;
+  --accent-foreground: #3A332E;
+  --destructive: #C0392B;
+  --border: #E8E1D8;
+  --input: #E8E1D8;
+  --ring: var(--brand);
+  --chart-1: #DE0000;
+  --chart-2: #C79A4B;
+  --chart-3: #4E7A8A;
+  --chart-4: #8A8F5A;
+  --chart-5: #9C6B4F;
+  --sidebar: #FBF9F5;
+  --sidebar-foreground: #241F1C;
+  --sidebar-primary: var(--brand);
+  --sidebar-primary-foreground: #FFFFFF;
+  --sidebar-accent: var(--brand-soft);
+  --sidebar-accent-foreground: var(--brand);
+  --sidebar-border: #E8E1D8;
+  --sidebar-ring: var(--brand);
+
+  /* 卡片弱阴影（统一，避免各处自造 shadow） */
+  --card-shadow: 0 1px 2px rgba(36, 31, 28, 0.04), 0 6px 18px rgba(36, 31, 28, 0.05);
+  --card-shadow-hover: 0 1px 2px rgba(36, 31, 28, 0.05), 0 10px 26px rgba(36, 31, 28, 0.08);
 }
 
 .dark {
@@ -153,4 +177,55 @@ html {
 
 body {
   @apply font-sans;
+  /* 浅暖米白底 + 低透明度品牌红 / 暖金光晕（固定在视口，不随内容滚动，避免整页移动） */
+  background-color: var(--background);
+  background-image:
+    radial-gradient(920px 540px at 92% -10%, rgba(222, 0, 0, 0.055), transparent 62%),
+    radial-gradient(780px 480px at -8% 106%, rgba(199, 154, 75, 0.062), transparent 60%),
+    radial-gradient(640px 420px at 50% -14%, rgba(222, 0, 0, 0.028), transparent 66%);
+  background-attachment: fixed;
+  background-repeat: no-repeat;
+}
+
+/* ===== 品牌化通用件 ===== */
+
+/* 卡片统一：16px 圆角 + 轻边框 + 弱阴影；hover/active 只改阴影与描边，不改变尺寸（防抖动） */
+.brand-card {
+  border-radius: 1rem;
+  border: 1px solid var(--border);
+  background: var(--card);
+  box-shadow: var(--card-shadow);
+  transition: box-shadow 180ms ease, border-color 180ms ease;
+}
+.brand-card:hover {
+  box-shadow: var(--card-shadow-hover);
+  border-color: var(--brand-line);
+}
+
+/* 章节标题：品牌红竖条 + 衬线字 */
+.brand-section-title {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-family: var(--font-serif);
+  font-size: 0.9375rem;
+  font-weight: 600;
+  color: var(--foreground);
+}
+.brand-section-title::before {
+  content: "";
+  width: 3px;
+  height: 14px;
+  border-radius: 2px;
+  background: var(--brand);
+  flex: none;
+}
+
+/* 轻玻璃卡（登录页等） */
+.brand-glass {
+  background: rgba(255, 255, 255, 0.72);
+  backdrop-filter: blur(14px) saturate(140%);
+  -webkit-backdrop-filter: blur(14px) saturate(140%);
+  border: 1px solid rgba(255, 255, 255, 0.75);
+  box-shadow: 0 1px 2px rgba(36, 31, 28, 0.05), 0 18px 44px rgba(36, 31, 28, 0.09);
 }

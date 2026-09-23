@@ -9,6 +9,8 @@ import { PageSkeleton } from "@/components/common/page-skeleton";
 import { PageHeader } from "@/components/common/page-header";
 import { RunSummaryCard } from "@/components/leads/run-summary-card";
 import { toast } from "sonner";
+import { SlidersHorizontal, ChevronDown } from "lucide-react";
+import { cn } from "@/lib/utils";
 
 type Scope = "active" | "history";
 
@@ -19,6 +21,8 @@ export default function LeadsPage() {
   const [error, setError] = useState<string | null>(null);
   const [info, setInfo] = useState<string | null>(null);
   const [scope, setScope] = useState<Scope>("active");
+  /** 筛选区默认收起：把首屏让给运行摘要与线索卡片 */
+  const [filterOpen, setFilterOpen] = useState(false);
   const [runSummary,setRunSummary]=useState<any>(null);
   const loadRunSummary=useCallback(async()=>{try{const r=await fetch('/api/leads/run-summary');if(r.ok)setRunSummary(await r.json());}catch{}},[]);
 
@@ -118,9 +122,38 @@ export default function LeadsPage() {
           subtitle="从时间窗口内的新文章中识别新栏目、系列报道、专题、特色策划；每条线索附原文依据供核验"
         />
 
-        {/* 条件区 */}
-        <LeadsFilter onIdentify={handleIdentify} loading={loading} />
-        {runSummary&&<RunSummaryCard data={runSummary} />}
+        {/* 运行摘要（置顶突出） */}
+        {runSummary && <RunSummaryCard data={runSummary} />}
+
+        {/* 条件区：默认收起，压缩首屏高度 */}
+        <div className="mb-4 rounded-2xl border border-[var(--border)] bg-[var(--card)] [box-shadow:var(--card-shadow)]">
+          <button
+            type="button"
+            onClick={() => setFilterOpen((v) => !v)}
+            className="flex w-full items-center justify-between gap-2 px-4 py-2.5 text-sm"
+          >
+            <span className="flex items-center gap-2 font-medium">
+              <span className="flex h-6 w-6 items-center justify-center rounded-md bg-[var(--brand-soft)] text-[var(--brand)]">
+                <SlidersHorizontal className="w-3.5 h-3.5" />
+              </span>
+              筛选与识别条件
+              {!filterOpen && (
+                <span className="text-xs text-[var(--muted-foreground)]">已收起，点击展开</span>
+              )}
+            </span>
+            <ChevronDown
+              className={cn(
+                "w-4 h-4 text-[var(--muted-foreground)] transition-transform duration-150",
+                filterOpen && "rotate-180"
+              )}
+            />
+          </button>
+          {filterOpen && (
+            <div className="border-t border-[var(--border)] px-4 py-3">
+              <LeadsFilter onIdentify={handleIdentify} loading={loading} />
+            </div>
+          )}
+        </div>
 
         {/* 视图切换：今日待确认 / 历史线索库 */}
         <div className="flex items-center gap-2 mb-4">
@@ -131,18 +164,19 @@ export default function LeadsPage() {
             <button
               key={tab.key}
               onClick={() => setScope(tab.key)}
-              className={`rounded-md border px-3 py-1.5 text-sm font-medium transition-colors ${
+              className={cn(
+                "rounded-lg border px-3 py-1.5 text-sm font-medium transition-[color,background-color,border-color] duration-150",
                 scope === tab.key
-                  ? "bg-[#b3392f] text-white border-[#b3392f]"
-                  : "bg-white text-[#6b6257] border-[#e8e2d8] hover:bg-[#faf7f2] hover:border-[#d8d0bf]"
-              }`}
+                  ? "bg-[var(--brand-soft)] text-[var(--brand)] border-[var(--brand-line)]"
+                  : "bg-[var(--card)] text-[var(--muted-foreground)] border-[var(--border)] hover:bg-[var(--accent)]"
+              )}
             >
               {tab.label}
             </button>
           ))}
           <button
             onClick={() => loadClues(scope)}
-            className="ml-auto text-xs text-[#6b6257] hover:text-[#b3392f]"
+            className="ml-auto text-xs text-[var(--muted-foreground)] hover:text-[var(--brand)]"
           >
             刷新
           </button>
@@ -162,16 +196,16 @@ export default function LeadsPage() {
         {loadingList ? (
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             {Array.from({ length: 4 }).map((_, i) => (
-              <PageSkeleton key={i} lines={3} cards={0} withHeader={false} className="rounded-lg border border-[#eeeadd] p-4" />
+              <PageSkeleton key={i} lines={3} cards={0} withHeader={false} className="rounded-lg border border-[var(--border)] p-4" />
             ))}
           </div>
         ) : clues.length > 0 ? (
           <div>
             <div className="flex items-center justify-between mb-4">
-              <h2 className="text-lg font-serif font-bold text-[#1f1b16]">
+              <h2 className="text-lg font-serif font-bold text-[var(--foreground)]">
                 {scope === "active" ? "今日待确认" : "历史线索库"}（{clues.length} 条）
               </h2>
-              <div className="text-sm text-[#6b6257]">
+              <div className="text-sm text-[var(--muted-foreground)]">
                 {scope === "active" && <>待确认 {pendingCount} 条 · </>}
                 已确认 {confirmedCount} 条
               </div>

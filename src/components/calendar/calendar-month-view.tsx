@@ -27,11 +27,11 @@ function paletteForCategory(cat?: CalCategory | null): TagPalette {
   const name = cat?.category_name ?? "";
   if (/纪念日|节日/.test(name)) return { bg: "#efe9f3", text: "#6b4a8a", dot: "#8f6cb0" }; // 纪念日/周年 偏紫灰
   if (/党史|历史/.test(name)) return { bg: "#f3e4e2", text: "#a03a2f", dot: "#c0584b" }; // 重大历史 深红
-  if (/总书记|讲话|论述/.test(name)) return { bg: "#f4e2e3", text: "#8f2f33", dot: "#b3392f" }; // 政治/讲话 紫红深红
+  if (/总书记|讲话|论述/.test(name)) return { bg: "#f4e2e3", text: "#8f2f33", dot: "var(--brand)" }; // 政治/讲话 紫红深红
   if (/重大会议|政策/.test(name)) return { bg: "#f0e6ef", text: "#7a3d88", dot: "#9a5aa8" }; // 重大会议/政策 紫红
   if (/国家战略|区域发展/.test(name)) return { bg: "#e4ebf4", text: "#2d5a8a", dot: "#3d7fbf" }; // 区域战略 蓝
   if (/展会|会议|活动|行业/.test(name)) return { bg: "#e3eef7", text: "#1f6f9e", dot: "#2d8fc4" }; // 经济/产业/展会 蓝
-  if (/广东|广州/.test(name)) return { bg: "#f4e6d8", text: "#a05c22", dot: "#c87f2d" }; // 广东/广州本地 橙棕
+  if (/广东|广州/.test(name)) return { bg: "#f4e6d8", text: "#a05c22", dot: "var(--gold)" }; // 广东/广州本地 橙棕
   return defaultPalette;
 }
 
@@ -44,8 +44,8 @@ function tagStyle(ev: CalEvent): { bg: string; text: string; dot: string; isLoca
   // 本地节点：橙棕强调
   if (isLocal) bg = "#f4e6d8";
   // S 级节点：朱砂红作强调（浅底色版本保持克制）
-  const text = isImportant && ev.importance === "S" ? "#b3392f" : p.text;
-  const dot = isImportant && ev.importance === "S" ? "#b3392f" : isLocal ? "#c87f2d" : p.dot;
+  const text = isImportant && ev.importance === "S" ? "var(--brand)" : p.text;
+  const dot = isImportant && ev.importance === "S" ? "var(--brand)" : isLocal ? "var(--gold)" : p.dot;
   return { bg, text, dot, isLocal, isImportant };
 }
 
@@ -204,7 +204,7 @@ export function CalendarMonthView({
           <div
             key={w}
             className={`text-sm font-semibold ${
-              WEEKEND_INDEX.has(i) ? "text-[#b3392f]/70" : "text-[var(--muted-foreground)]"
+              WEEKEND_INDEX.has(i) ? "text-[var(--brand)]/70" : "text-[var(--muted-foreground)]"
             }`}
           >
             {w}
@@ -373,7 +373,7 @@ function FloatingChip({ f }: { f: FloatingEvent }) {
   const p = paletteForCategory(f.category);
   const isLocal = f.region === "local";
   const bg = isLocal ? "#f4e6d8" : p.bg;
-  const dot = isLocal ? "#c87f2d" : p.dot;
+  const dot = isLocal ? "var(--gold)" : p.dot;
   return (
     <span
       className="inline-flex items-center gap-1 rounded-md px-2 py-1 text-xs font-medium"

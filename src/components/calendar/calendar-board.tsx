@@ -42,9 +42,9 @@ interface OccurrenceItem {
 type View = "week" | "next14" | "month" | "all";
 
 const importanceStyle: Record<string, string> = {
-  S: "bg-[#b3392f] text-white",
-  A: "bg-[#c87f2d] text-white",
-  B: "bg-[#6b6257] text-white",
+  S: "bg-[var(--brand)] text-white",
+  A: "bg-[var(--gold)] text-white",
+  B: "bg-[var(--muted-foreground)] text-white",
 };
 
 export function CalendarBoard() {
@@ -222,7 +222,7 @@ export function CalendarBoard() {
                     {d.getUTCMonth() + 1}月 · {weekDay[d.getUTCDay()]}
                   </div>
                   {minDays === 0 && (
-                    <Badge className="mt-1 bg-[#b3392f] text-white">今天</Badge>
+                    <Badge className="mt-1 bg-[var(--brand)] text-white">今天</Badge>
                   )}
                 </div>
                 <div className="flex-1 space-y-2 border-l-2 border-[var(--border)] pl-4">
@@ -301,8 +301,8 @@ export function CalendarBoard() {
                   <Badge
                     className={cn(
                       "shrink-0",
-                      f.date_status === "month_known" && "bg-[#c87f2d] text-white",
-                      f.date_status === "unknown" && "bg-[#6b6257] text-white",
+                      f.date_status === "month_known" && "bg-[var(--gold)] text-white",
+                      f.date_status === "unknown" && "bg-[var(--muted-foreground)] text-white",
                     )}
                   >
                     {f.date_status === "month_known" && f.candidate_month ? `${f.candidate_month}月` : "待定"}

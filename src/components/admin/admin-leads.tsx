@@ -144,12 +144,12 @@ export function AdminLeadsBoard() {
   return (
     <div className="space-y-4">
       {/* 操作栏 */}
-      <div className="flex items-center gap-3 sticky top-0 bg-[#faf7f2] z-10 py-3 border-b border-[#e8e2d8]">
+      <div className="flex items-center gap-3 sticky top-0 bg-[var(--background)] z-10 py-3 border-b border-[var(--border)]">
         <LoadingButton
           onClick={handleIdentify}
           loading={identifying}
           loadingText="识别中…"
-          className="bg-[#b3392f] hover:bg-[#9a2f26] text-white"
+          className="bg-[var(--brand)] hover:bg-[#9a2f26] text-white"
         >
           AI 线索识别
         </LoadingButton>
@@ -167,7 +167,7 @@ export function AdminLeadsBoard() {
           </SelectContent>
         </Select>
 
-        <div className="ml-auto flex items-center gap-4 text-sm text-[#6b6257]">
+        <div className="ml-auto flex items-center gap-4 text-sm text-[var(--muted-foreground)]">
           <span>待审核: <strong className="text-[#b8860b]">{stats.pending_review}</strong></span>
           <span>自动通过: <strong className="text-[#3f7d5c]">{stats.auto_approved}</strong></span>
           <span>共 {total} 条</span>
@@ -176,9 +176,9 @@ export function AdminLeadsBoard() {
 
       {/* 线索列表 */}
       {loading ? (
-        <div className="text-center py-12 text-[#6b6257]">加载中...</div>
+        <div className="text-center py-12 text-[var(--muted-foreground)]">加载中...</div>
       ) : clues.length === 0 ? (
-        <div className="text-center py-12 text-[#6b6257]">
+        <div className="text-center py-12 text-[var(--muted-foreground)]">
           <p className="text-lg mb-2">暂无线索</p>
           <p className="text-sm">点击「AI 线索识别」从已入库文章中生成线索</p>
         </div>
@@ -187,7 +187,7 @@ export function AdminLeadsBoard() {
           {clues.map((clue) => {
             const statusInfo = STATUS_LABELS[clue.review_status] ?? STATUS_LABELS.rejected;
             return (
-              <Card key={clue.id} className="border-[#e8e2d8] shadow-none">
+              <Card key={clue.id} className="border-[var(--border)] shadow-none">
                 <CardContent className="p-4">
                   <div className="flex items-start gap-3">
                     <div className="flex flex-col gap-1 shrink-0">
@@ -202,13 +202,13 @@ export function AdminLeadsBoard() {
                     </div>
 
                     <div className="flex-1 min-w-0">
-                      <div className="font-medium text-[#1f1b16] mb-1">
+                      <div className="font-medium text-[var(--foreground)] mb-1">
                         {clue.clue_name || clue.topic || clue.summary || "(无标题)"}
                       </div>
-                      <p className="text-sm text-[#6b6257] mb-2 line-clamp-2">
+                      <p className="text-sm text-[var(--muted-foreground)] mb-2 line-clamp-2">
                         {clue.summary}
                       </p>
-                      <div className="flex items-center gap-3 text-xs text-[#6b6257]">
+                      <div className="flex items-center gap-3 text-xs text-[var(--muted-foreground)]">
                         <span>{clue.media_name}</span>
                         <span>{new Date(clue.first_found_at).toLocaleDateString("zh-CN")}</span>
                         <span>置信度 {Math.round(clue.confidence * 100)}%</span>
@@ -237,7 +237,7 @@ export function AdminLeadsBoard() {
           <Button variant="outline" size="sm" disabled={page <= 1} onClick={() => setPage(page - 1)}>
             上一页
           </Button>
-          <span className="text-sm text-[#6b6257]">{page} / {totalPages}</span>
+          <span className="text-sm text-[var(--muted-foreground)]">{page} / {totalPages}</span>
           <Button variant="outline" size="sm" disabled={page >= totalPages} onClick={() => setPage(page + 1)}>
             下一页
           </Button>
@@ -253,7 +253,7 @@ export function AdminLeadsBoard() {
           {reviewClue && (
             <div className="space-y-4">
               <div>
-                <label className="text-sm font-medium text-[#1f1b16]">线索类型</label>
+                <label className="text-sm font-medium text-[var(--foreground)]">线索类型</label>
                 <Select value={editType} onValueChange={setEditType}>
                   <SelectTrigger>
                     <SelectValue placeholder="选择类型" />
@@ -267,14 +267,14 @@ export function AdminLeadsBoard() {
                 </Select>
               </div>
               <div>
-                <label className="text-sm font-medium text-[#1f1b16]">摘要</label>
+                <label className="text-sm font-medium text-[var(--foreground)]">摘要</label>
                 <Textarea
                   value={editSummary}
                   onChange={(e) => setEditSummary(e.target.value)}
                   rows={3}
                 />
               </div>
-              <div className="text-xs text-[#6b6257] space-y-1">
+              <div className="text-xs text-[var(--muted-foreground)] space-y-1">
                 <p>媒体: {reviewClue.media_name}</p>
                 <p>置信度: {Math.round(reviewClue.confidence * 100)}%</p>
                 <p>理由: {reviewClue.reason}</p>
@@ -288,7 +288,7 @@ export function AdminLeadsBoard() {
                 <Button size="sm" onClick={() => handleReview("approve")} className="bg-[#3f7d5c] hover:bg-[#2f6a4a]">
                   通过
                 </Button>
-                <Button size="sm" onClick={() => handleReview("modify")} className="bg-[#b3392f] hover:bg-[#9a2f26]">
+                <Button size="sm" onClick={() => handleReview("modify")} className="bg-[var(--brand)] hover:bg-[#9a2f26]">
                   修改并通过
                 </Button>
               </DialogFooter>

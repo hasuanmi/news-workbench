@@ -36,9 +36,9 @@ const CLUE_TYPE_LABELS: Record<string, string> = {
 };
 
 const CLUE_TYPE_COLORS: Record<string, string> = {
-  new_column: "bg-[#b3392f] text-white",
-  series: "bg-[#c87f2d] text-white",
-  special_topic: "bg-[#6b6257] text-white",
+  new_column: "bg-[var(--brand)] text-white",
+  series: "bg-[var(--gold)] text-white",
+  special_topic: "bg-[var(--muted-foreground)] text-white",
   feature_plan: "bg-[#3f7d5c] text-white",
 };
 
@@ -78,7 +78,7 @@ export function LeadsBoard() {
   return (
     <div className="space-y-4">
       {/* 筛选栏 */}
-      <div className="flex flex-wrap items-center gap-3 sticky top-0 bg-[#faf7f2] z-10 py-3 border-b border-[#e8e2d8]">
+      <div className="flex flex-wrap items-center gap-3 sticky top-0 bg-[var(--background)] z-10 py-3 border-b border-[var(--border)]">
         <Input
           type="date"
           value={dateFilter}
@@ -98,50 +98,50 @@ export function LeadsBoard() {
             <SelectItem value="feature_plan">特色策划</SelectItem>
           </SelectContent>
         </Select>
-        <div className="ml-auto text-sm text-[#6b6257]">
+        <div className="ml-auto text-sm text-[var(--muted-foreground)]">
           共 {total} 条线索
         </div>
       </div>
 
       {/* 线索卡片列表 */}
       {loading ? (
-        <div className="text-center py-12 text-[#6b6257]">加载中...</div>
+        <div className="text-center py-12 text-[var(--muted-foreground)]">加载中...</div>
       ) : clues.length === 0 ? (
-        <div className="text-center py-12 text-[#6b6257]">
+        <div className="text-center py-12 text-[var(--muted-foreground)]">
           <p className="text-lg mb-2">暂无线索</p>
           <p className="text-sm">管理员可在后台触发「AI 线索识别」从已入库文章中生成线索</p>
         </div>
       ) : (
         <div className="grid gap-3">
           {clues.map((clue) => (
-            <Card key={clue.id} className="border-[#e8e2d8] shadow-none">
+            <Card key={clue.id} className="border-[var(--border)] shadow-none">
               <CardContent className="p-4">
                 <div className="flex items-start gap-3">
                   {/* 类型徽章 */}
-                  <Badge className={CLUE_TYPE_COLORS[clue.clue_type ?? ""] ?? "bg-[#6b6257] text-white shrink-0"}>
+                  <Badge className={CLUE_TYPE_COLORS[clue.clue_type ?? ""] ?? "bg-[var(--muted-foreground)] text-white shrink-0"}>
                     {CLUE_TYPE_LABELS[clue.clue_type ?? ""] ?? "未分类"}
                   </Badge>
 
                   <div className="flex-1 min-w-0">
                     {/* 标题行 */}
                     <div className="flex items-center gap-2 mb-1">
-                      <span className="font-medium text-[#1f1b16]">
+                      <span className="font-medium text-[var(--foreground)]">
                         {clue.clue_name || clue.topic || clue.summary}
                       </span>
-                      <span className="text-xs text-[#6b6257] shrink-0">
+                      <span className="text-xs text-[var(--muted-foreground)] shrink-0">
                         {clue.media_name}
                       </span>
                     </div>
 
                     {/* 摘要 */}
                     {clue.summary && (
-                      <p className="text-sm text-[#6b6257] mb-2 line-clamp-2">
+                      <p className="text-sm text-[var(--muted-foreground)] mb-2 line-clamp-2">
                         {clue.summary}
                       </p>
                     )}
 
                     {/* 底部信息 */}
-                    <div className="flex items-center gap-3 text-xs text-[#6b6257]">
+                    <div className="flex items-center gap-3 text-xs text-[var(--muted-foreground)]">
                       <span>首次发现: {new Date(clue.first_found_at).toLocaleDateString("zh-CN")}</span>
                       {clue.article_count > 1 && (
                         <span>追踪 {clue.article_count} 篇</span>
@@ -149,7 +149,7 @@ export function LeadsBoard() {
                       {clue.confidence > 0 && (
                         <span className="flex items-center gap-1">
                           置信度
-                          <span className="inline-block w-12 h-1.5 bg-[#e8e2d8] rounded-full overflow-hidden">
+                          <span className="inline-block w-12 h-1.5 bg-[var(--border)] rounded-full overflow-hidden">
                             <span
                               className="block h-full bg-[#3f7d5c] rounded-full"
                               style={{ width: `${clue.confidence * 100}%` }}
@@ -166,7 +166,7 @@ export function LeadsBoard() {
                         {clue.tags.map((tag) => (
                           <span
                             key={tag}
-                            className="px-1.5 py-0.5 text-xs bg-[#f5f0e8] text-[#6b6257] rounded"
+                            className="px-1.5 py-0.5 text-xs bg-[#f5f0e8] text-[var(--muted-foreground)] rounded"
                           >
                             {tag}
                           </span>
@@ -192,7 +192,7 @@ export function LeadsBoard() {
           >
             上一页
           </Button>
-          <span className="text-sm text-[#6b6257]">
+          <span className="text-sm text-[var(--muted-foreground)]">
             {page} / {totalPages}
           </span>
           <Button

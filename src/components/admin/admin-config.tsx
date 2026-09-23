@@ -17,7 +17,16 @@ interface ConfigItem {
   description: string | null;
 }
 
-const groups: { title: string; keys: string[] }[] = [
+/** 第一层：系统运行配置 —— 影响系统本身如何运行（数据库连接、定时任务…） */
+const systemGroups: { title: string; keys: string[] }[] = [
+  {
+    title: "定时任务（cron，5 字段：分 时 日 月 周）",
+    keys: ["cron.news_lead", "cron.weekly_briefing", "cron.dynamic_node_discover", "cron.daily_review"],
+  },
+];
+
+/** 第二层：业务配置 —— 各业务的判断阈值，不影响系统运行 */
+const businessGroups: { title: string; keys: string[] }[] = [
   {
     title: "新闻日历",
     keys: ["calendar.window_days"],
@@ -29,10 +38,6 @@ const groups: { title: string; keys: string[] }[] = [
   {
     title: "每日评报",
     keys: ["review.word_count_threshold", "review.auto_approve_threshold", "review.review_threshold"],
-  },
-  {
-    title: "定时任务（cron，5 字段：分 时 日 月 周）",
-    keys: ["cron.news_lead", "cron.weekly_briefing", "cron.dynamic_node_discover", "cron.daily_review"],
   },
 ];
 
@@ -85,6 +90,29 @@ export function AdminConfig() {
 
   const desc = (key: string) => items.find((i) => i.key === key)?.description;
 
+  const renderGroup = (g: { title: string; keys: string[] }) => (
+    <Card key={g.title}>
+      <CardHeader>
+        <CardTitle className="text-sm font-semibold">{g.title}</CardTitle>
+      </CardHeader>
+      <CardContent className="space-y-4">
+        {g.keys.map((key) => (
+          <div key={key} className="space-y-1.5">
+            <Label className="text-xs font-mono">{key}</Label>
+            <Input
+              value={values[key] ?? ""}
+              onChange={(e) => setValues({ ...values, [key]: e.target.value })}
+              className="font-mono text-sm"
+            />
+            {desc(key) && (
+              <p className="text-xs text-[var(--muted-foreground)]">{desc(key)}</p>
+            )}
+          </div>
+        ))}
+      </CardContent>
+    </Card>
+  );
+
   return (
     <div className="space-y-5">
       <header className="flex items-center justify-between">
@@ -99,32 +127,28 @@ export function AdminConfig() {
         </LoadingButton>
       </header>
 
-      <SupabaseConfigCard />
+      {/* ===== 第一层：系统运行配置 ===== */}
+      <section className="space-y-3">
+        <div className="brand-section-title">系统运行配置</div>
+        <p className="-mt-1 text-xs text-[var(--muted-foreground)]">
+          数据库连接、定时任务等决定系统本身如何运行的设置，修改前请确认影响范围。
+        </p>
+        <SupabaseConfigCard />
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+          {systemGroups.map((g) => renderGroup(g))}
+        </div>
+      </section>
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-        {groups.map((g) => (
-          <Card key={g.title}>
-            <CardHeader>
-              <CardTitle className="text-sm font-semibold">{g.title}</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              {g.keys.map((key) => (
-                <div key={key} className="space-y-1.5">
-                  <Label className="text-xs font-mono">{key}</Label>
-                  <Input
-                    value={values[key] ?? ""}
-                    onChange={(e) => setValues({ ...values, [key]: e.target.value })}
-                    className="font-mono text-sm"
-                  />
-                  {desc(key) && (
-                    <p className="text-xs text-[var(--muted-foreground)]">{desc(key)}</p>
-                  )}
-                </div>
-              ))}
-            </CardContent>
-          </Card>
-        ))}
-      </div>
+      {/* ===== 第二层：业务配置 ===== */}
+      <section className="space-y-3">
+        <div className="brand-section-title">业务配置</div>
+        <p className="-mt-1 text-xs text-[var(--muted-foreground)]">
+          新闻日历 / 新闻线索 / 每日评报的判断阈值，保存后下一次任务执行生效。
+        </p>
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+          {businessGroups.map((g) => renderGroup(g))}
+        </div>
+      </section>
     </div>
   );
 }

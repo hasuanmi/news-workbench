@@ -11,11 +11,11 @@ function paletteForCategory(cat?: CalCategory | null): TagPalette {
   const name = cat?.category_name ?? "";
   if (/纪念日|节日/.test(name)) return { bg: "#f5f0f7", text: "#6b4a8a", dot: "#8f6cb0" };
   if (/党史|历史/.test(name)) return { bg: "#f3e4e2", text: "#a03a2f", dot: "#c0584b" };
-  if (/总书记|讲话|论述/.test(name)) return { bg: "#f4e2e3", text: "#8f2f33", dot: "#b3392f" };
+  if (/总书记|讲话|论述/.test(name)) return { bg: "#f4e2e3", text: "#8f2f33", dot: "var(--brand)" };
   if (/重大会议|政策/.test(name)) return { bg: "#f0e6ef", text: "#7a3d88", dot: "#9a5aa8" };
   if (/国家战略|区域发展/.test(name)) return { bg: "#e4ebf4", text: "#2d5a8a", dot: "#3d7fbf" };
   if (/展会|会议|活动|行业/.test(name)) return { bg: "#e3eef7", text: "#1f6f9e", dot: "#2d8fc4" };
-  if (/广东|广州/.test(name)) return { bg: "#f4e6d8", text: "#a05c22", dot: "#c87f2d" };
+  if (/广东|广州/.test(name)) return { bg: "#f4e6d8", text: "#a05c22", dot: "var(--gold)" };
   return defaultPalette;
 }
 
@@ -23,8 +23,8 @@ function tagStyle(ev: CalEvent): { bg: string; text: string; dot: string } {
   const p = paletteForCategory(ev.category);
   const isLocal = ev.region === "local";
   const bg = isLocal ? "#f4e6d8" : p.bg;
-  const text = ev.importance === "S" ? "#b3392f" : p.text;
-  const dot = ev.importance === "S" ? "#b3392f" : isLocal ? "#c87f2d" : p.dot;
+  const text = ev.importance === "S" ? "var(--brand)" : p.text;
+  const dot = ev.importance === "S" ? "var(--brand)" : isLocal ? "var(--gold)" : p.dot;
   return { bg, text, dot };
 }
 
@@ -34,7 +34,7 @@ const regionMark = (region: string | null) =>
   region === "local" ? (
     <span
       className="ml-1 inline-block h-3 w-0.5 self-stretch rounded"
-      style={{ backgroundColor: "#b3392f" }}
+      style={{ backgroundColor: "var(--brand)" }}
       title="广东/广州"
     />
   ) : null;

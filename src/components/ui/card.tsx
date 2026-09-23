@@ -11,9 +11,11 @@ function Card({
     <div
       data-slot="card"
       className={cn(
-        "bg-card text-card-foreground flex flex-col gap-6 rounded-xl border py-6 shadow-sm",
+        /* 统一 16px 圆角（rounded-xl = --radius 12px + 4px）+ 轻边框 + 弱阴影 */
+        "bg-card text-card-foreground flex flex-col gap-6 rounded-xl border py-6 [box-shadow:var(--card-shadow)]",
         clickable &&
-          "cursor-pointer transition-[color,background-color,border-color,box-shadow,transform] duration-150 hover:border-ring hover:bg-accent/50 active:translate-y-px active:shadow-xs focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/40",
+          /* hover/active 只改描边与阴影，不做位移/缩放，避免抖动 */
+          "cursor-pointer transition-[color,background-color,border-color,box-shadow] duration-150 hover:border-brand-line hover:[box-shadow:var(--card-shadow-hover)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/40",
         className
       )}
       {...props}

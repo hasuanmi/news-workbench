@@ -63,10 +63,10 @@ const levelLabel: Record<string, string> = {
 };
 
 const crawlStatusLabel: Record<string, { text: string; cls: string }> = {
-  untested: { text: "待 PoC", cls: "bg-[#e8e2d8] text-[#6b6257]" },
+  untested: { text: "待 PoC", cls: "bg-[var(--border)] text-[var(--muted-foreground)]" },
   ok: { text: "正常", cls: "bg-[#e6f0ea] text-[#3f7d5c]" },
   warning: { text: "警告", cls: "bg-[#faf0da] text-[#b8860b]" },
-  error: { text: "失败", cls: "bg-[#f6e3e1] text-[#b3392f]" },
+  error: { text: "失败", cls: "bg-[#f6e3e1] text-[var(--brand)]" },
 };
 
 export function AdminMedia() {
@@ -208,11 +208,11 @@ export function AdminMedia() {
               <div className="text-xs text-[var(--muted-foreground)] mt-1">⚠️ 警告</div>
             </div>
             <div>
-              <div className="text-2xl font-bold text-[#b3392f]">{stats.error}</div>
+              <div className="text-2xl font-bold text-[var(--brand)]">{stats.error}</div>
               <div className="text-xs text-[var(--muted-foreground)] mt-1">❌ 失败</div>
             </div>
             <div>
-              <div className="text-2xl font-bold text-[#6b6257]">{stats.untested}</div>
+              <div className="text-2xl font-bold text-[var(--muted-foreground)]">{stats.untested}</div>
               <div className="text-xs text-[var(--muted-foreground)] mt-1">️ 待测</div>
             </div>
           </div>
@@ -458,7 +458,7 @@ function SourceConfigDialog({
                         </span>
                       )}
                       {s.fail_count > 0 && (
-                        <span className="ml-2 text-xs font-normal text-[#b3392f]">
+                        <span className="ml-2 text-xs font-normal text-[var(--brand)]">
                           连续失败 {s.fail_count} 次
                         </span>
                       )}
@@ -472,7 +472,7 @@ function SourceConfigDialog({
                     </div>
                   </div>
                   {s.last_error && (
-                    <p className="text-xs text-[#b3392f] break-all">最近错误：{s.last_error}</p>
+                    <p className="text-xs text-[var(--brand)] break-all">最近错误：{s.last_error}</p>
                   )}
                   <div className="space-y-1.5">
                     <Label className="text-xs">数据源 URL</Label>
@@ -558,7 +558,7 @@ function SourceConfigDialog({
                       className={`text-xs p-2 rounded ${
                         testResult[s.id].success
                           ? "bg-[#e6f0ea] text-[#3f7d5c]"
-                          : "bg-[#f6e3e1] text-[#b3392f]"
+                          : "bg-[#f6e3e1] text-[var(--brand)]"
                       }`}
                     >
                       {testResult[s.id].message}

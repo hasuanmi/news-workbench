@@ -171,15 +171,15 @@ export function ReviewFollowup({ reviewId, onReviewUpdated }: ReviewFollowupProp
   };
 
   return (
-    <Card className="border-[#e8e2d8]">
+    <Card className="border-[var(--border)]">
       <CardContent className="pt-4 space-y-3">
         <div className="flex items-center gap-2">
-          <Sparkles className="h-4 w-4 text-[#b3392f]" />
-          <span className="text-sm font-semibold text-[#1f1b16]">补充要求，重新生成完整评报</span>
-          <span className="text-xs text-[#6b6257]">基于本期选稿 / 同题聚类 / 同行独有 / 原始评报 · AI 结果仅供辅助，最终需人工确认</span>
+          <Sparkles className="h-4 w-4 text-[var(--brand)]" />
+          <span className="text-sm font-semibold text-[var(--foreground)]">补充要求，重新生成完整评报</span>
+          <span className="text-xs text-[var(--muted-foreground)]">基于本期选稿 / 同题聚类 / 同行独有 / 原始评报 · AI 结果仅供辅助，最终需人工确认</span>
           <button
             onClick={toggleVersions}
-            className="ml-auto inline-flex items-center gap-1 text-xs text-[#6b6257] hover:text-[#b3392f]"
+            className="ml-auto inline-flex items-center gap-1 text-xs text-[var(--muted-foreground)] hover:text-[var(--brand)]"
           >
             <History className="h-3.5 w-3.5" />
             历史版本（原版本 / 当前版本）
@@ -188,20 +188,20 @@ export function ReviewFollowup({ reviewId, onReviewUpdated }: ReviewFollowupProp
 
         {/* 版本历史：原版本 / 当前版本，可切换恢复 */}
         {showVersions && (
-          <div className="border border-[#e8e2d8] rounded-md p-3 space-y-1.5 bg-[#faf7f2]/50">
+          <div className="border border-[var(--border)] rounded-md p-3 space-y-1.5 bg-[var(--background)]/50">
             {versionsLoading ? (
-              <p className="text-xs text-[#6b6257] py-2 text-center">加载版本中…</p>
+              <p className="text-xs text-[var(--muted-foreground)] py-2 text-center">加载版本中…</p>
             ) : revisions.length === 0 ? (
-              <p className="text-xs text-[#6b6257] py-2 text-center">暂无历史版本（当前版本保存在评报中）</p>
+              <p className="text-xs text-[var(--muted-foreground)] py-2 text-center">暂无历史版本（当前版本保存在评报中）</p>
             ) : (
               revisions.map((r) => (
                 <div key={r.id} className="flex items-center justify-between gap-2 text-xs">
                   <div className="min-w-0">
-                    <span className="font-medium text-[#1f1b16]">v{r.version}</span>
-                    <span className="ml-2 rounded bg-muted px-1.5 py-0.5 text-[#6b6257]">
+                    <span className="font-medium text-[var(--foreground)]">v{r.version}</span>
+                    <span className="ml-2 rounded bg-muted px-1.5 py-0.5 text-[var(--muted-foreground)]">
                       {sourceLabel(r.source)}
                     </span>
-                    <span className="ml-2 text-[#6b6257] truncate">{r.change_note || "—"}</span>
+                    <span className="ml-2 text-[var(--muted-foreground)] truncate">{r.change_note || "—"}</span>
                     <span className="ml-2 text-[#9a948a]">
                       {new Date(r.created_at).toLocaleString("zh-CN", { hour12: false })}
                     </span>
@@ -222,7 +222,7 @@ export function ReviewFollowup({ reviewId, onReviewUpdated }: ReviewFollowupProp
           </div>
         )}
 
-        <p className="text-xs leading-relaxed text-[#6b6257] bg-muted/40 border border-[#e8e2d8] rounded-md px-3 py-2">
+        <p className="text-xs leading-relaxed text-[var(--muted-foreground)] bg-muted/40 border border-[var(--border)] rounded-md px-3 py-2">
           提交补充要求后，系统会基于本期选稿、同题聚类、同行独有报道与原始评报，<b>重新生成一版完整评报</b>并保存为当前评报的
           新版本；原版本会保留在「历史版本」中，可随时恢复。例如：把重点调整到科技创新主题、语言更书面、精简为三段、增补某媒体的独家信息等。
         </p>
@@ -234,7 +234,7 @@ export function ReviewFollowup({ reviewId, onReviewUpdated }: ReviewFollowupProp
               key={q}
               disabled={loading}
               onClick={() => setInput(q)}
-              className="rounded-full border border-[#e8e2d8] px-2.5 py-1 text-xs text-[#6b6257] hover:bg-[#faf7f2] disabled:opacity-50"
+              className="rounded-full border border-[var(--border)] px-2.5 py-1 text-xs text-[var(--muted-foreground)] hover:bg-[var(--background)] disabled:opacity-50"
             >
               {q}
             </button>
@@ -249,7 +249,7 @@ export function ReviewFollowup({ reviewId, onReviewUpdated }: ReviewFollowupProp
             disabled={loading}
             placeholder="填写补充要求，例如：把分析重点调整到科技创新主题；语言更书面；精简为三段；补充某媒体的独家信息…"
             rows={2}
-            className="flex-1 rounded-md border border-[#e8e2d8] bg-white px-3 py-2 text-sm text-[#1f1b16] placeholder:text-[#9a948a] focus:outline-none focus:ring-2 focus:ring-[#b3392f]/30 disabled:opacity-60 resize-none"
+            className="flex-1 rounded-md border border-[var(--border)] bg-white px-3 py-2 text-sm text-[var(--foreground)] placeholder:text-[#9a948a] focus:outline-none focus:ring-2 focus:ring-[var(--brand)]/30 disabled:opacity-60 resize-none"
           />
           <LoadingButton
             onClick={submit}

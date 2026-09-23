@@ -123,7 +123,7 @@ export default function AdminLeadsConfigPage() {
   if (loading) {
     return (
       <AppShell>
-        <div className="p-6 text-center text-[#6b6257]">加载中...</div>
+        <div className="p-6 text-center text-[var(--muted-foreground)]">加载中...</div>
       </AppShell>
     );
   }
@@ -132,8 +132,8 @@ export default function AdminLeadsConfigPage() {
     <AppShell>
       <div className="max-w-[1000px] mx-auto px-6 py-6">
         <div className="mb-6">
-          <h1 className="text-2xl font-serif font-bold text-[#1f1b16]">新闻线索管理</h1>
-          <p className="text-sm text-[#6b6257] mt-1">
+          <h1 className="text-2xl font-serif font-bold text-[var(--foreground)]">新闻线索管理</h1>
+          <p className="text-sm text-[var(--muted-foreground)] mt-1">
             配置线索卡片的展示字段、排序、分组、长度限制等呈现规则。媒体和数据源请在「媒体与数据源」中管理。
           </p>
         </div>
@@ -221,7 +221,7 @@ export default function AdminLeadsConfigPage() {
                   onChange={(e) => setRules((prev) => ({ ...prev, summary_max_length: Number(e.target.value) }))}
                   className="w-[100px]"
                 />
-                <span className="text-sm text-[#6b6257]">字</span>
+                <span className="text-sm text-[var(--muted-foreground)]">字</span>
               </div>
               <div className="flex items-center gap-4">
                 <Label className="w-24 text-sm">推荐理由长度</Label>
@@ -231,7 +231,7 @@ export default function AdminLeadsConfigPage() {
                   onChange={(e) => setRules((prev) => ({ ...prev, reason_max_length: Number(e.target.value) }))}
                   className="w-[100px]"
                 />
-                <span className="text-sm text-[#6b6257]">字</span>
+                <span className="text-sm text-[var(--muted-foreground)]">字</span>
               </div>
             </CardContent>
           </Card>

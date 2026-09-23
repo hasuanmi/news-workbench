@@ -209,7 +209,7 @@ export default function AdminReviewConfigPage() {
   if (loading) {
     return (
       <AppShell>
-        <div className="p-6 text-center text-[#6b6257]">加载中...</div>
+        <div className="p-6 text-center text-[var(--muted-foreground)]">加载中...</div>
       </AppShell>
     );
   }
@@ -218,8 +218,8 @@ export default function AdminReviewConfigPage() {
     <AppShell>
       <div className="max-w-[1000px] mx-auto px-6 py-6">
         <div className="mb-6">
-          <h1 className="text-2xl font-serif font-bold text-[#1f1b16]">每日评报管理</h1>
-          <p className="text-sm text-[#6b6257] mt-1">
+          <h1 className="text-2xl font-serif font-bold text-[var(--foreground)]">每日评报管理</h1>
+          <p className="text-sm text-[var(--muted-foreground)] mt-1">
             配置评报的生成规则（字数、模块、数量）和展示规则（媒体名、标题、链接、依据等）。
           </p>
         </div>
@@ -239,7 +239,7 @@ export default function AdminReviewConfigPage() {
                   onChange={(e) => setGenRules((prev) => ({ ...prev, max_words: Number(e.target.value) }))}
                   className="w-[100px]"
                 />
-                <span className="text-sm text-[#6b6257]">字以内</span>
+                <span className="text-sm text-[var(--muted-foreground)]">字以内</span>
               </div>
 
               <Separator />
@@ -272,7 +272,7 @@ export default function AdminReviewConfigPage() {
                   onChange={(e) => setGenRules((prev) => ({ ...prev, same_topic_max: Number(e.target.value) }))}
                   className="w-[100px]"
                 />
-                <span className="text-sm text-[#6b6257]">个</span>
+                <span className="text-sm text-[var(--muted-foreground)]">个</span>
               </div>
               <div className="flex items-center gap-4">
                 <Label className="w-24 text-sm">同行亮点数</Label>
@@ -282,7 +282,7 @@ export default function AdminReviewConfigPage() {
                   onChange={(e) => setGenRules((prev) => ({ ...prev, peer_highlights_max: Number(e.target.value) }))}
                   className="w-[100px]"
                 />
-                <span className="text-sm text-[#6b6257]">条</span>
+                <span className="text-sm text-[var(--muted-foreground)]">条</span>
               </div>
               <div className="flex items-center gap-4">
                 <Label className="w-24 text-sm">主题摘要长度</Label>
@@ -292,7 +292,7 @@ export default function AdminReviewConfigPage() {
                   onChange={(e) => setGenRules((prev) => ({ ...prev, topic_summary_max_length: Number(e.target.value) }))}
                   className="w-[100px]"
                 />
-                <span className="text-sm text-[#6b6257]">字</span>
+                <span className="text-sm text-[var(--muted-foreground)]">字</span>
               </div>
 
               <Separator />
@@ -313,7 +313,7 @@ export default function AdminReviewConfigPage() {
           <Card>
             <CardHeader>
               <CardTitle className="text-base">选稿规则（长业务规则，前台不再逐次选择）</CardTitle>
-              <p className="text-xs text-[#6b6257]">
+              <p className="text-xs text-[var(--muted-foreground)]">
                 这些规则作为每日评报的默认选稿条件，由后台统一维护；前台每日只选日期、关注主题、自定义要求。
               </p>
             </CardHeader>
@@ -326,7 +326,7 @@ export default function AdminReviewConfigPage() {
                   onChange={(e) => setSelRules((prev) => ({ ...prev, min_word_count: Number(e.target.value) }))}
                   className="w-[100px]"
                 />
-                <span className="text-sm text-[#6b6257]">字</span>
+                <span className="text-sm text-[var(--muted-foreground)]">字</span>
               </div>
 
               <Separator />

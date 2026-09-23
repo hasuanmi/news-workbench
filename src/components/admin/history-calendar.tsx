@@ -42,7 +42,7 @@ const STATUS_BADGE: Record<string, { label: string; cls: string }> = {
   uploaded: { label: "已上传", cls: "border-[#5b6b8c] text-[#5b6b8c]" },
   parsed: { label: "已解析", cls: "border-[#b8860b] text-[#b8860b]" },
   confirmed: { label: "已入库", cls: "bg-[#3f7d5c] text-white" },
-  failed: { label: "失败", cls: "bg-[#b3392f] text-white" },
+  failed: { label: "失败", cls: "bg-[var(--brand)] text-white" },
 };
 
 function dateLabel(n: ParsedNode): string {
@@ -244,8 +244,8 @@ export function HistoryCalendar() {
                               className={cn(
                                 "text-[10px] px-1 rounded",
                                 n.date_status === "confirmed" && "bg-[#3f7d5c] text-white",
-                                n.date_status === "month_known" && "bg-[#c87f2d] text-white",
-                                n.date_status === "unknown" && "bg-[#6b6257] text-white",
+                                n.date_status === "month_known" && "bg-[var(--gold)] text-white",
+                                n.date_status === "unknown" && "bg-[var(--muted-foreground)] text-white",
                               )}
                             >
                               {n.date_status === "confirmed" ? "已定" : n.date_status === "month_known" ? "仅月份" : "待定"}
@@ -257,9 +257,9 @@ export function HistoryCalendar() {
                           <Badge
                             className={cn(
                               "text-[10px]",
-                              n.importance === "S" && "bg-[#b3392f] text-white",
-                              n.importance === "A" && "bg-[#c87f2d] text-white",
-                              n.importance === "B" && "bg-[#6b6257] text-white",
+                              n.importance === "S" && "bg-[var(--brand)] text-white",
+                              n.importance === "A" && "bg-[var(--gold)] text-white",
+                              n.importance === "B" && "bg-[var(--muted-foreground)] text-white",
                             )}
                           >
                             {n.importance}
