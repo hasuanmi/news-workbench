@@ -18,7 +18,8 @@ export function BrandLogo({
   className?: string;
 }) {
   const isFull = variant === "full";
-  const ratio = isFull ? 1098 / 278 : 439 / 244;
+  // 由官方 SVG 输出：full 裁剪为横向 620×200，mark 为正方形 240×240
+  const ratio = isFull ? 620 / 200 : 240 / 240;
   return (
     // eslint-disable-next-line @next/next/no-img-element
     <img
