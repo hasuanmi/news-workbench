@@ -87,8 +87,8 @@ html {
   /* ===== 广州日报品牌色 =====
      品牌红取自官方 logo 标准红（实测 logo 主色 #DE0000，H≈360 S≈100% L≈44%），
      全站主色、选中态、CTA、链接态统一引用 --brand，禁止再散落 #b3392f 等临时值。 */
-  --brand: #DE0000;
-  --brand-deep: #B0000A;   /* 品牌红加深：hover / 强调文本 */
+  --brand: #e30905;
+  --brand-deep: #B20704;   /* 品牌红加深：hover / 强调文本 */
   --brand-soft: #FDEDEC;   /* 浅红底：导航选中态、标签底、区块底 */
   --brand-line: #F5C9C9;   /* 浅红描边 */
   --gold: #C79A4B;         /* 暖金辅助（logo 银球暖调） */
