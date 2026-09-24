@@ -10,6 +10,18 @@
 
 ---
 
+## 每日逐源任务（2026-09-24 同步）
+
+正式每日入口为主仓库 `scripts/run-daily-task.mjs media_then_clues`，通过 `scripts/scraper-runtime.mjs` 固定调用本目录 `poc_ingest_real.py`。不再依赖旁边的独立 `media-scraper/` 目录。
+
+- Python 优先使用本目录 `.venv`，其次使用 `start.bat` / `start.sh` 创建的 `venv`；可通过 `SCRAPER_PYTHON` 指定解释器，代码目录始终为本仓库 `scraper/`。
+- 主服务地址及 ingest token 由主任务环境传入；保留本目录现有 `.env`、启动脚本和 Docker 配置，不复制独立项目凭据。
+- 队列只含 `source_status=active` 且 `enabled=true` 的源。调度传入五项 source 身份字段，worker 使用确切 URL，禁止按媒体重新选择 source。
+- 四状态及失败转待修复由主系统维护；真实结果回写 `/api/ingest/source-result`。
+- `app/core/worker.py` 常驻模式沿用原开关，默认关闭；不要与每日任务重复启动采集。
+
+最小离线回归（在本目录执行）：`python -m unittest test_source_binding test_link_rules`。
+
 ## 快速开始（开箱即用，无需 Playwright）
 
 环境要求：**Python 3.10+**（推荐 3.12）。

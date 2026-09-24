@@ -441,3 +441,381 @@ sources:
     scraper: generic
     entry_urls:
       - https://www.qntv.cn/
+
+  # 2026-09-24: HTTP list + substantive article verified; explicit source IDs only.
+  - media: "三峡日报"
+    business: [news_lead]
+    enabled: true
+    source_type: 官方网站
+    scraper: generic
+    source_ids: ["9a3c4d34-e3e0-424d-815a-6e76b3e6a418", "01c122dd-2489-4f96-985d-f6e364eca45f"]
+    entry_urls:
+      - "http://www.cn3x.com.cn"
+  - media: "三明市融媒体中心"
+    business: [news_lead]
+    enabled: true
+    source_type: 官方网站
+    scraper: generic
+    source_ids: ["974480ac-4eba-4988-97dd-36b30e8feaff", "90d8f489-7707-41fa-83b6-55d8721bc149"]
+    entry_urls:
+      - "http://www.smnet.com.cn"
+  - media: "中国妇女报"
+    business: [news_lead]
+    enabled: true
+    source_type: 官方网站
+    scraper: generic
+    source_ids: ["79db5362-50c8-4f24-bf9c-412bb2a29423"]
+    entry_urls:
+      - "http://www.cnwomen.com.cn"
+  - media: "中国教育电视台"
+    business: [news_lead]
+    enabled: true
+    source_type: 官方网站
+    scraper: generic
+    source_ids: ["2f9127cf-ac48-456a-b4cb-b658cc155c43", "7bb9dd05-6801-47ff-ad2c-af2616cf951a"]
+    entry_urls:
+      - "http://www.centv.cn"
+  - media: "中国新闻社"
+    business: [news_lead]
+    enabled: true
+    source_type: 官方网站
+    scraper: generic
+    source_ids: ["6c3d2281-b98e-4870-9066-86fc6a3a618a", "696920cd-92cb-4bd2-9c2b-7022d5c9a97a"]
+    entry_urls:
+      - "http://www.chinanews.com.cn"
+  - media: "中国纪检监察报"
+    business: [news_lead]
+    enabled: true
+    source_type: 官方网站
+    scraper: generic
+    source_ids: ["2c3210ab-d049-4b37-98b7-b53a9aa255b0"]
+    entry_urls:
+      - "http://www.ccdi.gov.cn"
+  - media: "人民政协报"
+    business: [news_lead]
+    enabled: true
+    source_type: 官方网站
+    scraper: generic
+    source_ids: ["a582584e-fc8a-466c-82ab-3aed793d3f8d", "18508e26-7b48-44ee-b7fd-a013c2ac024f"]
+    entry_urls:
+      - "http://www.rmzxw.com.cn"
+  - media: "光明日报"
+    business: [news_lead]
+    enabled: true
+    source_type: 官方网站
+    scraper: generic
+    source_ids: ["f984e41f-524d-4aa5-acf0-c08b3cc8c63d"]
+    entry_urls:
+      - "https://www.gmw.cn"
+  - media: "北京日报"
+    business: [news_lead]
+    enabled: true
+    source_type: 官方网站
+    scraper: generic
+    source_ids: ["eefc1945-bb0f-4d61-bb95-7c42476f8f50", "7c30674b-a07c-42d9-ba06-22e4fb538867"]
+    entry_urls:
+      - "http://www.bjd.com.cn"
+  - media: "吐鲁番日报"
+    business: [news_lead]
+    enabled: true
+    source_type: 官方网站
+    scraper: generic
+    source_ids: ["3526b315-9247-428d-a089-e6e11b03b879", "e33acb19-46e7-4497-8272-0b98d3949b74"]
+    entry_urls:
+      - "http://www.tlf.gov.cn"
+  - media: "四川广播电视台"
+    business: [news_lead]
+    enabled: true
+    source_type: 官方网站
+    scraper: generic
+    source_ids: ["70e7de9e-d955-459d-8706-95086e9db0d6", "3994763a-0708-4c33-88ad-ea51991bdd1b"]
+    entry_urls:
+      - "http://www.sctv.com"
+  - media: "四川日报"
+    business: [news_lead]
+    enabled: true
+    source_type: 官方网站
+    scraper: generic
+    source_ids: ["4d7f94b3-48f3-45c2-9431-f5fee615b297", "b404c528-8930-4beb-b7a3-07e1c4bdb49a"]
+    entry_urls:
+      - "http://www.scol.com.cn"
+  - media: "学习时报"
+    business: [news_lead]
+    enabled: true
+    source_type: 官方网站
+    scraper: generic
+    source_ids: ["a2efcfea-cd51-4294-b64a-325abf7f1369", "025e7bbd-6973-4a45-8cef-d7aaa3255e0c"]
+    entry_urls:
+      - "http://www.studytimes.cn"
+  - media: "宁夏广播电视台"
+    business: [news_lead]
+    enabled: true
+    source_type: 官方网站
+    scraper: generic
+    source_ids: ["fb176cf9-f1f5-457d-b346-3aa30e253259", "8defe366-e756-42f6-859c-ea2bf98e9cc4"]
+    entry_urls:
+      - "http://www.nxtv.com.cn"
+  - media: "宁波日报报业集团"
+    business: [news_lead]
+    enabled: true
+    source_type: 官方网站
+    scraper: generic
+    source_ids: ["4231d731-0deb-4626-9aa4-66696a37ea12", "dcbb89ca-777c-4ecf-835f-91ab445b908b"]
+    entry_urls:
+      - "http://nbjt.cnnb.com.cn"
+  - media: "山西日报"
+    business: [news_lead]
+    enabled: true
+    source_type: 官方网站
+    scraper: generic
+    source_ids: ["edf92267-797e-4424-9542-9e138cd4feba", "a7eecada-fb58-4d73-8864-d70792dc46a4"]
+    entry_urls:
+      - "http://www.sxrb.com"
+  - media: "工人日报"
+    business: [news_lead]
+    enabled: true
+    source_type: 官方网站
+    scraper: generic
+    source_ids: ["1cb985c0-cdaf-49b4-bd24-1123bb172cea"]
+    entry_urls:
+      - "http://www.workercn.cn"
+  - media: "承德广播电视台"
+    business: [news_lead]
+    enabled: true
+    source_type: 官方网站
+    scraper: generic
+    source_ids: ["c48e42d3-ff35-4eaa-8b38-c2a6f41f9165", "e6ca3778-c11a-49a4-b69b-34f265fc8082"]
+    entry_urls:
+      - "http://www.chengde.gov.cn"
+  - media: "新华日报"
+    business: [news_lead]
+    enabled: true
+    source_type: 官方网站
+    scraper: generic
+    source_ids: ["25e2a75a-8265-4546-8150-6f1fc205143f", "6d77e808-c44b-4304-a114-ea8cde202f8f"]
+    entry_urls:
+      - "http://www.xhby.net"
+  - media: "新华社"
+    business: [news_lead]
+    enabled: true
+    source_type: 官方网站
+    scraper: generic
+    source_ids: ["651abe46-e60e-47dd-8e64-28c0eec1b596"]
+    entry_urls:
+      - "http://www.xinhuanet.com"
+  - media: "无锡日报报业集团"
+    business: [news_lead]
+    enabled: true
+    source_type: 官方网站
+    scraper: generic
+    source_ids: ["f6deb4f6-0360-4bb4-a880-561eb551bf4c", "88db6c96-e629-41aa-af16-c42f08219c04"]
+    entry_urls:
+      - "http://www.wxrb.com"
+  - media: "求是"
+    business: [news_lead]
+    enabled: true
+    source_type: 官方网站
+    scraper: generic
+    source_ids: ["fddba8cb-abe9-4fb5-a62d-63a2c0c4268d", "47cc51ca-0879-4f42-9ca1-fa3ddbe9deed"]
+    entry_urls:
+      - "http://www.qstheory.cn"
+  - media: "江苏省广播电视总台"
+    business: [news_lead]
+    enabled: true
+    source_type: 官方网站
+    scraper: generic
+    source_ids: ["46d98481-3931-47c2-bb2f-b0b8e727d8e5", "4700d44f-45d8-4527-a45d-edd9f4abc986"]
+    entry_urls:
+      - "http://www.jsbc.com"
+  - media: "法治日报"
+    business: [news_lead]
+    enabled: true
+    source_type: 官方网站
+    scraper: generic
+    source_ids: ["d9ec8081-73c2-4460-a374-93fba15760ed"]
+    entry_urls:
+      - "http://www.legaldaily.com.cn"
+  - media: "洛阳广播电视台"
+    business: [news_lead]
+    enabled: true
+    source_type: 官方网站
+    scraper: generic
+    source_ids: ["c3034c4a-0188-4620-963d-6d3ff203d112", "6f7af13b-e89a-46c0-b6fb-13637731723b"]
+    entry_urls:
+      - "http://www.lytv.com.cn"
+  - media: "济南广播电视台"
+    business: [news_lead]
+    enabled: true
+    source_type: 官方网站
+    scraper: generic
+    source_ids: ["da0a95b1-ea0b-465d-bd3d-4ea146d00a94", "68d4af59-5f1e-487d-b9c5-346b43037e68"]
+    entry_urls:
+      - "http://www.e23.cn"
+  - media: "浙江日报"
+    business: [news_lead]
+    enabled: true
+    source_type: 官方网站
+    scraper: generic
+    source_ids: ["c78d88de-b566-4dd9-93ef-2fff29f7111a", "9ab1eb07-de9f-4f94-a1e0-0bcf1027d3a1"]
+    entry_urls:
+      - "http://zjnews.zjol.com.cn"
+  - media: "海南广播电视总台"
+    business: [news_lead]
+    enabled: true
+    source_type: 官方网站
+    scraper: generic
+    source_ids: ["296bf4a5-e959-4c12-9636-2cd8f5883b1d"]
+    entry_urls:
+      - "https://www.bluehn.com/"
+  - media: "深圳报业集团"
+    business: [news_lead]
+    enabled: true
+    source_type: 官方网站
+    scraper: generic
+    source_ids: ["7a0caa4d-ff34-4063-8439-356ae774e0e2", "419c9f3c-e25b-4134-b242-57ea5cfefe61"]
+    entry_urls:
+      - "http://www.sznews.com"
+  - media: "湄洲日报"
+    business: [news_lead]
+    enabled: true
+    source_type: 官方网站
+    scraper: generic
+    source_ids: ["aa7ae184-3fbb-4ace-99c0-9e9b30f9df4d", "7e0aaca5-7a69-47c9-aab2-dccf91861bdb"]
+    entry_urls:
+      - "http://www.ptxw.com"
+  - media: "湖南日报"
+    business: [news_lead]
+    enabled: true
+    source_type: 官方网站
+    scraper: generic
+    source_ids: ["1c89bfc7-71e0-478a-9f20-c2d357f05749", "76a7e0ed-1f83-426c-855d-5e72b3f6cdd6"]
+    entry_urls:
+      - "http://www.voc.com.cn"
+  - media: "澎湃新闻"
+    business: [news_lead]
+    enabled: true
+    source_type: 官方网站
+    scraper: generic
+    source_ids: ["5b231dec-f22b-47f8-8950-b7b69c823f11", "1954afb6-db52-4715-b4e1-51150a5183f6"]
+    entry_urls:
+      - "https://www.thepaper.cn"
+  - media: "甘肃日报"
+    business: [news_lead]
+    enabled: true
+    source_type: 官方网站
+    scraper: generic
+    source_ids: ["dc889cf5-d70e-4d19-98d8-8e869dd06fbd", "fd7bb5eb-7a02-45c2-8ddb-755ef0808f01"]
+    entry_urls:
+      - "http://gansudaily.com.cn"
+  - media: "科技日报"
+    business: [news_lead]
+    enabled: true
+    source_type: 官方网站
+    scraper: generic
+    source_ids: ["e6f33de8-7d0c-411d-a11f-4c838faab4ff"]
+    entry_urls:
+      - "http://www.stdaily.com"
+  - media: "经济参考报"
+    business: [news_lead]
+    enabled: true
+    source_type: 官方网站
+    scraper: generic
+    source_ids: ["f632c210-8ab1-4f64-8b9e-6317cf9bddad", "6ce12ebe-a41e-47e1-b515-ab886f2dc9d9"]
+    entry_urls:
+      - "http://www.jjckb.cn"
+  - media: "经济日报"
+    business: [news_lead]
+    enabled: true
+    source_type: 官方网站
+    scraper: generic
+    source_ids: ["cb9f3c8a-6948-494b-b762-74489da1383e"]
+    entry_urls:
+      - "http://www.ce.cn"
+  - media: "苏州广播电视总台"
+    business: [news_lead]
+    enabled: true
+    source_type: 官方网站
+    scraper: generic
+    source_ids: ["ad7a164d-2508-4afd-a3ac-a1da99f24c5a", "5878737f-a633-42db-850d-0341e29c1f8b"]
+    entry_urls:
+      - "http://www.csztv.cn"
+  - media: "苏州日报社"
+    business: [news_lead]
+    enabled: true
+    source_type: 官方网站
+    scraper: generic
+    source_ids: ["6f518a63-b136-4919-83aa-9db4058b0739", "c1a8577e-adfe-4ee6-aa97-d5efceefcb65"]
+    entry_urls:
+      - "http://www.subaonet.com"
+  - media: "解放军报"
+    business: [news_lead]
+    enabled: true
+    source_type: 官方网站
+    scraper: generic
+    source_ids: ["2ed214ca-bebc-49fb-a60e-5c69e8ec5c3c"]
+    entry_urls:
+      - "http://www.81.cn"
+  - media: "重庆广播电视集团"
+    business: [news_lead]
+    enabled: true
+    source_type: 官方网站
+    scraper: generic
+    source_ids: ["e64be86c-98e8-4e00-848f-6f1c88b64675", "60a4f608-c27a-4353-9bee-7617a7f6741f"]
+    entry_urls:
+      - "http://www.cbg.cn"
+  - media: "重庆日报"
+    business: [news_lead]
+    enabled: true
+    source_type: 官方网站
+    scraper: generic
+    source_ids: ["54cfbdaa-1ec6-49c1-aeee-9a22dfca2daf", "ff679027-1451-45a2-89a1-3e18c389e79a"]
+    entry_urls:
+      - "http://www.cqnews.net"
+  - media: "锡林郭勒盟日报"
+    business: [news_lead]
+    enabled: true
+    source_type: 官方网站
+    scraper: generic
+    source_ids: ["9107eb61-1648-4e8b-b249-6353e881cc06", "234c65a1-6c67-4531-a665-806c27bfb8e8"]
+    entry_urls:
+      - "http://www.xlgl.gov.cn"
+  - media: "长江日报"
+    business: [news_lead]
+    enabled: true
+    source_type: 官方网站
+    scraper: generic
+    source_ids: ["0bc828f6-4dba-42b1-b7a2-40f26f8295fd", "34357650-ec67-4c9a-8b01-f6a4f338c30b"]
+    entry_urls:
+      - "http://www.cjn.cn"
+  - media: "陕西广播电视台"
+    business: [news_lead]
+    enabled: true
+    source_type: 官方网站
+    scraper: generic
+    source_ids: ["a2e5e1ec-867d-4928-babb-b894f8e56ca3", "2dfa3495-262b-426c-a49a-57b9bb6c12bc"]
+    entry_urls:
+      - "http://www.sxtvs.com"
+  - media: "陕西日报"
+    business: [news_lead]
+    enabled: true
+    source_type: 官方网站
+    scraper: generic
+    source_ids: ["4c97f4f1-aeea-4ef1-899e-9509fdd966d8", "ac105550-3aec-46f4-9739-4d73b29ea091"]
+    entry_urls:
+      - "http://www.sxdaily.com.cn"
+  - media: "青岛日报报业集团"
+    business: [news_lead]
+    enabled: true
+    source_type: 官方网站
+    scraper: generic
+    source_ids: ["22c34aa8-0496-4354-a7e5-30c8715441e3", "36f7fbcd-50ea-4f93-8822-ae6f6c13b541"]
+    entry_urls:
+      - "http://www.qingdaonews.com"
+  - media: "青海广播电视台"
+    business: [news_lead]
+    enabled: true
+    source_type: 官方网站
+    scraper: generic
+    source_ids: ["f12289a0-2e8b-4838-9c13-09b7b2410c76"]
+    entry_urls:
+      - "https://www.qhbtv.com.cn/"

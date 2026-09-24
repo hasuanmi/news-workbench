@@ -30,13 +30,16 @@ def load_sources() -> list:
         return yaml.safe_load(f)["sources"]
 
 
-def get_scrapers(business: str = None, media: str = None):
+def get_scrapers(business: str = None, media: str = None, source_id: str = None):
     """返回 [(source_cfg, scraper_instance), ...]"""
     out = []
     for s in load_sources():
         if not s.get("enabled", True):
             continue
         if media and s["media"] != media:
+            continue
+        # Newly verified generic configurations may cover only explicit queue sources.
+        if source_id and s.get("source_ids") and source_id not in s["source_ids"]:
             continue
         if business and business not in s.get("business", []):
             continue

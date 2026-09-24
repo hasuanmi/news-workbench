@@ -1,6 +1,7 @@
 // Real Windows-task entry: ensure local main app, then invoke authenticated business HTTP.
 import fs from 'node:fs';import path from 'node:path';import {fileURLToPath}from'node:url';
 import {runSource, sourceSnapshot} from './source-runner.mjs';
+import {resolveScraperRuntime} from './scraper-runtime.mjs';
 import {spawn}from'node:child_process';import{randomUUID}from'node:crypto';import dotenv from'dotenv';
 const root=path.resolve(path.dirname(fileURLToPath(import.meta.url)),'..');process.chdir(root);
 for(const p of ['.env.local','.env'])if(fs.existsSync(p))dotenv.config({path:p,quiet:true});
@@ -38,7 +39,8 @@ try{
   else {
   if(job==='media_then_clues'){
     journal.phase='media_preflight';save();
-    const scraper=path.resolve(root,'../media-scraper');const python=path.join(scraper,'.venv/Scripts/python.exe');
+    const {scraper,python}=resolveScraperRuntime(root);
+    journal.scraper_directory=scraper; journal.python_executable=python; save();
     // 抓取子进程必须走代理才能访问外网新闻站；但 localhost:3001 的 ingest 回推要走直连，
     // 故显式注入 HTTP(S)_PROXY 并设 NO_PROXY=localhost,127.0.0.1（主服务本身不代理，避免 502）。
     const SCRAPER_PROXY=process.env.SCRAPER_PROXY||'http://127.0.0.1:7897';

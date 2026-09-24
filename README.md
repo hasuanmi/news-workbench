@@ -241,3 +241,7 @@ pnpm tsx --test src/lib/calendar-engine.test.ts  # 日历引擎单测
 ## 许可证
 
 内部项目，仅限授权范围内使用。
+
+## 每日抓取代码归属（2026-09-24）
+
+正式调用链：`scripts/run-daily-task.mjs` → `scripts/scraper-runtime.mjs` → 本仓库 `scraper/poc_ingest_real.py`。源码和部署交付统一以本仓库 `scraper/` 为准，旁边的独立 `media-scraper/` 保留作历史对照，不再作为每日任务代码入口。详见 [scraper 使用说明](scraper/README.md)。

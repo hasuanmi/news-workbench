@@ -2,7 +2,7 @@
 import fs from 'node:fs';import path from 'node:path';import dotenv from 'dotenv';import {createClient} from '@supabase/supabase-js';
 for(const p of ['.env.local','.env'])if(fs.existsSync(p))dotenv.config({path:p,quiet:true});
 const db=createClient(process.env.SUPABASE_URL,process.env.SUPABASE_SERVICE_ROLE_KEY,{auth:{persistSession:false}});
-const folder='../media-scraper/logs/real-poc';const reports=['广州日报','南方日报','南方都市报'].map(name=>JSON.parse(fs.readFileSync(path.join(folder,fs.readdirSync(folder).filter(file=>file.startsWith(name+'-')).sort().at(-1)),'utf8')));
+const folder='scraper/logs/real-poc';const reports=['广州日报','南方日报','南方都市报'].map(name=>JSON.parse(fs.readFileSync(path.join(folder,fs.readdirSync(folder).filter(file=>file.startsWith(name+'-')).sort().at(-1)),'utf8')));
 const journal={checked_at:new Date().toISOString(),mapping:[],business:{}};const save=()=>fs.writeFileSync('logs/real-poc-business.json',JSON.stringify(journal,null,2));
 const {data:media}=await db.from('media').select('id,media_name');
 for(const report of reports){const {data,error}=await db.from('article').select('id,source_id,media_id,url,title,publish_time,is_test,word_count').in('url',report.articles.map(a=>a.url));journal.mapping.push({media:report.media,source_id:report.source_id,ingest:report.ingest,stored:data?.map(a=>({...a,media_name:media.find(m=>m.id===a.media_id)?.media_name})),error:error?.message});}save();

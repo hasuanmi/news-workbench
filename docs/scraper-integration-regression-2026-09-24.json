@@ -1,0 +1,99 @@
+{
+  "checked_at": "2026-09-24T10:01:21.858Z",
+  "run_id": "c885b235-fbfa-4b59-ae58-8dc350380058",
+  "scope": "one active source, maximum two articles, no AI stage",
+  "main_port": "3002",
+  "runtime": {
+    "scraper": "C:\\Users\\48489\\Desktop\\GZdailydata\\news-workbench\\scraper",
+    "python": "C:\\Users\\48489\\Desktop\\GZdailydata\\news-workbench\\scraper\\.venv\\Scripts\\python.exe"
+  },
+  "active_queue": 101,
+  "result": {
+    "source_id": "c7fb44f1-52bb-465d-a4c1-22f365645b7d",
+    "media_id": "18415fb5-a68b-4781-96f9-84c9d17cf35a",
+    "media_name": "南方日报",
+    "source_url": "http://www.southcn.com",
+    "source_type": "website",
+    "crawl_method": "html",
+    "ok": true,
+    "code": 0,
+    "report": "c885b235-fbfa-4b59-ae58-8dc350380058-c7fb44f1-52bb-465d-a4c1-22f365645b7d-bb1f26aa-8417-45f7-9495-59a671e2c8f2.json",
+    "log": "c885b235-fbfa-4b59-ae58-8dc350380058-c7fb44f1-52bb-465d-a4c1-22f365645b7d-bb1f26aa-8417-45f7-9495-59a671e2c8f2.log",
+    "articles": 2,
+    "ingest": {
+      "success": true,
+      "schema_version": "article-v1",
+      "sources": 1,
+      "successSources": 1,
+      "failedSources": 0,
+      "inserted": 0,
+      "updated": 0,
+      "duplicated": 2,
+      "invalid": 0,
+      "failed": 0,
+      "perSource": [
+        {
+          "sourceId": "c7fb44f1-52bb-465d-a4c1-22f365645b7d",
+          "ok": true,
+          "inserted": 0,
+          "updated": 0,
+          "duplicated": 2,
+          "invalid": 0,
+          "failed": 0,
+          "warnings": []
+        }
+      ]
+    },
+    "failures": [],
+    "retryable": false,
+    "attempts": [
+      {
+        "attempt_id": "bb1f26aa-8417-45f7-9495-59a671e2c8f2",
+        "attempt": 1,
+        "source_id": "c7fb44f1-52bb-465d-a4c1-22f365645b7d",
+        "media_id": "18415fb5-a68b-4781-96f9-84c9d17cf35a",
+        "media_name": "南方日报",
+        "source_url": "http://www.southcn.com",
+        "source_type": "website",
+        "crawl_method": "html",
+        "ok": true,
+        "code": 0,
+        "report": "c885b235-fbfa-4b59-ae58-8dc350380058-c7fb44f1-52bb-465d-a4c1-22f365645b7d-bb1f26aa-8417-45f7-9495-59a671e2c8f2.json",
+        "log": "c885b235-fbfa-4b59-ae58-8dc350380058-c7fb44f1-52bb-465d-a4c1-22f365645b7d-bb1f26aa-8417-45f7-9495-59a671e2c8f2.log",
+        "articles": 2,
+        "ingest": {
+          "success": true,
+          "schema_version": "article-v1",
+          "sources": 1,
+          "successSources": 1,
+          "failedSources": 0,
+          "inserted": 0,
+          "updated": 0,
+          "duplicated": 2,
+          "invalid": 0,
+          "failed": 0,
+          "perSource": [
+            {
+              "sourceId": "c7fb44f1-52bb-465d-a4c1-22f365645b7d",
+              "ok": true,
+              "inserted": 0,
+              "updated": 0,
+              "duplicated": 2,
+              "invalid": 0,
+              "failed": 0,
+              "warnings": []
+            }
+          ]
+        },
+        "failures": [],
+        "retryable": false
+      }
+    ]
+  },
+  "lifecycle": {
+    "http": 200,
+    "result": {
+      "success": true
+    }
+  }
+}

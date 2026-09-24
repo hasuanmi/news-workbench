@@ -22,6 +22,7 @@ from app.scrapers.base import (
     guess_column,
     guess_content,
     guess_time,
+    is_non_news_link,
 )
 from app.scrapers.registry import get_scrapers
 
@@ -48,22 +49,16 @@ class GenericScraper(BaseScraper):
         self.media = urlparse(source_url).netloc
         self.source_type = source_type
         self.entry_urls = [source_url]
-        self.list_method = None
+        self.list_method = None  # 'http' | 'playwright'
 
     async def list_articles(self):
         from app.scrapers.base import fetch_list_links
 
         url = self.entry_urls[0]
         host = urlparse(url).netloc.lower()
-        try:
-            links, method = await fetch_list_links(
-                url, min_cn=6, allowed_hosts=[host], media=self.media)
-            self.list_method = method
-        except Exception as e:
-            from app.core.logger import logger
-
-            logger.warning(f"[worker] 列表页失败 {url}: {e}")
-            links = []
+        links, method = await fetch_list_links(
+            url, min_cn=6, allowed_hosts=[host], media=self.media)
+        self.list_method = method
         return links
 
     async def parse_detail(self, url, html):
@@ -130,6 +125,8 @@ def _filter_stubs(stubs: list) -> list:
         url = ((st.get("url") if isinstance(st, dict) else None) or "").strip()
         if not url:
             continue
+        if is_non_news_link(url, st.get("title", "")):
+            continue
         p = urlparse(url)
         if p.fragment:
             continue
@@ -168,6 +165,9 @@ async def dispatch_source(source: dict) -> dict:
     except Exception as e:
         return {"sourceId": source_id, "success": False,
                 "error": f"列表抓取失败: {str(e)[:150]}", "articles": []}
+    logger.info(
+        f"[worker] {source_id} 列表方式={getattr(scraper, 'list_method', None)} "
+        f"候选={len(stubs)}")
 
     stubs = _filter_stubs(stubs)
     if not stubs:
@@ -185,7 +185,7 @@ async def dispatch_source(source: dict) -> dict:
         except Exception as e:
             logger.warning(f"[worker] 详情失败 {st.get('url')}: {e}")
 
-    logger.info(f"[worker] {source_id} 列表方式={getattr(scraper, 'list_method', None)} 抓得 {len(articles)} 篇（候选 {len(stubs)}）")
+    logger.info(f"[worker] {source_id} 抓得 {len(articles)} 篇（候选 {len(stubs)}）")
     return {"sourceId": source_id, "success": True, "articles": articles}
 
 

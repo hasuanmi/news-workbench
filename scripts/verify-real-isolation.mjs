@@ -5,7 +5,7 @@ import dotenv from 'dotenv';
 import {createClient} from '@supabase/supabase-js';
 for(const p of ['.env.local','.env']) if(fs.existsSync(p)) dotenv.config({path:p,quiet:true});
 const db=createClient(process.env.SUPABASE_URL,process.env.SUPABASE_SERVICE_ROLE_KEY,{auth:{persistSession:false}});
-const directory='../media-scraper/logs/real-poc';
+const directory='scraper/logs/real-poc';
 const reports=fs.readdirSync(directory).filter(f=>f.endsWith('.json')).map(f=>JSON.parse(fs.readFileSync(path.join(directory,f),'utf8'))).filter(r=>r.ingest?.success);
 const urls=[...new Set(reports.flatMap(r=>r.articles.map(a=>a.url)))];
 const {data:rows,error}=await db.from('article').select('id,url,source_id,media_id,is_test,content,word_count,publish_time,column_name').in('url',urls);

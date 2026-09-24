@@ -15,6 +15,14 @@ from app.core.logger import logger
 
 _client = None
 
+
+class FetchedHTML(str):
+    """Keep the final document URL without changing the existing (html, method) API."""
+    def __new__(cls, value: str, resolved_url: str):
+        obj = super().__new__(cls, value)
+        obj.resolved_url = resolved_url
+        return obj
+
 # 仅当命中这些“强反爬/挑战页”特征时才直接判为需要 JS 兜底
 # （注意：不要匹配 "robot"/"验证" 等常见词，否则会误杀正常新闻页的 robots meta/JS）
 _STRONG_SUSPICIOUS = re.compile(
@@ -113,7 +121,7 @@ async def _fetch_playwright(url: str, wait_until: str = "networkidle", extra_wai
         try:
             await page.goto(url, wait_until=wait_until, timeout=cfg.fetch_timeout * 1000)
             await page.wait_for_timeout(extra_wait)
-            return await page.content()
+            return FetchedHTML(await page.content(), page.url)
         finally:
             await browser.close()
 
@@ -133,11 +141,13 @@ def _warn_playwright_once():
     )
 
 
-async def fetch(url: str, force_playwright: bool = False, pw_wait_until: str = "networkidle", pw_extra_wait: int = 1500) -> Tuple[str, str]:
+async def fetch(url: str, force_playwright: bool = False,
+               pw_wait_until: str = "networkidle", pw_extra_wait: int = 1500) -> Tuple[str, str]:
     """返回 (html, method)。method ∈ {http, playwright}。
 
-    pw_wait_until / pw_extra_wait 仅用于列表页等需要更稳妥等待策略的场景
-    （重 JS 列表页常因长轮询/埋点永不 networkidle 而超时，列表级传 domcontentloaded + 2500）。
+    pw_wait_until / pw_extra_wait 仅在使用 Playwright 兜底时生效：
+    - 详情页默认 networkidle（等网络静默，正文通常已渲染）；
+    - 列表页建议传 domcontentloaded（SPA 列表页常因长轮询/埋点永不 networkidle 而超时）。
     """
     cfg = settings.get_settings()
 
@@ -154,7 +164,7 @@ async def fetch(url: str, force_playwright: bool = False, pw_wait_until: str = "
             _warn_playwright_once()
         try:
             resp = await _http_get(url)
-            html = _decode(resp.content)
+            html = FetchedHTML(_decode(resp.content), str(resp.url))
             if _is_real(html):
                 return html, "http"
             raise RuntimeError(f"http 内容不足且浏览器兜底不可用: {url}")
@@ -166,10 +176,15 @@ async def fetch(url: str, force_playwright: bool = False, pw_wait_until: str = "
     if not force_playwright:
         try:
             resp = await _http_get(url)
-            html = _decode(resp.content)
+            html = FetchedHTML(_decode(resp.content), str(resp.url))
             if _is_real(html):
                 return html, "http"
             logger.warning(f"[fetch] http 内容不足/疑似空壳，改用 playwright: {url}")
+        except httpx.HTTPStatusError as e:
+            # A confirmed missing URL is not a JS page; do not parse its browser error page.
+            if e.response.status_code in (404, 410):
+                raise
+            logger.warning(f"[fetch] http 失败，准备 playwright: {url} -> {e}")
         except Exception as e:
             logger.warning(f"[fetch] http 失败，准备 playwright: {url} -> {e}")
     return await _fetch_playwright(url, wait_until=pw_wait_until, extra_wait=pw_extra_wait), "playwright"

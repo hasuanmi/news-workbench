@@ -35,13 +35,16 @@ class OeeeeScraper(BaseScraper):
     async def parse_detail(self, url, html):
         soup = BeautifulSoup(html, "lxml")
         art = Article(media=self.media)
-        h1 = soup.find("h1") or soup.select_one(".article-title, .title, .art_title, .news-title")
+        h1 = soup.select_one(".title h1, h1:not(.logo)") or soup.select_one(".article-title, .art_title, .news-title")
         art.title = clean_text(h1.get_text()) if h1 else clean_text(
             soup.title.get_text() if soup.title else ""
         )
         art.publish_time = guess_time(soup, url)
-        art.content = guess_content(soup)
-        art.column_name = guess_column(soup)
+        body = soup.select_one(".article_detail .content")
+        art.content = body.get_text("\n", strip=True) if body else guess_content(soup)
+        # The generic .nav selector is the whole site menu, not an article column.
+        parts = soup.title.get_text(strip=True).split("_") if soup.title else []
+        art.column_name = parts[-2] if len(parts) >= 3 else None
         for img in soup.select(".article-content img, .content img, article img, .post_content img"):
             src = img.get("src") or img.get("data-src")
             if src:

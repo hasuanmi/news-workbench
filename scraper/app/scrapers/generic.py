@@ -12,11 +12,13 @@ from urllib.parse import urljoin, urlparse
 
 from bs4 import BeautifulSoup
 
+from app.core.logger import logger
 from app.scrapers.base import (
     Article,
     BaseScraper,
     clean_text,
     collect_links,
+    fetch_list_links,
     guess_column,
     guess_content,
     guess_time,
@@ -28,21 +30,21 @@ class GenericScraper(BaseScraper):
     business = ["news_lead"]
     source_type = "官方网站"
     entry_urls = []
+    list_method = None  # 'http' | 'playwright'：本次列表页最终使用的方式
 
     async def list_articles(self):
-        from app.scrapers.base import fetch_list_links
-
         out = []
         for url in self.entry_urls:
             try:
-                host = urlparse(url).netloc.lower()
-                links, _method = await fetch_list_links(
-                    url, min_cn=6, allowed_hosts=[host], media=self.media)
+                links, method = await fetch_list_links(
+                    url, min_cn=6,
+                    allowed_hosts=[(urlparse(url).hostname or "").lower().removeprefix("www.")],
+                    media=self.media,
+                )
             except Exception as e:
-                from app.core.logger import logger
-
                 logger.warning(f"[generic] 列表页失败 {url}: {e}")
                 continue
+            self.list_method = method
             out += links
         seen, uniq = set(), []
         for s in out:

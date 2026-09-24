@@ -47,7 +47,7 @@ class IngestClient:
         url = f"{self.base}/api/ingest/articles"
         try:
             async with httpx.AsyncClient(timeout=60, follow_redirects=True) as cli:
-                r = await cli.post(url, headers=self._headers(), json={"results": results})
+                r = await cli.post(url, headers=self._headers(), json={"schema_version": "article-v1", "results": results})
                 if r.status_code == 401:
                     logger.error("[ingest] 推送鉴权失败(401)")
                     return {"success": False, "error": "unauthorized"}

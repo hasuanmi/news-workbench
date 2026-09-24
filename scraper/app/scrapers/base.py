@@ -1,11 +1,11 @@
-import re
-from abc import ABC, abstractmethod
-from dataclasses import dataclass, field, asdict
-from datetime import datetime
 import asyncio
 import json
 import os
+import re
 import time
+from abc import ABC, abstractmethod
+from dataclasses import dataclass, field, asdict
+from datetime import datetime
 from typing import List, Optional, Tuple
 
 from bs4 import BeautifulSoup
@@ -68,15 +68,23 @@ def norm_time(raw: Optional[str]) -> str:
 
 
 def guess_time(soup: BeautifulSoup, url: str = "") -> str:
+    date_only = None
     for attr, val in _TIME_META:
         tag = soup.find("meta", attrs={attr: val})
         if tag and tag.get("content"):
-            return norm_time(tag["content"])
+            raw = tag["content"]
+            if re.search(r"\d{1,2}:\d{2}", raw):
+                return norm_time(raw)
+            candidate = norm_time(raw)
+            if candidate != MISSING_TIME:
+                date_only = candidate
     # 页面文本里出现的时间
     text = soup.get_text(" ", strip=True)
     m = re.search(r"(\d{4}[-/年]\d{1,2}[-/月]\d{1,2}日?\s*\d{1,2}:\d{2})", text)
     if m:
         return norm_time(m.group(1))
+    if date_only:
+        return date_only
     # 数字报等：日期常编码在 URL 路径里（如 /content/2026-09/07/ 或 /node/2026-09/07/）
     if url:
         mu = re.search(r"/(?:content|node|html|news|article)?/?(\d{4})[-_/](\d{1,2})[-_/](\d{1,2})", url)
@@ -86,7 +94,37 @@ def guess_time(soup: BeautifulSoup, url: str = "") -> str:
     return MISSING_TIME
 
 
+def is_non_news_link(url: str, text: str = "") -> bool:
+    """Reject explicit utility/licence pages, not news reporting about licences."""
+    parsed = urlparse(url)
+    path = parsed.path.lower()
+    if re.match(r"^(?:vote\d*|passport|login|bbs|forum|club)\.", (parsed.hostname or "").lower()):
+        return True
+    if re.search(r"\.(?:apk|exe|msi|dmg)$", path):
+        return True
+    if re.search(r"(?:^|/)(?:xukezheng|hlwxkz|beian|license|licence|copyright|privacy|"
+                 r"about(?:us)?|contact(?:us)?|jubao|tousu|public_report|download)(?:[./_-]|$)", path):
+        return True
+    if re.search(r"/(?:paperindex|node_\d+)\.html?$", path):
+        return True
+    if re.search(r"/(?:list|channel|category|node)(?:_\d+)+(?:\.[a-z]+)?/?$", path):
+        return True
+    # A plain channel/index directory is not a detail page. Keep dated/ID-bearing
+    # article directories, which some CMSs legitimately publish as index.html.
+    has_article_path = bool(re.search(r"20\d{2}[-/]\d{1,2}[-/]|\d{6,}|[a-f0-9]{16,}", path))
+    if not has_article_path and (path.endswith("/") or re.search(r"/index\.(?:s?html?)$", path)):
+        return True
+    return bool(re.fullmatch(
+        r"(?:互联网(?:新闻)?信息服务许可证|信息网络传播视听节目许可证|"
+        r"广播电视节目制作经营许可证|网络文化经营许可证|增值电信业务经营许可证|"
+        r"ICP备案(?:号)?|网站备案(?:号)?|公安备案(?:号)?|版权声明|隐私政策|联系我们|关于我们|"
+        r"网络举报(?:监督)?专区|违法和不良信息举报)"
+        r"[：:\sA-Za-z0-9\-（）()]*", (text or "").strip()))
+
+
 def _looks_like_article(url: str, text: str) -> bool:
+    if is_non_news_link(url, text):
+        return False
     if not re.search(r"[\u4e00-\u9fff]", text):
         return False
     path = urlparse(url).path
@@ -117,17 +155,27 @@ def collect_links(soup: BeautifulSoup, base_url: str, min_cn: int = 6,
     allowed_hosts: 若提供，仅保留 netloc 以列表中任一后缀结尾的链接，
                    用于过滤页脚/导航里的站外链接噪音（如政府门户、友站）。
     """
+    base_tag = soup.find("base", href=True)
+    if base_tag:
+        base_url = urljoin(base_url, base_tag["href"])
     out, seen = [], set()
     for a in soup.find_all("a", href=True):
-        text = clean_text(a.get_text())
+        if a.find_parent("footer") or any(
+            re.search(r"(?:^|[\s_-])(?:footer|copyright)(?:$|[\s_-])",
+                      " ".join(parent.get("class", [])) + " " + (parent.get("id") or ""), re.I)
+            for parent in a.parents if getattr(parent, "attrs", None)
+        ):
+            continue
+        text = clean_text(a.get_text()) or clean_text(a.get("title"))
         if len(text) < min_cn:
             continue
         href = a["href"].strip()
         if href.startswith(("javascript:", "#", "mailto:")):
             continue
         full = urljoin(base_url, href)
-        host = urlparse(full).netloc.lower()
-        if allowed_hosts and not any(host.endswith(h.lower().lstrip(".")) for h in allowed_hosts):
+        host = (urlparse(full).hostname or "").lower()
+        if allowed_hosts and not any(host == h.lower().lstrip(".") or
+                host.endswith("." + h.lower().lstrip(".")) for h in allowed_hosts):
             continue
         if not _looks_like_article(full, text) or full in seen:
             continue
@@ -143,83 +191,124 @@ def collect_links(soup: BeautifulSoup, base_url: str, min_cn: int = 6,
     return out
 
 
-# ---------- 列表页 Playwright 兜底（HTTP 优先，仅当实抽链接不足时兜底） ----------
-_LIST_LOG_PATH = os.path.join(os.path.dirname(os.path.dirname(__file__)), "logs", "list_method_log.jsonl")
-_list_pw_sem = None
+# ---------- 列表页 Playwright 兜底（仅兜底，不默认给所有媒体上浏览器）----------
+# 全局限流：限制同时渲染列表页的浏览器数量，避免 135 路并发把资源打爆。
+_LIST_PW_SEM = None
+_LIST_LOG_PATH = os.path.join(
+    os.path.dirname(os.path.dirname(os.path.abspath(__file__))),  # app/
+    "logs", "list_method_log.jsonl",
+)
 
 
-def _list_pw_sem():
-    global _list_pw_sem
-    if _list_pw_sem is None:
-        _list_pw_sem = asyncio.Semaphore(2)
-    return _list_pw_sem
+def _list_pw_sem() -> "asyncio.Semaphore":
+    global _LIST_PW_SEM
+    if _LIST_PW_SEM is None:
+        try:
+            from app.core import settings
+            cap = getattr(settings.get_settings(), "list_pw_concurrency", 2) or 2
+        except Exception:
+            cap = 2
+        _LIST_PW_SEM = asyncio.Semaphore(cap)
+    return _LIST_PW_SEM
 
 
 # 详情级限流：正文过短时用浏览器复渲染，全量 run_once 下若不限并发，
 # 会一次起几十个 Chromium 把资源打满导致任务挂死。只限制 Playwright 兜底，
 # 不影响普通 HTTP 抓取。保守值 3（与列表级 2 相加后同时最多约 5 个浏览器）。
-_detail_pw_sem = None
+_DETAIL_PW_SEM = None
 _DETAIL_PW_CONCURRENCY = 3
 
 
-def _detail_pw_sem():
-    global _detail_pw_sem
-    if _detail_pw_sem is None:
+def _detail_pw_sem() -> "asyncio.Semaphore":
+    global _DETAIL_PW_SEM
+    if _DETAIL_PW_SEM is None:
         try:
             from app.core import settings
             cap = getattr(settings.get_settings(), "detail_pw_concurrency",
                           _DETAIL_PW_CONCURRENCY) or _DETAIL_PW_CONCURRENCY
         except Exception:
             cap = _DETAIL_PW_CONCURRENCY
-        _detail_pw_sem = asyncio.Semaphore(cap)
-    return _detail_pw_sem
+        _DETAIL_PW_SEM = asyncio.Semaphore(cap)
+    return _DETAIL_PW_SEM
 
 
-def _record_list_method(media, url, method, http_links, pw_links):
+def _record_list_method(media: str, url: str, method: str, http_links: int, pw_links: int) -> None:
+    """把本次列表页最终使用的抓取方式写到 JSONL，供统计「Playwright 实际触发媒体数」。"""
     try:
         os.makedirs(os.path.dirname(_LIST_LOG_PATH), exist_ok=True)
         with open(_LIST_LOG_PATH, "a", encoding="utf-8") as f:
             f.write(json.dumps({
-                "ts": time.time(), "media": media, "url": url,
-                "method": method, "http_links": http_links, "pw_links": pw_links,
+                "media": media, "url": url, "method": method,
+                "http_links": http_links, "pw_links": pw_links,
+                "ts": time.time(),
             }, ensure_ascii=False) + "\n")
     except Exception:
         pass
 
 
-async def fetch_list_links(url: str, min_cn: int = 6,
-                           allowed_hosts: Optional[List[str]] = None,
-                           min_links: int = 3, media: str = "") -> Tuple[list, str]:
-    """列表页抓取：默认 HTTP；仅当 collect_links 实抽文章链接数 < min_links 时，
-    用 Playwright 兜底（domcontentloaded + 2.5s，Semaphore(2) 限并发，1 次重试）。
-    返回 (links, method)。method ∈ {http, playwright}。
-    判据用『实抽链接数』而非 fetcher._is_real，避免 SPA 空壳页骗过 _is_real 而漏触发。"""
-    html, fetch_method = await fetch(url, pw_wait_until="domcontentloaded", pw_extra_wait=2500)
-    host = urlparse(url).netloc.lower()
+async def fetch_list_links(
+    url: str,
+    min_cn: int = 6,
+    allowed_hosts: Optional[List[str]] = None,
+    min_links: int = 3,
+    media: str = "",
+) -> Tuple[List[dict], str]:
+    """列表页抽取：HTTP 优先；仅当「HTTP 实抽到的文章链接数 < min_links」
+
+    （疑似 JS 空壳 / 列表失败 / 入口错误）时，才用 Playwright 渲染兜底。
+
+    规则（满足用户约束）：
+    - 默认走 HTTP，不默认给所有媒体上浏览器；
+    - 复用 fetcher.fetch（已含 HTTP 重试、超时与 _is_real 判据）；
+    - 并发浏览器数由全局 Semaphore 限制（默认 2），timeout 沿用 fetch_timeout；
+    - 列表级兜底带 1 次重试；
+    - 返回 (links, method)，method ∈ {"http","playwright"}，并写 JSONL 记录。
+
+    注意：若 fetcher 已因 _is_real 失败而内部走了 Playwright（method=playwright），
+    则视为已渲染过，不再重复渲染（避免双重渲染）。
+    """
+    html, fetch_method = await fetch(
+        url, pw_wait_until="domcontentloaded", pw_extra_wait=2500)
+    resolved_url = getattr(html, "resolved_url", url)
+    host = urlparse(resolved_url).hostname or ""
     hosts = allowed_hosts or [host]
-    links = collect_links(BeautifulSoup(html, "lxml"), url, min_cn=min_cn, allowed_hosts=hosts)
+    # Follow the server's actual redirect, retaining its host for same-site links.
+    if resolved_url != url:
+        hosts = list(dict.fromkeys([*hosts, host.removeprefix("www.")]))
+    links = collect_links(BeautifulSoup(html, "lxml"), resolved_url, min_cn=min_cn, allowed_hosts=hosts)
     if len(links) >= min_links:
         _record_list_method(media, url, fetch_method, len(links), len(links))
         return links, fetch_method
+
+    # HTTP 列表不足
     if fetch_method == "playwright":
+        # fetcher 已经渲染过仍不足，不再重复渲染
         _record_list_method(media, url, "playwright", len(links), len(links))
         return links, "playwright"
+
     from app.core import settings
     if not settings.playwright_enabled():
         _record_list_method(media, url, "http", len(links), 0)
         return links, "http"
+
+    # 强制 Playwright 渲染兜底（限流 + 1 次重试）
+    # 列表页用 domcontentloaded：SPA 列表页常因长轮询/埋点永不 networkidle 而 15s 超时。
     sem = _list_pw_sem()
     html2 = None
-    links2 = []
-    last_err = None
+    links2: List[dict] = []
+    last_err: Optional[Exception] = None
     for attempt in range(2):
         try:
             async with sem:
-                html2, _m = await fetch(url, force_playwright=True,
-                                       pw_wait_until="domcontentloaded", pw_extra_wait=2500)
-            links2 = collect_links(BeautifulSoup(html2, "lxml"), url, min_cn=min_cn, allowed_hosts=hosts)
+                html2, _m = await fetch(
+                    url, force_playwright=True,
+                    pw_wait_until="domcontentloaded", pw_extra_wait=2500)
+            resolved2 = getattr(html2, "resolved_url", url)
+            host2 = (urlparse(resolved2).hostname or "").removeprefix("www.")
+            links2 = collect_links(BeautifulSoup(html2, "lxml"), resolved2, min_cn=min_cn,
+                                   allowed_hosts=list(dict.fromkeys([*hosts, host2])))
             break
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001
             last_err = e
             logger.warning(f"[base] 列表页 PW 兜底第{attempt + 1}次失败 {url}: {e}")
     if html2 is not None and len(links2) > len(links):
@@ -339,6 +428,11 @@ class BaseScraper(ABC):
                     art.scrape_method = method2
             except Exception as e:
                 logger.warning(f"[base] playwright 兜底失败 {url}: {e}")
+        # A browser reparse creates a new Article. Restore identity after choosing
+        # the winning body; otherwise the second object reaches ingest with no URL.
+        art.url = url
+        art.source_type = self.source_type
+        art.business = self.business
         art.word_count = len(re.sub(r"\s+", "", art.content or ""))
         if not art.title:
             art.title = url

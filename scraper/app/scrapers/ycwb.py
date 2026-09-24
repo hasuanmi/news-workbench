@@ -2,7 +2,17 @@ from urllib.parse import urljoin
 
 from bs4 import BeautifulSoup
 
-from app.scrapers.base import Article, BaseScraper, clean_text, collect_links, guess_column, guess_content, guess_time
+from app.core.logger import logger
+from app.scrapers.base import (
+    Article,
+    BaseScraper,
+    clean_text,
+    collect_links,
+    fetch_list_links,
+    guess_column,
+    guess_content,
+    guess_time,
+)
 
 
 class YcwbScraper(BaseScraper):
@@ -14,19 +24,18 @@ class YcwbScraper(BaseScraper):
         "http://www.ycwb.com/",
         "http://epaper.ycwb.com/",
     ]
+    list_method = None  # 'http' | 'playwright'
 
     async def list_articles(self):
-        from app.scrapers.base import fetch_list_links
-
         stubs = []
         for url in self.entry_urls:
             try:
-                links, _method = await fetch_list_links(
+                links, method = await fetch_list_links(
                     url, min_cn=8, allowed_hosts=["ycwb.com"], media=self.media)
             except Exception as e:
-                from app.core.logger import logger
                 logger.warning(f"[ycwb] 列表页失败 {url}: {e}")
                 continue
+            self.list_method = method
             stubs += links
         seen, uniq = set(), []
         for s in stubs:
