@@ -10,7 +10,7 @@ import {
 
 const today = new Date(Date.UTC(2026, 8, 6)); // 2026-09-06
 
-test("固定节点：计算发生日与周年数（已过则取下一个同期）", () => {
+test("固定节点：始终按选定年份计算，不把已过日期滚到下一年", () => {
   const ev: CalendarRuleEvent = {
     id: "1",
     event_name: "香港回归",
@@ -20,9 +20,9 @@ test("固定节点：计算发生日与周年数（已过则取下一个同期�
   };
   const occ = computeOccurrence(ev, 2026, today);
   assert.ok(occ);
-  // today=2026-09-06 已过 7/1，引擎按窗口语义取下一个 ≥today 的同期 → 2027
-  assert.equal(occ.date, "2027-07-01");
-  assert.equal(occ.anniversary, 30);
+  assert.equal(occ.date, "2026-07-01");
+  assert.equal(occ.anniversary, 29);
+  assert.ok(occ.daysUntil < 0);
 });
 
 test("固定节点：event_year 动态计算周年数", () => {

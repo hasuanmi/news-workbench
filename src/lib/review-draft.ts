@@ -1,3 +1,4 @@
+import { reviewDayBounds } from "@/lib/review-date";
 /**
  * 每日评报 · 阶段1：本期选稿（M4 增强）
  *
@@ -98,18 +99,20 @@ export async function resolveComparisonMedia(mediaIds?: string[]): Promise<{
 
   // 显式传入的 mediaIds 优先；否则用固定六家按名称匹配
   if (Array.isArray(mediaIds) && mediaIds.length > 0) {
-    const { data: m2 } = await supabase().from("media").select("id, media_name").in("id", mediaIds);
+    const { data: m2, error } = await supabase().from("media").select("id, media_name").in("id", mediaIds);
+    if (error) throw new Error("评报媒体范围暂时无法读取");
     return {
       mediaIds: (m2 ?? []).map((x) => x.id),
       mediaNames: (m2 ?? []).map((x) => x.media_name),
     };
   }
 
-  const { data: rows } = await supabase()
+  const { data: rows, error } = await supabase()
     .from("media")
     .select("id, media_name")
     .eq("enabled", true)
     .in("media_name", names.flatMap(name => name === "广州日报" ? [name, "广州日报报业集团"] : [name]));
+  if (error) throw new Error("评报媒体范围暂时无法读取");
   return {
     mediaIds: (rows ?? []).map((m) => m.id),
     mediaNames: (rows ?? []).map((m) => m.media_name),
@@ -265,12 +268,12 @@ function toDraftArticle(a: ReviewArticle, suffix = ""): DraftArticle {
 }
 
 /** 阶段1：筛选 + AI 分组，返回选稿结果（未落库） */
-export async function buildDraft(conditions: ReviewConditions, dateStr: string, articles: ReviewArticle[], gzMediaNames: string[]): Promise<DraftPayload> {
+export async function buildDraft(conditions: ReviewConditions, dateStr: string, articles: ReviewArticle[], gzMediaNames: string[], onAiStart?: () => void): Promise<DraftPayload> {
   const { data: gzMedia, error: mediaError } = await supabase().from("media").select("id").in("media_name", gzMediaNames);
   if (mediaError) throw new Error(`查询广州日报覆盖范围失败: ${mediaError.message}`);
   const { data: coverage, error: coverageError } = gzMedia?.length
     ? await supabase().from("article").select("title").eq("is_test", false).in("media_id", gzMedia.map(m => m.id))
-      .gte("publish_time", `${dateStr}T00:00:00+08:00`).lte("publish_time", `${dateStr}T23:59:59+08:00`)
+      .gte("publish_time", reviewDayBounds(dateStr).start).lt("publish_time", reviewDayBounds(dateStr).end)
     : { data: [], error: null };
   if (coverageError) throw new Error(`查询广州日报当日标题失败: ${coverageError.message}`);
   const titles = (coverage ?? []).map(a => a.title);
@@ -283,6 +286,7 @@ export async function buildDraft(conditions: ReviewConditions, dateStr: string, 
     });
   };
   const messages = buildDraftMessages(dateStr, articles, gzMediaNames, conditions, titles);
+  onAiStart?.();
   const raw = await unifiedInvoke(messages, { temperature: 0.2 });
   const parsed = safeParseJson(raw);
 

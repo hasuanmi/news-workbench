@@ -1,0 +1,2366 @@
+[
+  {
+    "media": "湖州市新闻传媒中心",
+    "steps": 3,
+    "source_ids": [
+      "4884f74c-4d86-484e-9f86-dd0eac0f429e"
+    ],
+    "config": {
+      "media": "湖州市新闻传媒中心",
+      "business": [
+        "news_lead"
+      ],
+      "enabled": true,
+      "source_type": "官方网站",
+      "scraper": "generic",
+      "entry_urls": [
+        "https://www.hzgdw.cn/"
+      ]
+    },
+    "logs": [
+      "[fetch] http ʧ�ܣ�׼�� playwright: https://www.hzgdw.cn/ -> ",
+      "[generic] �б�ҳʧ�� https://www.hzgdw.cn/: Page.goto: Timeout 15000ms exceeded.",
+      "[generic] �б�ҳʧ�� https://www.hzgdw.cn/: Page.goto: net::ERR_CONNECTION_CLOSED at https://www.hzgdw.cn/"
+    ],
+    "list_methods": [],
+    "detail_errors": [],
+    "category": "网络/TLS/超时"
+  },
+  {
+    "media": "石家庄日报",
+    "steps": 2,
+    "source_ids": [
+      "01ade713-0acc-44a4-8443-58e70841746e"
+    ],
+    "config": {
+      "media": "石家庄日报",
+      "business": [
+        "news_lead"
+      ],
+      "enabled": true,
+      "source_type": "官方网站",
+      "scraper": "generic",
+      "entry_urls": [
+        "https://www.sjzdaily.com.cn/"
+      ]
+    },
+    "logs": [
+      "[fetch] http ʧ�ܣ�׼�� playwright: https://www.sjzdaily.com.cn/ -> [SSL: CERTIFICATE_VERIFY_FAILED] certificate verify failed: self-signed certificate (_ssl.c:1032)",
+      "[generic] �б�ҳʧ�� https://www.sjzdaily.com.cn/: Page.goto: net::ERR_CERT_AUTHORITY_INVALID at https://www.sjzdaily.com.cn/"
+    ],
+    "list_methods": [],
+    "detail_errors": [],
+    "category": "网络/TLS/超时"
+  },
+  {
+    "media": "北京广播电视台",
+    "steps": 2,
+    "source_ids": [
+      "c1c6806a-ae77-46d7-80f9-4deee21ef6fc"
+    ],
+    "config": {
+      "media": "北京广播电视台",
+      "business": [
+        "news_lead"
+      ],
+      "enabled": true,
+      "source_type": "官方网站",
+      "scraper": "generic",
+      "entry_urls": [
+        "https://www.brtv.org.cn/"
+      ]
+    },
+    "logs": [
+      "[fetch] http ʧ�ܣ�׼�� playwright: https://www.brtv.org.cn/ -> Client error '405 Not Allowed' for url 'https://www.brtv.org.cn/'"
+    ],
+    "list_methods": [
+      {
+        "media": "北京广播电视台",
+        "url": "https://www.brtv.org.cn/",
+        "method": "playwright",
+        "http_links": 0,
+        "pw_links": 0,
+        "ts": 1790216740.2381587
+      },
+      {
+        "media": "北京广播电视台",
+        "url": "https://www.brtv.org.cn/",
+        "method": "playwright",
+        "http_links": 0,
+        "pw_links": 0,
+        "ts": 1790216784.27206
+      }
+    ],
+    "detail_errors": [],
+    "category": "其他：HTTP 405，原因未定"
+  },
+  {
+    "media": "东莞日报社",
+    "steps": 3,
+    "source_ids": [
+      "a8d72a09-8f77-436a-8dac-1b0f480bd506"
+    ],
+    "config": {
+      "media": "东莞日报社",
+      "business": [
+        "news_lead"
+      ],
+      "enabled": true,
+      "source_type": "官方网站",
+      "scraper": "generic",
+      "entry_urls": [
+        "https://www.dgrb.com.cn/"
+      ]
+    },
+    "logs": [
+      "[fetch] http ʧ�ܣ�׼�� playwright: https://www.dgrb.com.cn/ -> ",
+      "[generic] �б�ҳʧ�� https://www.dgrb.com.cn/: Page.goto: net::ERR_CONNECTION_ABORTED at https://www.dgrb.com.cn/",
+      "[generic] �б�ҳʧ�� https://www.dgrb.com.cn/: Page.goto: net::ERR_CONNECTION_CLOSED at https://www.dgrb.com.cn/"
+    ],
+    "list_methods": [],
+    "detail_errors": [],
+    "category": "网络/TLS/超时"
+  },
+  {
+    "media": "黔南广播电视台",
+    "steps": 2,
+    "source_ids": [
+      "4f0b06e7-d9e3-495f-a90f-b4e55c44157d"
+    ],
+    "config": {
+      "media": "黔南广播电视台",
+      "business": [
+        "news_lead"
+      ],
+      "enabled": true,
+      "source_type": "官方网站",
+      "scraper": "generic",
+      "entry_urls": [
+        "https://www.qntv.cn/"
+      ]
+    },
+    "logs": [
+      "[fetch] http ʧ�ܣ�׼�� playwright: https://www.qntv.cn/ -> ",
+      "[generic] �б�ҳʧ�� https://www.qntv.cn/: Page.goto: net::ERR_CONNECTION_CLOSED at https://www.qntv.cn/"
+    ],
+    "list_methods": [],
+    "detail_errors": [],
+    "category": "网络/TLS/超时"
+  },
+  {
+    "media": "潍坊日报社",
+    "steps": 2,
+    "source_ids": [
+      "531e5237-a016-4fc2-b52b-bdce687c4693"
+    ],
+    "config": {
+      "media": "潍坊日报社",
+      "business": [
+        "news_lead"
+      ],
+      "enabled": true,
+      "source_type": "官方网站",
+      "scraper": "generic",
+      "entry_urls": [
+        "https://www.wfnews.com.cn/"
+      ]
+    },
+    "logs": [
+      "[fetch] http ʧ�ܣ�׼�� playwright: https://www.wfnews.com.cn/ -> ",
+      "[generic] �б�ҳʧ�� https://www.wfnews.com.cn/: Page.goto: net::ERR_CONNECTION_CLOSED at https://www.wfnews.com.cn/"
+    ],
+    "list_methods": [],
+    "detail_errors": [],
+    "category": "网络/TLS/超时"
+  },
+  {
+    "media": "常州广播电视台",
+    "steps": 3,
+    "source_ids": [
+      "d0b99757-7c2e-45a1-bc97-4a6577091b02"
+    ],
+    "config": {
+      "media": "常州广播电视台",
+      "business": [
+        "news_lead"
+      ],
+      "enabled": true,
+      "source_type": "官方网站",
+      "scraper": "generic",
+      "entry_urls": [
+        "https://www.cznews.cn/"
+      ]
+    },
+    "logs": [
+      "[fetch] http ʧ�ܣ�׼�� playwright: https://www.cznews.cn/ -> ",
+      "[generic] �б�ҳʧ�� https://www.cznews.cn/: Page.goto: net::ERR_CONNECTION_CLOSED at https://www.cznews.cn/"
+    ],
+    "list_methods": [],
+    "detail_errors": [],
+    "category": "网络/TLS/超时"
+  },
+  {
+    "media": "甘肃广播电视总台",
+    "steps": 3,
+    "source_ids": [
+      "cfc66d9f-74c6-4d6e-a5f7-48acddbc3b26"
+    ],
+    "config": {
+      "media": "甘肃广播电视总台",
+      "business": [
+        "news_lead"
+      ],
+      "enabled": true,
+      "source_type": "官方网站",
+      "scraper": "generic",
+      "entry_urls": [
+        "https://www.gstv.com.cn/"
+      ]
+    },
+    "logs": [
+      "[fetch] http ���ݲ���/���ƿտǣ����� playwright: https://www.gstv.com.cn/"
+    ],
+    "list_methods": [
+      {
+        "media": "甘肃广播电视总台",
+        "url": "https://www.gstv.com.cn/",
+        "method": "playwright",
+        "http_links": 0,
+        "pw_links": 0,
+        "ts": 1790216777.966588
+      },
+      {
+        "media": "甘肃广播电视总台",
+        "url": "https://www.gstv.com.cn/",
+        "method": "playwright",
+        "http_links": 0,
+        "pw_links": 0,
+        "ts": 1790216824.7082236
+      },
+      {
+        "media": "甘肃广播电视总台",
+        "url": "https://www.gstv.com.cn/",
+        "method": "playwright",
+        "http_links": 0,
+        "pw_links": 0,
+        "ts": 1790216877.3540096
+      }
+    ],
+    "detail_errors": [],
+    "category": "列表页解析失败"
+  },
+  {
+    "media": "宁夏日报报业集团",
+    "steps": 3,
+    "source_ids": [
+      "b6b1f28c-320a-4aec-8169-b4b00ed97a5f"
+    ],
+    "config": {
+      "media": "宁夏日报报业集团",
+      "business": [
+        "news_lead"
+      ],
+      "enabled": true,
+      "source_type": "官方网站",
+      "scraper": "generic",
+      "entry_urls": [
+        "https://www.nxnews.net/"
+      ]
+    },
+    "logs": [
+      "[fetch] http ʧ�ܣ�׼�� playwright: https://www.nxnews.net/ -> Client error '412 Precondition Failed' for url 'https://www.nxnews.net/'"
+    ],
+    "list_methods": [
+      {
+        "media": "宁夏日报报业集团",
+        "url": "https://www.nxnews.net/",
+        "method": "playwright",
+        "http_links": 0,
+        "pw_links": 0,
+        "ts": 1790216776.606626
+      },
+      {
+        "media": "宁夏日报报业集团",
+        "url": "https://www.nxnews.net/",
+        "method": "playwright",
+        "http_links": 0,
+        "pw_links": 0,
+        "ts": 1790216831.91719
+      },
+      {
+        "media": "宁夏日报报业集团",
+        "url": "https://www.nxnews.net/",
+        "method": "playwright",
+        "http_links": 0,
+        "pw_links": 0,
+        "ts": 1790216966.084834
+      }
+    ],
+    "detail_errors": [],
+    "category": "WAF/403/412/反爬"
+  },
+  {
+    "media": "新疆日报",
+    "steps": 2,
+    "source_ids": [
+      "4a3f8200-f4cc-4446-8815-6ed6210d234a"
+    ],
+    "config": {
+      "media": "新疆日报",
+      "business": [
+        "news_lead"
+      ],
+      "enabled": true,
+      "source_type": "官方网站",
+      "scraper": "generic",
+      "entry_urls": [
+        "https://www.ts.cn/"
+      ]
+    },
+    "logs": [
+      "[fetch] http ���ݲ���/���ƿտǣ����� playwright: https://www.ts.cn/",
+      "[generic] �б�ҳʧ�� https://www.ts.cn/: Page.goto: net::ERR_CONNECTION_CLOSED at https://www.ts.cn/"
+    ],
+    "list_methods": [],
+    "detail_errors": [],
+    "category": "列表页解析失败"
+  },
+  {
+    "media": "天山网",
+    "steps": 3,
+    "source_ids": [
+      "8a7bf076-3a46-4e5d-92e9-ad2108d883bf"
+    ],
+    "config": {
+      "media": "天山网",
+      "business": [
+        "news_lead"
+      ],
+      "enabled": true,
+      "source_type": "官方网站",
+      "scraper": "generic",
+      "entry_urls": [
+        "https://www.ts.cn/"
+      ]
+    },
+    "logs": [
+      "[fetch] http ���ݲ���/���ƿտǣ����� playwright: https://www.ts.cn/",
+      "[generic] �б�ҳʧ�� https://www.ts.cn/: Page.goto: net::ERR_CONNECTION_CLOSED at https://www.ts.cn/"
+    ],
+    "list_methods": [
+      {
+        "media": "天山网",
+        "url": "https://www.ts.cn/",
+        "method": "playwright",
+        "http_links": 0,
+        "pw_links": 0,
+        "ts": 1790216776.2714741
+      },
+      {
+        "media": "天山网",
+        "url": "https://www.ts.cn/",
+        "method": "playwright",
+        "http_links": 0,
+        "pw_links": 0,
+        "ts": 1790216824.3610153
+      },
+      {
+        "media": "天山网",
+        "url": "https://www.ts.cn/",
+        "method": "playwright",
+        "http_links": 0,
+        "pw_links": 0,
+        "ts": 1790216859.0171857
+      }
+    ],
+    "detail_errors": [],
+    "category": "列表页解析失败"
+  },
+  {
+    "media": "盐阜大众报报业集团",
+    "steps": 2,
+    "source_ids": [
+      "c03b5786-44f3-4634-8b41-4dd6533866a0"
+    ],
+    "config": {
+      "media": "盐阜大众报报业集团",
+      "business": [
+        "news_lead"
+      ],
+      "enabled": true,
+      "source_type": "官方网站",
+      "scraper": "generic",
+      "entry_urls": [
+        "https://www.ycrb.cn/"
+      ]
+    },
+    "logs": [
+      "[fetch] http ʧ�ܣ�׼�� playwright: https://www.ycrb.cn/ -> ",
+      "[generic] �б�ҳʧ�� https://www.ycrb.cn/: Page.goto: net::ERR_CONNECTION_CLOSED at https://www.ycrb.cn/"
+    ],
+    "list_methods": [],
+    "detail_errors": [],
+    "category": "网络/TLS/超时"
+  },
+  {
+    "media": "吉林广播电视台",
+    "steps": 3,
+    "source_ids": [
+      "cbe9f3f4-5330-436f-9abb-ee761d89da10"
+    ],
+    "config": {
+      "media": "吉林广播电视台",
+      "business": [
+        "news_lead"
+      ],
+      "enabled": true,
+      "source_type": "官方网站",
+      "scraper": "generic",
+      "entry_urls": [
+        "https://www.jlntv.cn/"
+      ]
+    },
+    "logs": [
+      "[fetch] http ���ݲ���/���ƿտǣ����� playwright: https://www.jlntv.cn/"
+    ],
+    "list_methods": [
+      {
+        "media": "吉林广播电视台",
+        "url": "https://www.jlntv.cn/",
+        "method": "playwright",
+        "http_links": 0,
+        "pw_links": 0,
+        "ts": 1790216785.4615724
+      },
+      {
+        "media": "吉林广播电视台",
+        "url": "https://www.jlntv.cn/",
+        "method": "playwright",
+        "http_links": 0,
+        "pw_links": 0,
+        "ts": 1790216859.8825326
+      },
+      {
+        "media": "吉林广播电视台",
+        "url": "https://www.jlntv.cn/",
+        "method": "playwright",
+        "http_links": 0,
+        "pw_links": 0,
+        "ts": 1790216929.8689015
+      }
+    ],
+    "detail_errors": [],
+    "category": "列表页解析失败"
+  },
+  {
+    "media": "中国文化报",
+    "steps": 3,
+    "source_ids": [
+      "25aa058e-2913-4ad5-84a5-a39e8f6b625e"
+    ],
+    "config": {
+      "media": "中国文化报",
+      "business": [
+        "news_lead"
+      ],
+      "enabled": true,
+      "source_type": "官方网站",
+      "scraper": "generic",
+      "entry_urls": [
+        "https://www.ccdy.cn/"
+      ]
+    },
+    "logs": [
+      "[fetch] http ���ݲ���/���ƿտǣ����� playwright: https://www.ccdy.cn/"
+    ],
+    "list_methods": [
+      {
+        "media": "中国文化报",
+        "url": "https://www.ccdy.cn/",
+        "method": "playwright",
+        "http_links": 0,
+        "pw_links": 0,
+        "ts": 1790216784.527095
+      },
+      {
+        "media": "中国文化报",
+        "url": "https://www.ccdy.cn/",
+        "method": "playwright",
+        "http_links": 0,
+        "pw_links": 0,
+        "ts": 1790216824.838116
+      },
+      {
+        "media": "中国文化报",
+        "url": "https://www.ccdy.cn/",
+        "method": "playwright",
+        "http_links": 0,
+        "pw_links": 0,
+        "ts": 1790216929.4432456
+      }
+    ],
+    "detail_errors": [],
+    "category": "列表页解析失败"
+  },
+  {
+    "media": "大连新闻传媒集团",
+    "steps": 2,
+    "source_ids": [
+      "43c9802e-3ef2-4e2d-b4e7-dcf8610c67e5"
+    ],
+    "config": {
+      "media": "大连新闻传媒集团",
+      "business": [
+        "news_lead"
+      ],
+      "enabled": true,
+      "source_type": "官方网站",
+      "scraper": "generic",
+      "entry_urls": [
+        "https://www.dlrm.com/"
+      ]
+    },
+    "logs": [
+      "[fetch] http ���ݲ���/���ƿտǣ����� playwright: https://www.dlrm.com/",
+      "[generic] �б�ҳʧ�� https://www.dlrm.com/: Page.content: Unable to retrieve content because the page is navigating and changing the content."
+    ],
+    "list_methods": [
+      {
+        "media": "大连新闻传媒集团",
+        "url": "https://www.dlrm.com/",
+        "method": "playwright",
+        "http_links": 0,
+        "pw_links": 0,
+        "ts": 1790216807.7199943
+      }
+    ],
+    "detail_errors": [],
+    "category": "列表页解析失败"
+  },
+  {
+    "media": "内蒙古日报",
+    "steps": 3,
+    "source_ids": [
+      "91b12444-4be6-44b5-8147-ac02d5e678ba"
+    ],
+    "config": {
+      "media": "内蒙古日报",
+      "business": [
+        "news_lead"
+      ],
+      "enabled": true,
+      "source_type": "官方网站",
+      "scraper": "generic",
+      "entry_urls": [
+        "https://www.nmgnews.com.cn/"
+      ]
+    },
+    "logs": [],
+    "list_methods": [
+      {
+        "media": "内蒙古日报",
+        "url": "https://www.nmgnews.com.cn/",
+        "method": "http",
+        "http_links": 0,
+        "pw_links": 0,
+        "ts": 1790216808.9830806
+      },
+      {
+        "media": "内蒙古日报",
+        "url": "https://www.nmgnews.com.cn/",
+        "method": "http",
+        "http_links": 0,
+        "pw_links": 0,
+        "ts": 1790216851.8053644
+      },
+      {
+        "media": "内蒙古日报",
+        "url": "https://www.nmgnews.com.cn/",
+        "method": "http",
+        "http_links": 0,
+        "pw_links": 0,
+        "ts": 1790216912.9826827
+      }
+    ],
+    "detail_errors": [],
+    "category": "列表页解析失败"
+  },
+  {
+    "media": "西藏日报",
+    "steps": 3,
+    "source_ids": [
+      "060b95e5-770d-41d3-a806-acc90d8c5f5b"
+    ],
+    "config": {
+      "media": "西藏日报",
+      "business": [
+        "news_lead"
+      ],
+      "enabled": true,
+      "source_type": "官方网站",
+      "scraper": "generic",
+      "entry_urls": [
+        "https://www.xzdaily.com.cn/"
+      ]
+    },
+    "logs": [
+      "[fetch] http ʧ�ܣ�׼�� playwright: https://www.xzdaily.com.cn/ -> ",
+      "[generic] �б�ҳʧ�� https://www.xzdaily.com.cn/: Page.goto: net::ERR_CONNECTION_CLOSED at https://www.xzdaily.com.cn/"
+    ],
+    "list_methods": [],
+    "detail_errors": [],
+    "category": "网络/TLS/超时"
+  },
+  {
+    "media": "新疆广播电视台",
+    "steps": 3,
+    "source_ids": [
+      "15fc5d8e-9e54-4ac3-ba65-d84af0250141"
+    ],
+    "config": {
+      "media": "新疆广播电视台",
+      "business": [
+        "news_lead"
+      ],
+      "enabled": true,
+      "source_type": "官方网站",
+      "scraper": "generic",
+      "entry_urls": [
+        "https://www.xjtvs.com.cn/"
+      ]
+    },
+    "logs": [],
+    "list_methods": [
+      {
+        "media": "新疆广播电视台",
+        "url": "https://www.xjtvs.com.cn/",
+        "method": "http",
+        "http_links": 0,
+        "pw_links": 0,
+        "ts": 1790216810.2534811
+      },
+      {
+        "media": "新疆广播电视台",
+        "url": "https://www.xjtvs.com.cn/",
+        "method": "http",
+        "http_links": 0,
+        "pw_links": 0,
+        "ts": 1790216852.697841
+      },
+      {
+        "media": "新疆广播电视台",
+        "url": "https://www.xjtvs.com.cn/",
+        "method": "http",
+        "http_links": 0,
+        "pw_links": 0,
+        "ts": 1790216984.7410374
+      }
+    ],
+    "detail_errors": [],
+    "category": "列表页解析失败"
+  },
+  {
+    "media": "徐州广播电视台",
+    "steps": 3,
+    "source_ids": [
+      "3e031367-ebd5-435f-ae68-c60337449499"
+    ],
+    "config": {
+      "media": "徐州广播电视台",
+      "business": [
+        "news_lead"
+      ],
+      "enabled": true,
+      "source_type": "官方网站",
+      "scraper": "generic",
+      "entry_urls": [
+        "https://www.cnxz.com.cn/"
+      ]
+    },
+    "logs": [
+      "[fetch] http ���ݲ���/���ƿտǣ����� playwright: https://www.cnxz.com.cn/"
+    ],
+    "list_methods": [
+      {
+        "media": "徐州广播电视台",
+        "url": "https://www.cnxz.com.cn/",
+        "method": "playwright",
+        "http_links": 0,
+        "pw_links": 0,
+        "ts": 1790216825.1757889
+      },
+      {
+        "media": "徐州广播电视台",
+        "url": "https://www.cnxz.com.cn/",
+        "method": "playwright",
+        "http_links": 0,
+        "pw_links": 0,
+        "ts": 1790216941.767262
+      },
+      {
+        "media": "徐州广播电视台",
+        "url": "https://www.cnxz.com.cn/",
+        "method": "playwright",
+        "http_links": 0,
+        "pw_links": 0,
+        "ts": 1790217185.5570502
+      }
+    ],
+    "detail_errors": [],
+    "category": "列表页解析失败"
+  },
+  {
+    "media": "内蒙古广播电视台",
+    "steps": 3,
+    "source_ids": [
+      "e86e123c-7822-4902-865e-2a0cf80295ef"
+    ],
+    "config": {
+      "media": "内蒙古广播电视台",
+      "business": [
+        "news_lead"
+      ],
+      "enabled": true,
+      "source_type": "官方网站",
+      "scraper": "generic",
+      "entry_urls": [
+        "https://www.nmtv.cn/"
+      ]
+    },
+    "logs": [
+      "[fetch] http ���ݲ���/���ƿտǣ����� playwright: https://www.nmtv.cn/"
+    ],
+    "list_methods": [
+      {
+        "media": "内蒙古广播电视台",
+        "url": "https://www.nmtv.cn/",
+        "method": "playwright",
+        "http_links": 0,
+        "pw_links": 0,
+        "ts": 1790216832.6995637
+      },
+      {
+        "media": "内蒙古广播电视台",
+        "url": "https://www.nmtv.cn/",
+        "method": "playwright",
+        "http_links": 0,
+        "pw_links": 0,
+        "ts": 1790216833.2298207
+      },
+      {
+        "media": "内蒙古广播电视台",
+        "url": "https://www.nmtv.cn/",
+        "method": "playwright",
+        "http_links": 0,
+        "pw_links": 0,
+        "ts": 1790216852.1513383
+      }
+    ],
+    "detail_errors": [],
+    "category": "列表页解析失败"
+  },
+  {
+    "media": "吉林日报",
+    "steps": 2,
+    "source_ids": [
+      "2655bafd-fe9f-4353-8e35-a3690ee63d8c"
+    ],
+    "config": {
+      "media": "吉林日报",
+      "business": [
+        "news_lead"
+      ],
+      "enabled": true,
+      "source_type": "官方网站",
+      "scraper": "generic",
+      "entry_urls": [
+        "https://www.jlrb.com.cn/"
+      ]
+    },
+    "logs": [
+      "[fetch] http ʧ�ܣ�׼�� playwright: https://www.jlrb.com.cn/ -> ",
+      "[generic] �б�ҳʧ�� https://www.jlrb.com.cn/: Page.goto: net::ERR_CONNECTION_CLOSED at https://www.jlrb.com.cn/"
+    ],
+    "list_methods": [],
+    "detail_errors": [],
+    "category": "网络/TLS/超时"
+  },
+  {
+    "media": "江西日报",
+    "steps": 3,
+    "source_ids": [
+      "7ee70b31-16b2-4c3a-b11d-dfca44c2b711"
+    ],
+    "config": {
+      "media": "江西日报",
+      "business": [
+        "news_lead"
+      ],
+      "enabled": true,
+      "source_type": "官方网站",
+      "scraper": "generic",
+      "entry_urls": [
+        "https://www.jxxw.com.cn/"
+      ]
+    },
+    "logs": [
+      "[fetch] http ʧ�ܣ�׼�� playwright: https://www.jxxw.com.cn/ -> ",
+      "[generic] �б�ҳʧ�� https://www.jxxw.com.cn/: Page.goto: Timeout 15000ms exceeded."
+    ],
+    "list_methods": [],
+    "detail_errors": [],
+    "category": "网络/TLS/超时"
+  },
+  {
+    "media": "辽宁广播电视台",
+    "steps": 2,
+    "source_ids": [
+      "dd9ffcbc-7720-44a3-a217-8122c6ade043"
+    ],
+    "config": {
+      "media": "辽宁广播电视台",
+      "business": [
+        "news_lead"
+      ],
+      "enabled": true,
+      "source_type": "官方网站",
+      "scraper": "generic",
+      "entry_urls": [
+        "https://www.lntv.cn/"
+      ]
+    },
+    "logs": [
+      "[fetch] http ʧ�ܣ�׼�� playwright: https://www.lntv.cn/ -> ",
+      "[generic] �б�ҳʧ�� https://www.lntv.cn/: Page.goto: net::ERR_CONNECTION_CLOSED at https://www.lntv.cn/"
+    ],
+    "list_methods": [],
+    "detail_errors": [],
+    "category": "网络/TLS/超时"
+  },
+  {
+    "media": "广西日报",
+    "steps": 2,
+    "source_ids": [
+      "489dda1a-b77b-4a4c-993e-b1c6dd9ae603"
+    ],
+    "config": {
+      "media": "广西日报",
+      "business": [
+        "news_lead"
+      ],
+      "enabled": true,
+      "source_type": "官方网站",
+      "scraper": "generic",
+      "entry_urls": [
+        "https://www.gxnews.com.cn/"
+      ]
+    },
+    "logs": [
+      "[fetch] http ʧ�ܣ�׼�� playwright: https://www.gxnews.com.cn/ -> Client error '412 Precondition Failed' for url 'https://www.gxnews.com.cn/'"
+    ],
+    "list_methods": [
+      {
+        "media": "广西日报",
+        "url": "https://www.gxnews.com.cn/",
+        "method": "playwright",
+        "http_links": 0,
+        "pw_links": 0,
+        "ts": 1790216911.6984549
+      },
+      {
+        "media": "广西日报",
+        "url": "https://www.gxnews.com.cn/",
+        "method": "playwright",
+        "http_links": 0,
+        "pw_links": 0,
+        "ts": 1790216983.4967127
+      }
+    ],
+    "detail_errors": [],
+    "category": "WAF/403/412/反爬"
+  },
+  {
+    "media": "常德市广播电视台",
+    "steps": 2,
+    "source_ids": [
+      "390ff44f-77d4-4610-891b-af5acfbe86ad"
+    ],
+    "config": {
+      "media": "常德市广播电视台",
+      "business": [
+        "news_lead"
+      ],
+      "enabled": true,
+      "source_type": "官方网站",
+      "scraper": "generic",
+      "entry_urls": [
+        "https://www.cdyy.com/"
+      ]
+    },
+    "logs": [
+      "[fetch] http ʧ�ܣ�׼�� playwright: https://www.cdyy.com/ -> [SSL: CERTIFICATE_VERIFY_FAILED] certificate verify failed: unable to get local issuer certificate (_ssl.c:1032)"
+    ],
+    "list_methods": [
+      {
+        "media": "常德市广播电视台",
+        "url": "https://www.cdyy.com/",
+        "method": "playwright",
+        "http_links": 0,
+        "pw_links": 0,
+        "ts": 1790216934.236578
+      },
+      {
+        "media": "常德市广播电视台",
+        "url": "https://www.cdyy.com/",
+        "method": "playwright",
+        "http_links": 0,
+        "pw_links": 0,
+        "ts": 1790217186.5812545
+      }
+    ],
+    "detail_errors": [],
+    "category": "列表页解析失败"
+  },
+  {
+    "media": "辽宁日报",
+    "steps": 3,
+    "source_ids": [
+      "c0dad72d-5215-493a-a9c5-0bff27c90ce2"
+    ],
+    "config": {
+      "media": "辽宁日报",
+      "business": [
+        "news_lead"
+      ],
+      "enabled": true,
+      "source_type": "官方网站",
+      "scraper": "generic",
+      "entry_urls": [
+        "https://www.lnrb.com.cn/"
+      ]
+    },
+    "logs": [
+      "[fetch] http ʧ�ܣ�׼�� playwright: https://www.lnrb.com.cn/ -> ",
+      "[generic] �б�ҳʧ�� https://www.lnrb.com.cn/: Page.goto: net::ERR_CONNECTION_CLOSED at https://www.lnrb.com.cn/"
+    ],
+    "list_methods": [],
+    "detail_errors": [],
+    "category": "网络/TLS/超时"
+  },
+  {
+    "media": "西藏广播电视台",
+    "steps": 3,
+    "source_ids": [
+      "6379d28d-501c-46ce-a819-6b7bb0d0e4fb"
+    ],
+    "config": {
+      "media": "西藏广播电视台",
+      "business": [
+        "news_lead"
+      ],
+      "enabled": true,
+      "source_type": "官方网站",
+      "scraper": "generic",
+      "entry_urls": [
+        "https://www.xzrtv.com/"
+      ]
+    },
+    "logs": [
+      "[fetch] http ʧ�ܣ�׼�� playwright: https://www.xzrtv.com/ -> ",
+      "[generic] �б�ҳʧ�� https://www.xzrtv.com/: Page.goto: net::ERR_CONNECTION_CLOSED at https://www.xzrtv.com/"
+    ],
+    "list_methods": [],
+    "detail_errors": [],
+    "category": "网络/TLS/超时"
+  },
+  {
+    "media": "天津海河传媒中心（天津广播电视台）",
+    "steps": 2,
+    "source_ids": [
+      "7420743f-1e4b-4b4d-895e-dd40d50e1ca2"
+    ],
+    "config": {
+      "media": "天津海河传媒中心（天津广播电视台）",
+      "business": [
+        "news_lead"
+      ],
+      "enabled": true,
+      "source_type": "官方网站",
+      "scraper": "generic",
+      "entry_urls": [
+        "https://www.tjrm.cn/"
+      ]
+    },
+    "logs": [],
+    "list_methods": [
+      {
+        "media": "天津海河传媒中心（天津广播电视台）",
+        "url": "https://www.tjrm.cn/",
+        "method": "http",
+        "http_links": 0,
+        "pw_links": 0,
+        "ts": 1790216949.050807
+      },
+      {
+        "media": "天津海河传媒中心（天津广播电视台）",
+        "url": "https://www.tjrm.cn/",
+        "method": "http",
+        "http_links": 0,
+        "pw_links": 0,
+        "ts": 1790217365.0131164
+      }
+    ],
+    "detail_errors": [],
+    "category": "列表页解析失败"
+  },
+  {
+    "media": "贵州日报",
+    "steps": 2,
+    "source_ids": [
+      "146ffa8d-5d80-40c2-9b5b-b1596777b76f"
+    ],
+    "config": {
+      "media": "贵州日报",
+      "business": [
+        "news_lead"
+      ],
+      "enabled": true,
+      "source_type": "官方网站",
+      "scraper": "generic",
+      "entry_urls": [
+        "https://www.gznews.com.cn/"
+      ]
+    },
+    "logs": [
+      "[fetch] http ʧ�ܣ�׼�� playwright: https://www.gznews.com.cn/ -> ",
+      "[generic] �б�ҳʧ�� https://www.gznews.com.cn/: Page.goto: net::ERR_CONNECTION_CLOSED at https://www.gznews.com.cn/"
+    ],
+    "list_methods": [],
+    "detail_errors": [],
+    "category": "网络/TLS/超时"
+  },
+  {
+    "media": "福建日报",
+    "steps": 3,
+    "source_ids": [
+      "ccef2051-e3ca-4f49-95df-67d5d0c3ec45"
+    ],
+    "config": {
+      "media": "福建日报",
+      "business": [
+        "news_lead"
+      ],
+      "enabled": true,
+      "source_type": "官方网站",
+      "scraper": "generic",
+      "entry_urls": [
+        "https://www.fjdaily.com/"
+      ]
+    },
+    "logs": [
+      "[fetch] http ���ݲ���/���ƿտǣ����� playwright: https://www.fjdaily.com/"
+    ],
+    "list_methods": [
+      {
+        "media": "福建日报",
+        "url": "https://www.fjdaily.com/",
+        "method": "playwright",
+        "http_links": 0,
+        "pw_links": 0,
+        "ts": 1790216947.4043555
+      },
+      {
+        "media": "福建日报",
+        "url": "https://www.fjdaily.com/",
+        "method": "playwright",
+        "http_links": 0,
+        "pw_links": 0,
+        "ts": 1790216965.6641996
+      },
+      {
+        "media": "福建日报",
+        "url": "https://www.fjdaily.com/",
+        "method": "playwright",
+        "http_links": 0,
+        "pw_links": 0,
+        "ts": 1790217218.9699297
+      }
+    ],
+    "detail_errors": [],
+    "category": "列表页解析失败"
+  },
+  {
+    "media": "泰州广播电视台",
+    "steps": 2,
+    "source_ids": [],
+    "config": null,
+    "logs": [],
+    "list_methods": [],
+    "detail_errors": [],
+    "category": "其他：未注册抓取配置"
+  },
+  {
+    "media": "青海广播电视台",
+    "steps": 2,
+    "source_ids": [],
+    "config": null,
+    "logs": [],
+    "list_methods": [],
+    "detail_errors": [],
+    "category": "其他：未注册抓取配置"
+  },
+  {
+    "media": "中国日报",
+    "steps": 1,
+    "source_ids": [],
+    "config": null,
+    "logs": [],
+    "list_methods": [],
+    "detail_errors": [],
+    "category": "其他：未注册抓取配置"
+  },
+  {
+    "media": "河南日报",
+    "steps": 1,
+    "source_ids": [],
+    "config": null,
+    "logs": [],
+    "list_methods": [],
+    "detail_errors": [],
+    "category": "其他：未注册抓取配置"
+  },
+  {
+    "media": "温州市新闻传媒中心",
+    "steps": 2,
+    "source_ids": [],
+    "config": null,
+    "logs": [],
+    "list_methods": [],
+    "detail_errors": [],
+    "category": "其他：未注册抓取配置"
+  },
+  {
+    "media": "浙江广播电视集团",
+    "steps": 3,
+    "source_ids": [
+      "f97647fa-df82-4761-8b24-123b991c1520"
+    ],
+    "config": {
+      "media": "浙江广播电视集团",
+      "business": [
+        "news_lead"
+      ],
+      "enabled": true,
+      "source_type": "官方网站",
+      "scraper": "generic",
+      "entry_urls": [
+        "https://www.zjol.com.cn/"
+      ]
+    },
+    "logs": [
+      "[fetch] http ���ݲ���/���ƿտǣ����� playwright: https://www.zjol.com.cn/",
+      "[fetch] http ���ݲ���/���ƿտǣ����� playwright: https://www.zjol.com.cn/05zjol/system/2013/06/08/019394427.shtml"
+    ],
+    "list_methods": [
+      {
+        "media": "浙江广播电视集团",
+        "url": "https://www.zjol.com.cn/",
+        "method": "playwright",
+        "http_links": 1,
+        "pw_links": 1,
+        "ts": 1790217000.3716054
+      },
+      {
+        "media": "浙江广播电视集团",
+        "url": "https://www.zjol.com.cn/",
+        "method": "playwright",
+        "http_links": 1,
+        "pw_links": 1,
+        "ts": 1790217023.2642202
+      },
+      {
+        "media": "浙江广播电视集团",
+        "url": "https://www.zjol.com.cn/",
+        "method": "playwright",
+        "http_links": 1,
+        "pw_links": 1,
+        "ts": 1790217452.3987794
+      }
+    ],
+    "detail_errors": [
+      {
+        "stage": "detail",
+        "url": "https://www.zjol.com.cn/05zjol/system/2013/06/08/019394427.shtml",
+        "reason": "Page.goto: Timeout 15000ms exceeded.\nCall log:\n  - navigating to \"https://www.zjol.com.cn/05zjol/system/2013/06/08/019394427.shtml\", waiting until \"networkidle\"\n"
+      },
+      {
+        "stage": "detail",
+        "url": "https://www.zjol.com.cn/05zjol/system/2013/06/08/019394427.shtml",
+        "reason": "Page.goto: Timeout 15000ms exceeded.\nCall log:\n  - navigating to \"https://www.zjol.com.cn/05zjol/system/2013/06/08/019394427.shtml\", waiting until \"networkidle\"\n"
+      },
+      {
+        "stage": "detail",
+        "url": "https://www.zjol.com.cn/05zjol/system/2013/06/08/019394427.shtml",
+        "reason": "Page.goto: Timeout 15000ms exceeded.\nCall log:\n  - navigating to \"https://www.zjol.com.cn/05zjol/system/2013/06/08/019394427.shtml\", waiting until \"networkidle\"\n"
+      }
+    ],
+    "category": "网络/TLS/超时"
+  },
+  {
+    "media": "广东广播电视台",
+    "steps": 2,
+    "source_ids": [
+      "e36d5e3a-7169-4f4f-bbba-144ba1e57e35"
+    ],
+    "config": {
+      "media": "广东广播电视台",
+      "business": [
+        "news_lead"
+      ],
+      "enabled": true,
+      "source_type": "官方网站",
+      "scraper": "generic",
+      "entry_urls": [
+        "https://www.tvs.cn/"
+      ]
+    },
+    "logs": [
+      "[fetch] http ʧ�ܣ�׼�� playwright: https://www.tvs.cn/ -> ",
+      "[generic] �б�ҳʧ�� https://www.tvs.cn/: Page.goto: net::ERR_CONNECTION_CLOSED at https://www.tvs.cn/"
+    ],
+    "list_methods": [],
+    "detail_errors": [],
+    "category": "网络/TLS/超时"
+  },
+  {
+    "media": "锡林郭勒盟日报",
+    "steps": 2,
+    "source_ids": [],
+    "config": null,
+    "logs": [],
+    "list_methods": [],
+    "detail_errors": [],
+    "category": "其他：未注册抓取配置"
+  },
+  {
+    "media": "榆林日报",
+    "steps": 2,
+    "source_ids": [],
+    "config": null,
+    "logs": [],
+    "list_methods": [],
+    "detail_errors": [],
+    "category": "其他：未注册抓取配置"
+  },
+  {
+    "media": "湄洲日报",
+    "steps": 2,
+    "source_ids": [],
+    "config": null,
+    "logs": [],
+    "list_methods": [],
+    "detail_errors": [],
+    "category": "其他：未注册抓取配置"
+  },
+  {
+    "media": "重庆广播电视集团",
+    "steps": 2,
+    "source_ids": [],
+    "config": null,
+    "logs": [],
+    "list_methods": [],
+    "detail_errors": [],
+    "category": "其他：未注册抓取配置"
+  },
+  {
+    "media": "四川日报",
+    "steps": 2,
+    "source_ids": [],
+    "config": null,
+    "logs": [],
+    "list_methods": [],
+    "detail_errors": [],
+    "category": "其他：未注册抓取配置"
+  },
+  {
+    "media": "长沙晚报社",
+    "steps": 2,
+    "source_ids": [],
+    "config": null,
+    "logs": [],
+    "list_methods": [],
+    "detail_errors": [],
+    "category": "其他：未注册抓取配置"
+  },
+  {
+    "media": "承德广播电视台",
+    "steps": 2,
+    "source_ids": [],
+    "config": null,
+    "logs": [],
+    "list_methods": [],
+    "detail_errors": [],
+    "category": "其他：未注册抓取配置"
+  },
+  {
+    "media": "贵州广播电视台",
+    "steps": 2,
+    "source_ids": [],
+    "config": null,
+    "logs": [],
+    "list_methods": [],
+    "detail_errors": [],
+    "category": "其他：未注册抓取配置"
+  },
+  {
+    "media": "黑龙江广播电视台",
+    "steps": 3,
+    "source_ids": [
+      "21c0bd38-4146-40f6-8c10-2c46d51ff29b"
+    ],
+    "config": {
+      "media": "黑龙江广播电视台",
+      "business": [
+        "news_lead"
+      ],
+      "enabled": true,
+      "source_type": "官方网站",
+      "scraper": "generic",
+      "entry_urls": [
+        "https://www.hljtv.com/"
+      ]
+    },
+    "logs": [],
+    "list_methods": [
+      {
+        "media": "黑龙江广播电视台",
+        "url": "https://www.hljtv.com/",
+        "method": "http",
+        "http_links": 0,
+        "pw_links": 0,
+        "ts": 1790217070.022116
+      },
+      {
+        "media": "黑龙江广播电视台",
+        "url": "https://www.hljtv.com/",
+        "method": "http",
+        "http_links": 0,
+        "pw_links": 0,
+        "ts": 1790217090.115393
+      },
+      {
+        "media": "黑龙江广播电视台",
+        "url": "https://www.hljtv.com/",
+        "method": "http",
+        "http_links": 0,
+        "pw_links": 0,
+        "ts": 1790217327.5558157
+      }
+    ],
+    "detail_errors": [],
+    "category": "列表页解析失败"
+  },
+  {
+    "media": "湖南广播电视台",
+    "steps": 2,
+    "source_ids": [
+      "ede21331-8dd4-485c-9cff-5e6e75f8218d"
+    ],
+    "config": {
+      "media": "湖南广播电视台",
+      "business": [
+        "news_lead"
+      ],
+      "enabled": true,
+      "source_type": "官方网站",
+      "scraper": "generic",
+      "entry_urls": [
+        "https://www.hunantv.com/"
+      ]
+    },
+    "logs": [
+      "[fetch] http ���ݲ���/���ƿտǣ����� playwright: https://www.hunantv.com/"
+    ],
+    "list_methods": [
+      {
+        "media": "湖南广播电视台",
+        "url": "https://www.hunantv.com/",
+        "method": "playwright",
+        "http_links": 0,
+        "pw_links": 0,
+        "ts": 1790217088.973699
+      },
+      {
+        "media": "湖南广播电视台",
+        "url": "https://www.hunantv.com/",
+        "method": "playwright",
+        "http_links": 0,
+        "pw_links": 0,
+        "ts": 1790217218.9221213
+      }
+    ],
+    "detail_errors": [],
+    "category": "列表页解析失败"
+  },
+  {
+    "media": "广西广播电视台",
+    "steps": 3,
+    "source_ids": [
+      "5648f0b2-41b8-4767-bc7c-97ec35754f5f"
+    ],
+    "config": {
+      "media": "广西广播电视台",
+      "business": [
+        "news_lead"
+      ],
+      "enabled": true,
+      "source_type": "官方网站",
+      "scraper": "generic",
+      "entry_urls": [
+        "https://www.gxtv.cn/"
+      ]
+    },
+    "logs": [
+      "[fetch] http ���ݲ���/���ƿտǣ����� playwright: https://www.gxtv.cn/web/xukezheng/xukezheng.html",
+      "[fetch] http ���ݲ���/���ƿտǣ����� playwright: https://www.gxtv.cn/web/xukezheng/hlwxkz.html",
+      "[fetch] http ���ݲ���/���ƿտǣ����� playwright: https://www.gxtv.cn/"
+    ],
+    "list_methods": [
+      {
+        "media": "广西广播电视台",
+        "url": "https://www.gxtv.cn/",
+        "method": "playwright",
+        "http_links": 0,
+        "pw_links": 2,
+        "ts": 1790217091.476674
+      },
+      {
+        "media": "广西广播电视台",
+        "url": "https://www.gxtv.cn/",
+        "method": "playwright",
+        "http_links": 2,
+        "pw_links": 2,
+        "ts": 1790217139.637611
+      },
+      {
+        "media": "广西广播电视台",
+        "url": "https://www.gxtv.cn/",
+        "method": "playwright",
+        "http_links": 2,
+        "pw_links": 2,
+        "ts": 1790217184.7313673
+      }
+    ],
+    "detail_errors": [
+      {
+        "stage": "detail",
+        "url": "https://www.gxtv.cn/web/xukezheng/xukezheng.html",
+        "reason": "Missing title or substantive body"
+      },
+      {
+        "stage": "detail",
+        "url": "https://www.gxtv.cn/web/xukezheng/hlwxkz.html",
+        "reason": "Missing title or substantive body"
+      },
+      {
+        "stage": "detail",
+        "url": "https://www.gxtv.cn/web/xukezheng/xukezheng.html",
+        "reason": "Missing title or substantive body"
+      },
+      {
+        "stage": "detail",
+        "url": "https://www.gxtv.cn/web/xukezheng/hlwxkz.html",
+        "reason": "Missing title or substantive body"
+      },
+      {
+        "stage": "detail",
+        "url": "https://www.gxtv.cn/web/xukezheng/xukezheng.html",
+        "reason": "Missing title or substantive body"
+      },
+      {
+        "stage": "detail",
+        "url": "https://www.gxtv.cn/web/xukezheng/hlwxkz.html",
+        "reason": "Missing title or substantive body"
+      }
+    ],
+    "category": "数据格式/无效文章"
+  },
+  {
+    "media": "中国青年报",
+    "steps": 2,
+    "source_ids": [
+      "89518fc7-1fca-49f6-9125-506ebc5be8d4"
+    ],
+    "config": {
+      "media": "中国青年报",
+      "business": [
+        "news_lead"
+      ],
+      "enabled": true,
+      "source_type": "官方网站",
+      "scraper": "generic",
+      "entry_urls": [
+        "https://www.cyol.com/"
+      ]
+    },
+    "logs": [],
+    "list_methods": [
+      {
+        "media": "中国青年报",
+        "url": "https://www.cyol.com/",
+        "method": "playwright",
+        "http_links": 0,
+        "pw_links": 3,
+        "ts": 1790217141.110661
+      },
+      {
+        "media": "中国青年报",
+        "url": "https://www.cyol.com/",
+        "method": "playwright",
+        "http_links": 0,
+        "pw_links": 3,
+        "ts": 1790217359.5918884
+      }
+    ],
+    "detail_errors": [
+      {
+        "stage": "detail",
+        "url": "http://www.cyol.com/home/xukezheng.htm",
+        "reason": "Missing title or substantive body"
+      },
+      {
+        "stage": "detail",
+        "url": "http://www.cyol.com/home/xukezheng.htm",
+        "reason": "Missing title or substantive body"
+      }
+    ],
+    "category": "数据格式/无效文章"
+  },
+  {
+    "media": "珠海广播电视台",
+    "steps": 2,
+    "source_ids": [
+      "074a1b73-874f-4145-9729-e90541e7d20a"
+    ],
+    "config": {
+      "media": "珠海广播电视台",
+      "business": [
+        "news_lead"
+      ],
+      "enabled": true,
+      "source_type": "官方网站",
+      "scraper": "generic",
+      "entry_urls": [
+        "https://www.zhtv.com/"
+      ]
+    },
+    "logs": [
+      "[fetch] http ʧ�ܣ�׼�� playwright: https://www.zhtv.com/ -> ",
+      "[generic] �б�ҳʧ�� https://www.zhtv.com/: Page.goto: net::ERR_CONNECTION_CLOSED at https://www.zhtv.com/"
+    ],
+    "list_methods": [],
+    "detail_errors": [],
+    "category": "网络/TLS/超时"
+  },
+  {
+    "media": "中国航天报",
+    "steps": 2,
+    "source_ids": [
+      "6bcbd9b0-26a7-470a-a827-21d33bf685d0"
+    ],
+    "config": {
+      "media": "中国航天报",
+      "business": [
+        "news_lead"
+      ],
+      "enabled": true,
+      "source_type": "官方网站",
+      "scraper": "generic",
+      "entry_urls": [
+        "https://www.spacechina.com/"
+      ]
+    },
+    "logs": [
+      "[fetch] http ���ݲ���/���ƿտǣ����� playwright: https://www.spacechina.com/",
+      "[fetch] http ʧ�ܣ�׼�� playwright: https://www.spacechina.com/n1995122/n1996795/index.html -> Client error '404 Not Found' for url 'https://www.spacechina.com/n1995122/n1996795/index.html'",
+      "[fetch] http ʧ�ܣ�׼�� playwright: https://www.spacechina.com/n2014789/n2414549/c4714952/content.html -> Client error '404 Not Found' for url 'https://www.spacechina.com/n2014789/n2414549/c4714952/content.html'",
+      "[fetch] http ʧ�ܣ�׼�� playwright: https://www.spacechina.com/n2014789/n2414549/c4713696/content.html -> Client error '404 Not Found' for url 'https://www.spacechina.com/n2014789/n2414549/c4713696/content.html'",
+      "[fetch] http ʧ�ܣ�׼�� playwright: https://www.spacechina.com/n2014789/n2414549/c4709487/content.html -> Client error '404 Not Found' for url 'https://www.spacechina.com/n2014789/n2414549/c4709487/content.html'",
+      "[fetch] http ʧ�ܣ�׼�� playwright: https://www.spacechina.com/n2014789/n2888836/c4714965/content.html -> Client error '404 Not Found' for url 'https://www.spacechina.com/n2014789/n2888836/c4714965/content.html'",
+      "[fetch] http ʧ�ܣ�׼�� playwright: https://www.spacechina.com/n2014789/n2888836/c4709996/content.html -> Client error '404 Not Found' for url 'https://www.spacechina.com/n2014789/n2888836/c4709996/content.html'",
+      "[fetch] http ʧ�ܣ�׼�� playwright: https://www.spacechina.com/n2014789/n2888836/c4707732/content.html -> Client error '404 Not Found' for url 'https://www.spacechina.com/n2014789/n2888836/c4707732/content.html'",
+      "[fetch] http ʧ�ܣ�׼�� playwright: https://www.spacechina.com/n2014789/n2888836/c4707289/content.html -> Client error '404 Not Found' for url 'https://www.spacechina.com/n2014789/n2888836/c4707289/content.html'",
+      "[fetch] http ʧ�ܣ�׼�� playwright: https://www.spacechina.com/n2014789/n2888836/c4703503/content.html -> Client error '404 Not Found' for url 'https://www.spacechina.com/n2014789/n2888836/c4703503/content.html'",
+      "[fetch] http ʧ�ܣ�׼�� playwright: https://www.spacechina.com/n2014789/n2014819/c4452901/content.html -> Client error '404 Not Found' for url 'https://www.spacechina.com/n2014789/n2014819/c4452901/content.html'"
+    ],
+    "list_methods": [
+      {
+        "media": "中国航天报",
+        "url": "https://www.spacechina.com/",
+        "method": "playwright",
+        "http_links": 33,
+        "pw_links": 33,
+        "ts": 1790217239.6746755
+      },
+      {
+        "media": "中国航天报",
+        "url": "https://www.spacechina.com/",
+        "method": "playwright",
+        "http_links": 33,
+        "pw_links": 33,
+        "ts": 1790217364.695371
+      }
+    ],
+    "detail_errors": [
+      {
+        "stage": "detail",
+        "url": "https://www.spacechina.com/n1995122/n1996795/index.html",
+        "reason": "Missing title or substantive body"
+      },
+      {
+        "stage": "detail",
+        "url": "https://www.spacechina.com/n2014789/n2414549/c4714952/content.html",
+        "reason": "Missing title or substantive body"
+      },
+      {
+        "stage": "detail",
+        "url": "https://www.spacechina.com/n2014789/n2414549/c4713696/content.html",
+        "reason": "Missing title or substantive body"
+      },
+      {
+        "stage": "detail",
+        "url": "https://www.spacechina.com/n2014789/n2414549/c4709487/content.html",
+        "reason": "Missing title or substantive body"
+      },
+      {
+        "stage": "detail",
+        "url": "https://www.spacechina.com/n2014789/n2888836/c4714965/content.html",
+        "reason": "Missing title or substantive body"
+      },
+      {
+        "stage": "detail",
+        "url": "https://www.spacechina.com/n2014789/n2888836/c4709996/content.html",
+        "reason": "Missing title or substantive body"
+      },
+      {
+        "stage": "detail",
+        "url": "https://www.spacechina.com/n2014789/n2888836/c4707732/content.html",
+        "reason": "Missing title or substantive body"
+      },
+      {
+        "stage": "detail",
+        "url": "https://www.spacechina.com/n2014789/n2888836/c4707289/content.html",
+        "reason": "Missing title or substantive body"
+      },
+      {
+        "stage": "detail",
+        "url": "https://www.spacechina.com/n2014789/n2888836/c4703503/content.html",
+        "reason": "Missing title or substantive body"
+      },
+      {
+        "stage": "detail",
+        "url": "https://www.spacechina.com/n2014789/n2014819/c4452901/content.html",
+        "reason": "Missing title or substantive body"
+      },
+      {
+        "stage": "detail",
+        "url": "https://www.spacechina.com/n1995122/n1996795/index.html",
+        "reason": "Missing title or substantive body"
+      },
+      {
+        "stage": "detail",
+        "url": "https://www.spacechina.com/n2014789/n2414549/c4714952/content.html",
+        "reason": "Missing title or substantive body"
+      },
+      {
+        "stage": "detail",
+        "url": "https://www.spacechina.com/n2014789/n2414549/c4713696/content.html",
+        "reason": "Missing title or substantive body"
+      },
+      {
+        "stage": "detail",
+        "url": "https://www.spacechina.com/n2014789/n2414549/c4709487/content.html",
+        "reason": "Missing title or substantive body"
+      },
+      {
+        "stage": "detail",
+        "url": "https://www.spacechina.com/n2014789/n2888836/c4714965/content.html",
+        "reason": "Missing title or substantive body"
+      },
+      {
+        "stage": "detail",
+        "url": "https://www.spacechina.com/n2014789/n2888836/c4709996/content.html",
+        "reason": "Missing title or substantive body"
+      },
+      {
+        "stage": "detail",
+        "url": "https://www.spacechina.com/n2014789/n2888836/c4707732/content.html",
+        "reason": "Missing title or substantive body"
+      },
+      {
+        "stage": "detail",
+        "url": "https://www.spacechina.com/n2014789/n2888836/c4707289/content.html",
+        "reason": "Missing title or substantive body"
+      },
+      {
+        "stage": "detail",
+        "url": "https://www.spacechina.com/n2014789/n2888836/c4703503/content.html",
+        "reason": "Missing title or substantive body"
+      },
+      {
+        "stage": "detail",
+        "url": "https://www.spacechina.com/n2014789/n2014819/c4452901/content.html",
+        "reason": "Missing title or substantive body"
+      }
+    ],
+    "category": "URL/入口错误"
+  },
+  {
+    "media": "东莞广播电视台",
+    "steps": 3,
+    "source_ids": [
+      "415535c6-0280-44a5-8aed-ed5dd01c4819"
+    ],
+    "config": {
+      "media": "东莞广播电视台",
+      "business": [
+        "news_lead"
+      ],
+      "enabled": true,
+      "source_type": "官方网站",
+      "scraper": "generic",
+      "entry_urls": [
+        "https://www.sun0769.com/"
+      ]
+    },
+    "logs": [],
+    "list_methods": [
+      {
+        "media": "东莞广播电视台",
+        "url": "https://www.sun0769.com/",
+        "method": "http",
+        "http_links": 0,
+        "pw_links": 0,
+        "ts": 1790217327.320601
+      },
+      {
+        "media": "东莞广播电视台",
+        "url": "https://www.sun0769.com/",
+        "method": "http",
+        "http_links": 0,
+        "pw_links": 0,
+        "ts": 1790217342.048737
+      },
+      {
+        "media": "东莞广播电视台",
+        "url": "https://www.sun0769.com/",
+        "method": "http",
+        "http_links": 0,
+        "pw_links": 0,
+        "ts": 1790217346.5726578
+      }
+    ],
+    "detail_errors": [],
+    "category": "列表页解析失败"
+  },
+  {
+    "media": "中国纪检监察报",
+    "steps": 1,
+    "source_ids": [],
+    "config": null,
+    "logs": [],
+    "list_methods": [],
+    "detail_errors": [],
+    "category": "其他：未注册抓取配置"
+  },
+  {
+    "media": "沈阳日报",
+    "steps": 2,
+    "source_ids": [],
+    "config": null,
+    "logs": [],
+    "list_methods": [],
+    "detail_errors": [],
+    "category": "其他：未注册抓取配置"
+  },
+  {
+    "media": "福州日报社",
+    "steps": 2,
+    "source_ids": [],
+    "config": null,
+    "logs": [],
+    "list_methods": [],
+    "detail_errors": [],
+    "category": "其他：未注册抓取配置"
+  },
+  {
+    "media": "陕西日报",
+    "steps": 2,
+    "source_ids": [],
+    "config": null,
+    "logs": [],
+    "list_methods": [],
+    "detail_errors": [],
+    "category": "其他：未注册抓取配置"
+  },
+  {
+    "media": "北京日报",
+    "steps": 2,
+    "source_ids": [],
+    "config": null,
+    "logs": [],
+    "list_methods": [],
+    "detail_errors": [],
+    "category": "其他：未注册抓取配置"
+  },
+  {
+    "media": "吐鲁番日报",
+    "steps": 2,
+    "source_ids": [],
+    "config": null,
+    "logs": [],
+    "list_methods": [],
+    "detail_errors": [],
+    "category": "其他：未注册抓取配置"
+  },
+  {
+    "media": "中国新闻社",
+    "steps": 2,
+    "source_ids": [],
+    "config": null,
+    "logs": [],
+    "list_methods": [],
+    "detail_errors": [],
+    "category": "其他：未注册抓取配置"
+  },
+  {
+    "media": "求是",
+    "steps": 2,
+    "source_ids": [],
+    "config": null,
+    "logs": [],
+    "list_methods": [],
+    "detail_errors": [],
+    "category": "其他：未注册抓取配置"
+  },
+  {
+    "media": "学习时报",
+    "steps": 2,
+    "source_ids": [],
+    "config": null,
+    "logs": [],
+    "list_methods": [],
+    "detail_errors": [],
+    "category": "其他：未注册抓取配置"
+  },
+  {
+    "media": "中央广播电视总台",
+    "steps": 2,
+    "source_ids": [],
+    "config": null,
+    "logs": [],
+    "list_methods": [],
+    "detail_errors": [],
+    "category": "其他：未注册抓取配置"
+  },
+  {
+    "media": "河北广播电视台",
+    "steps": 2,
+    "source_ids": [],
+    "config": null,
+    "logs": [],
+    "list_methods": [],
+    "detail_errors": [],
+    "category": "其他：未注册抓取配置"
+  },
+  {
+    "media": "河北日报",
+    "steps": 2,
+    "source_ids": [],
+    "config": null,
+    "logs": [],
+    "list_methods": [],
+    "detail_errors": [],
+    "category": "其他：未注册抓取配置"
+  },
+  {
+    "media": "山西日报",
+    "steps": 2,
+    "source_ids": [],
+    "config": null,
+    "logs": [],
+    "list_methods": [],
+    "detail_errors": [],
+    "category": "其他：未注册抓取配置"
+  },
+  {
+    "media": "山西广播电视台",
+    "steps": 2,
+    "source_ids": [],
+    "config": null,
+    "logs": [],
+    "list_methods": [],
+    "detail_errors": [],
+    "category": "其他：未注册抓取配置"
+  },
+  {
+    "media": "上海广播电视台",
+    "steps": 2,
+    "source_ids": [],
+    "config": null,
+    "logs": [],
+    "list_methods": [],
+    "detail_errors": [],
+    "category": "其他：未注册抓取配置"
+  },
+  {
+    "media": "新华日报",
+    "steps": 2,
+    "source_ids": [],
+    "config": null,
+    "logs": [],
+    "list_methods": [],
+    "detail_errors": [],
+    "category": "其他：未注册抓取配置"
+  },
+  {
+    "media": "中国江苏网",
+    "steps": 2,
+    "source_ids": [],
+    "config": null,
+    "logs": [],
+    "list_methods": [],
+    "detail_errors": [],
+    "category": "其他：未注册抓取配置"
+  },
+  {
+    "media": "江西广播电视台",
+    "steps": 2,
+    "source_ids": [],
+    "config": null,
+    "logs": [],
+    "list_methods": [],
+    "detail_errors": [],
+    "category": "其他：未注册抓取配置"
+  },
+  {
+    "media": "安徽广播电视台",
+    "steps": 2,
+    "source_ids": [],
+    "config": null,
+    "logs": [],
+    "list_methods": [],
+    "detail_errors": [],
+    "category": "其他：未注册抓取配置"
+  },
+  {
+    "media": "云南广播电视台",
+    "steps": 2,
+    "source_ids": [],
+    "config": null,
+    "logs": [],
+    "list_methods": [],
+    "detail_errors": [],
+    "category": "其他：未注册抓取配置"
+  },
+  {
+    "media": "宁夏广播电视台",
+    "steps": 2,
+    "source_ids": [],
+    "config": null,
+    "logs": [],
+    "list_methods": [],
+    "detail_errors": [],
+    "category": "其他：未注册抓取配置"
+  },
+  {
+    "media": "苏州日报社",
+    "steps": 2,
+    "source_ids": [],
+    "config": null,
+    "logs": [],
+    "list_methods": [],
+    "detail_errors": [],
+    "category": "其他：未注册抓取配置"
+  },
+  {
+    "media": "无锡日报报业集团",
+    "steps": 2,
+    "source_ids": [],
+    "config": null,
+    "logs": [],
+    "list_methods": [],
+    "detail_errors": [],
+    "category": "其他：未注册抓取配置"
+  },
+  {
+    "media": "青岛日报报业集团",
+    "steps": 2,
+    "source_ids": [],
+    "config": null,
+    "logs": [],
+    "list_methods": [],
+    "detail_errors": [],
+    "category": "其他：未注册抓取配置"
+  },
+  {
+    "media": "科技日报",
+    "steps": 1,
+    "source_ids": [],
+    "config": null,
+    "logs": [],
+    "list_methods": [],
+    "detail_errors": [],
+    "category": "其他：未注册抓取配置"
+  },
+  {
+    "media": "工人日报",
+    "steps": 1,
+    "source_ids": [],
+    "config": null,
+    "logs": [],
+    "list_methods": [],
+    "detail_errors": [],
+    "category": "其他：未注册抓取配置"
+  },
+  {
+    "media": "中国妇女报",
+    "steps": 1,
+    "source_ids": [],
+    "config": null,
+    "logs": [],
+    "list_methods": [],
+    "detail_errors": [],
+    "category": "其他：未注册抓取配置"
+  },
+  {
+    "media": "农民日报",
+    "steps": 1,
+    "source_ids": [],
+    "config": null,
+    "logs": [],
+    "list_methods": [],
+    "detail_errors": [],
+    "category": "其他：未注册抓取配置"
+  },
+  {
+    "media": "澎湃新闻",
+    "steps": 2,
+    "source_ids": [],
+    "config": null,
+    "logs": [],
+    "list_methods": [],
+    "detail_errors": [],
+    "category": "其他：未注册抓取配置"
+  },
+  {
+    "media": "海南广播电视总台",
+    "steps": 2,
+    "source_ids": [],
+    "config": null,
+    "logs": [],
+    "list_methods": [],
+    "detail_errors": [],
+    "category": "其他：未注册抓取配置"
+  },
+  {
+    "media": "光明日报",
+    "steps": 1,
+    "source_ids": [],
+    "config": null,
+    "logs": [],
+    "list_methods": [],
+    "detail_errors": [],
+    "category": "其他：未注册抓取配置"
+  },
+  {
+    "media": "长江日报",
+    "steps": 2,
+    "source_ids": [],
+    "config": null,
+    "logs": [],
+    "list_methods": [],
+    "detail_errors": [],
+    "category": "其他：未注册抓取配置"
+  },
+  {
+    "media": "湖南日报",
+    "steps": 2,
+    "source_ids": [],
+    "config": null,
+    "logs": [],
+    "list_methods": [],
+    "detail_errors": [],
+    "category": "其他：未注册抓取配置"
+  },
+  {
+    "media": "济南广播电视台",
+    "steps": 2,
+    "source_ids": [],
+    "config": null,
+    "logs": [],
+    "list_methods": [],
+    "detail_errors": [],
+    "category": "其他：未注册抓取配置"
+  },
+  {
+    "media": "深圳报业集团",
+    "steps": 2,
+    "source_ids": [],
+    "config": null,
+    "logs": [],
+    "list_methods": [],
+    "detail_errors": [],
+    "category": "其他：未注册抓取配置"
+  },
+  {
+    "media": "重庆日报",
+    "steps": 2,
+    "source_ids": [],
+    "config": null,
+    "logs": [],
+    "list_methods": [],
+    "detail_errors": [],
+    "category": "其他：未注册抓取配置"
+  },
+  {
+    "media": "三峡日报",
+    "steps": 2,
+    "source_ids": [],
+    "config": null,
+    "logs": [],
+    "list_methods": [],
+    "detail_errors": [],
+    "category": "其他：未注册抓取配置"
+  },
+  {
+    "media": "四川广播电视台",
+    "steps": 2,
+    "source_ids": [],
+    "config": null,
+    "logs": [],
+    "list_methods": [],
+    "detail_errors": [],
+    "category": "其他：未注册抓取配置"
+  },
+  {
+    "media": "陕西广播电视台",
+    "steps": 2,
+    "source_ids": [],
+    "config": null,
+    "logs": [],
+    "list_methods": [],
+    "detail_errors": [],
+    "category": "其他：未注册抓取配置"
+  },
+  {
+    "media": "甘肃日报",
+    "steps": 2,
+    "source_ids": [],
+    "config": null,
+    "logs": [],
+    "list_methods": [],
+    "detail_errors": [],
+    "category": "其他：未注册抓取配置"
+  },
+  {
+    "media": "青海日报",
+    "steps": 2,
+    "source_ids": [],
+    "config": null,
+    "logs": [],
+    "list_methods": [],
+    "detail_errors": [],
+    "category": "其他：未注册抓取配置"
+  },
+  {
+    "media": "南京广播电视台",
+    "steps": 2,
+    "source_ids": [],
+    "config": null,
+    "logs": [],
+    "list_methods": [],
+    "detail_errors": [],
+    "category": "其他：未注册抓取配置"
+  },
+  {
+    "media": "苏州广播电视总台",
+    "steps": 2,
+    "source_ids": [],
+    "config": null,
+    "logs": [],
+    "list_methods": [],
+    "detail_errors": [],
+    "category": "其他：未注册抓取配置"
+  },
+  {
+    "media": "宁波日报报业集团",
+    "steps": 2,
+    "source_ids": [],
+    "config": null,
+    "logs": [],
+    "list_methods": [],
+    "detail_errors": [],
+    "category": "其他：未注册抓取配置"
+  },
+  {
+    "media": "合肥报业传媒集团",
+    "steps": 2,
+    "source_ids": [],
+    "config": null,
+    "logs": [],
+    "list_methods": [],
+    "detail_errors": [],
+    "category": "其他：未注册抓取配置"
+  },
+  {
+    "media": "湖北日报",
+    "steps": 2,
+    "source_ids": [],
+    "config": null,
+    "logs": [],
+    "list_methods": [],
+    "detail_errors": [],
+    "category": "其他：未注册抓取配置"
+  },
+  {
+    "media": "三明市融媒体中心",
+    "steps": 2,
+    "source_ids": [],
+    "config": null,
+    "logs": [],
+    "list_methods": [],
+    "detail_errors": [],
+    "category": "其他：未注册抓取配置"
+  },
+  {
+    "media": "浙江日报",
+    "steps": 2,
+    "source_ids": [],
+    "config": null,
+    "logs": [],
+    "list_methods": [],
+    "detail_errors": [],
+    "category": "其他：未注册抓取配置"
+  },
+  {
+    "media": "洛阳广播电视台",
+    "steps": 2,
+    "source_ids": [],
+    "config": null,
+    "logs": [],
+    "list_methods": [],
+    "detail_errors": [],
+    "category": "其他：未注册抓取配置"
+  },
+  {
+    "media": "安徽日报",
+    "steps": 2,
+    "source_ids": [],
+    "config": null,
+    "logs": [],
+    "list_methods": [],
+    "detail_errors": [],
+    "category": "其他：未注册抓取配置"
+  },
+  {
+    "media": "天津海河传媒中心（天津日报）",
+    "steps": 2,
+    "source_ids": [],
+    "config": null,
+    "logs": [],
+    "list_methods": [],
+    "detail_errors": [],
+    "category": "其他：未注册抓取配置"
+  },
+  {
+    "media": "人民政协报",
+    "steps": 2,
+    "source_ids": [],
+    "config": null,
+    "logs": [],
+    "list_methods": [],
+    "detail_errors": [],
+    "category": "其他：未注册抓取配置"
+  },
+  {
+    "media": "经济参考报",
+    "steps": 2,
+    "source_ids": [],
+    "config": null,
+    "logs": [],
+    "list_methods": [],
+    "detail_errors": [],
+    "category": "其他：未注册抓取配置"
+  },
+  {
+    "media": "中国教育电视台",
+    "steps": 2,
+    "source_ids": [],
+    "config": null,
+    "logs": [],
+    "list_methods": [],
+    "detail_errors": [],
+    "category": "其他：未注册抓取配置"
+  },
+  {
+    "media": "黑龙江日报",
+    "steps": 2,
+    "source_ids": [],
+    "config": null,
+    "logs": [],
+    "list_methods": [],
+    "detail_errors": [],
+    "category": "其他：未注册抓取配置"
+  },
+  {
+    "media": "江苏省广播电视总台",
+    "steps": 2,
+    "source_ids": [],
+    "config": null,
+    "logs": [],
+    "list_methods": [],
+    "detail_errors": [],
+    "category": "其他：未注册抓取配置"
+  },
+  {
+    "media": "解放军报",
+    "steps": 1,
+    "source_ids": [],
+    "config": null,
+    "logs": [],
+    "list_methods": [],
+    "detail_errors": [],
+    "category": "其他：未注册抓取配置"
+  },
+  {
+    "media": "经济日报",
+    "steps": 1,
+    "source_ids": [],
+    "config": null,
+    "logs": [],
+    "list_methods": [],
+    "detail_errors": [],
+    "category": "其他：未注册抓取配置"
+  },
+  {
+    "media": "法治日报",
+    "steps": 1,
+    "source_ids": [],
+    "config": null,
+    "logs": [],
+    "list_methods": [],
+    "detail_errors": [],
+    "category": "其他：未注册抓取配置"
+  },
+  {
+    "media": "新华社",
+    "steps": 1,
+    "source_ids": [],
+    "config": null,
+    "logs": [],
+    "list_methods": [],
+    "detail_errors": [],
+    "category": "其他：未注册抓取配置"
+  }
+]

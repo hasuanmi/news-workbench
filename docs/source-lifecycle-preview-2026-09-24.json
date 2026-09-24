@@ -1,0 +1,3239 @@
+{
+  "mode": "preview",
+  "started_at": "2026-09-24T09:30:16.444Z",
+  "rows": [
+    {
+      "source_id": "015b5e24-3293-467e-a5b7-89ada9ee2277",
+      "media_id": "2cce0d71-709c-45f4-b27b-f4736dbaab96",
+      "source_type": "website",
+      "source_status": "active",
+      "enabled": true,
+      "status_reason": "逐源真实抓取与入库成功；run e3f6940c-52f7-44b8-8566-f4fdc2ad4aa0",
+      "duplicate_of": null,
+      "verified_at": "2026-09-24T08:33:44.100Z"
+    },
+    {
+      "source_id": "01ade713-0acc-44a4-8443-58e70841746e",
+      "media_id": "169e4529-b024-4959-8321-a74c79a2df7a",
+      "source_type": "website",
+      "source_status": "needs_fix",
+      "enabled": false,
+      "status_reason": "逐源抓取失败：empty_list；run e3f6940c-52f7-44b8-8566-f4fdc2ad4aa0",
+      "duplicate_of": null,
+      "verified_at": null
+    },
+    {
+      "source_id": "01c122dd-2489-4f96-985d-f6e364eca45f",
+      "media_id": "d8eb91ec-b093-4f15-941e-4ee8d4b3448a",
+      "source_type": "website",
+      "source_status": "active",
+      "enabled": true,
+      "status_reason": "逐源真实抓取与入库成功；run e3f6940c-52f7-44b8-8566-f4fdc2ad4aa0",
+      "duplicate_of": null,
+      "verified_at": "2026-09-24T06:43:47.686Z"
+    },
+    {
+      "source_id": "025e7bbd-6973-4a45-8cef-d7aaa3255e0c",
+      "media_id": "bd760b1a-4d94-4ec0-9bb3-9c08592a2c7e",
+      "source_type": "website",
+      "source_status": "duplicate",
+      "enabled": false,
+      "status_reason": "同媒体、同规范化 URL、同 source_type 重复；保留 a2efcfea-cd51-4294-b64a-325abf7f1369",
+      "duplicate_of": "a2efcfea-cd51-4294-b64a-325abf7f1369",
+      "verified_at": null
+    },
+    {
+      "source_id": "0407a3e1-3357-4131-9ddf-867f2b0a450e",
+      "media_id": "92a14871-1203-468e-994c-f3fcb9f947eb",
+      "source_type": "epaper",
+      "source_status": "needs_fix",
+      "enabled": false,
+      "status_reason": "电子报绑定测试通过，但内容验收未通过，等待修复日期/模板解析",
+      "duplicate_of": null,
+      "verified_at": null
+    },
+    {
+      "source_id": "05178bdc-85c1-495c-92b1-aebf3cc55930",
+      "media_id": "92a14871-1203-468e-994c-f3fcb9f947eb",
+      "source_type": "website",
+      "source_status": "active",
+      "enabled": true,
+      "status_reason": "逐源真实抓取与入库成功；run e3f6940c-52f7-44b8-8566-f4fdc2ad4aa0",
+      "duplicate_of": null,
+      "verified_at": "2026-09-24T07:58:52.787Z"
+    },
+    {
+      "source_id": "05dc3bbf-61b8-4aa1-ae9b-d33e14a18f9e",
+      "media_id": "6c9bcc8d-2da2-404e-87b6-fddd86feebb6",
+      "source_type": "website",
+      "source_status": "needs_fix",
+      "enabled": false,
+      "status_reason": "逐源抓取失败：configuration_missing；run e3f6940c-52f7-44b8-8566-f4fdc2ad4aa0",
+      "duplicate_of": null,
+      "verified_at": null
+    },
+    {
+      "source_id": "060b95e5-770d-41d3-a806-acc90d8c5f5b",
+      "media_id": "a1b67d3e-b993-43fd-9af3-e5975b78ebec",
+      "source_type": "website",
+      "source_status": "active",
+      "enabled": true,
+      "status_reason": "逐源真实抓取与入库成功；run e3f6940c-52f7-44b8-8566-f4fdc2ad4aa0",
+      "duplicate_of": null,
+      "verified_at": "2026-09-24T08:31:57.385Z"
+    },
+    {
+      "source_id": "065e084c-f6ef-420c-b597-da53af5b81e2",
+      "media_id": "b46b5c33-ceaa-4e94-95fd-f49873cb99f2",
+      "source_type": "website",
+      "source_status": "duplicate",
+      "enabled": false,
+      "status_reason": "同媒体、同规范化 URL、同 source_type 重复；保留 9c259287-10be-4684-8583-eafeb1249c3f",
+      "duplicate_of": "9c259287-10be-4684-8583-eafeb1249c3f",
+      "verified_at": null
+    },
+    {
+      "source_id": "074a1b73-874f-4145-9729-e90541e7d20a",
+      "media_id": "7948c361-4c35-4a2a-b29c-0eda94915992",
+      "source_type": "epaper",
+      "source_status": "needs_fix",
+      "enabled": false,
+      "status_reason": "当前为 manual 抓取配置，未通过自动采集验证",
+      "duplicate_of": null,
+      "verified_at": null
+    },
+    {
+      "source_id": "08e2ed86-472a-4210-9ebc-c71d714d614c",
+      "media_id": "1856ca2a-93aa-4075-a1e5-3c88d00c96bc",
+      "source_type": "website",
+      "source_status": "duplicate",
+      "enabled": false,
+      "status_reason": "同媒体、同规范化 URL、同 source_type 重复；保留 a6f6d5f3-b5e9-46c3-8317-b10c35b3ef83",
+      "duplicate_of": "a6f6d5f3-b5e9-46c3-8317-b10c35b3ef83",
+      "verified_at": null
+    },
+    {
+      "source_id": "0989bf8b-9b44-43fe-90f4-18553eeb9aea",
+      "media_id": "6377308c-a6a6-4ebb-96af-329611ce73b6",
+      "source_type": "website",
+      "source_status": "duplicate",
+      "enabled": false,
+      "status_reason": "同媒体、同规范化 URL、同 source_type 重复；保留 11f9b432-d220-4a81-810a-65b5e0f6db99",
+      "duplicate_of": "11f9b432-d220-4a81-810a-65b5e0f6db99",
+      "verified_at": null
+    },
+    {
+      "source_id": "0a09ee31-7f44-4011-a328-569491c86be2",
+      "media_id": "2aa5c046-818e-4af0-8d47-72312861a5f6",
+      "source_type": "website",
+      "source_status": "active",
+      "enabled": true,
+      "status_reason": "逐源真实抓取与入库成功；run e3f6940c-52f7-44b8-8566-f4fdc2ad4aa0",
+      "duplicate_of": null,
+      "verified_at": "2026-09-24T05:47:20.161Z"
+    },
+    {
+      "source_id": "0ae022f2-3419-4a6a-b5be-fb4c697c32ba",
+      "media_id": "f2467aa6-7d5f-4b08-b43b-37f8122cf1c0",
+      "source_type": "website",
+      "source_status": "active",
+      "enabled": true,
+      "status_reason": "逐源真实抓取与入库成功；run e3f6940c-52f7-44b8-8566-f4fdc2ad4aa0",
+      "duplicate_of": null,
+      "verified_at": "2026-09-24T05:49:55.678Z"
+    },
+    {
+      "source_id": "0b776882-f7c1-4e20-b9b7-1619cfa72d5b",
+      "media_id": "111c1597-20fe-438c-bb44-31d551f71bbd",
+      "source_type": "website",
+      "source_status": "active",
+      "enabled": true,
+      "status_reason": "逐源真实抓取与入库成功；run e3f6940c-52f7-44b8-8566-f4fdc2ad4aa0",
+      "duplicate_of": null,
+      "verified_at": "2026-09-24T08:34:16.932Z"
+    },
+    {
+      "source_id": "0bae6817-0fd9-4e75-97bf-f9e073e34fe0",
+      "media_id": "c1e36ab9-79ca-40fe-a824-6dbb26c6cf83",
+      "source_type": "website",
+      "source_status": "needs_fix",
+      "enabled": false,
+      "status_reason": "逐源抓取失败：configuration_missing；run e3f6940c-52f7-44b8-8566-f4fdc2ad4aa0",
+      "duplicate_of": null,
+      "verified_at": null
+    },
+    {
+      "source_id": "0bc828f6-4dba-42b1-b7a2-40f26f8295fd",
+      "media_id": "0fbc62c6-8b98-47b1-b244-7377e3487e6c",
+      "source_type": "website",
+      "source_status": "active",
+      "enabled": true,
+      "status_reason": "逐源真实抓取与入库成功；run e3f6940c-52f7-44b8-8566-f4fdc2ad4aa0",
+      "duplicate_of": null,
+      "verified_at": "2026-09-24T06:21:27.244Z"
+    },
+    {
+      "source_id": "0e09c24f-6e18-4b86-a89f-c0681d618000",
+      "media_id": "c8ef46ce-4f9a-4043-b790-a1c6be1e8f5f",
+      "source_type": "website",
+      "source_status": "duplicate",
+      "enabled": false,
+      "status_reason": "同媒体、同规范化 URL、同 source_type 重复；保留 19e19f93-ce54-4b8b-8fb3-78eecde9ea36",
+      "duplicate_of": "19e19f93-ce54-4b8b-8fb3-78eecde9ea36",
+      "verified_at": null
+    },
+    {
+      "source_id": "0e629bbb-b53b-4f4a-a005-0a2b3ffe4233",
+      "media_id": "5801bac8-ccc0-42dd-8cd3-14e583a7a245",
+      "source_type": "website",
+      "source_status": "needs_fix",
+      "enabled": false,
+      "status_reason": "逐源抓取失败：configuration_missing；run e3f6940c-52f7-44b8-8566-f4fdc2ad4aa0",
+      "duplicate_of": null,
+      "verified_at": null
+    },
+    {
+      "source_id": "10ec9e4c-fd47-49bb-ae8e-65e016b1b1a1",
+      "media_id": "f2467aa6-7d5f-4b08-b43b-37f8122cf1c0",
+      "source_type": "website",
+      "source_status": "needs_fix",
+      "enabled": false,
+      "status_reason": "逐源抓取失败：empty_list；run e3f6940c-52f7-44b8-8566-f4fdc2ad4aa0",
+      "duplicate_of": null,
+      "verified_at": null
+    },
+    {
+      "source_id": "11f9b432-d220-4a81-810a-65b5e0f6db99",
+      "media_id": "6377308c-a6a6-4ebb-96af-329611ce73b6",
+      "source_type": "website",
+      "source_status": "active",
+      "enabled": true,
+      "status_reason": "逐源真实抓取与入库成功；run e3f6940c-52f7-44b8-8566-f4fdc2ad4aa0",
+      "duplicate_of": null,
+      "verified_at": "2026-09-24T08:03:48.766Z"
+    },
+    {
+      "source_id": "11ffaa86-6b60-43df-a3e7-a59f461854ce",
+      "media_id": "e6733651-51d8-4e8b-a155-fab58275a37a",
+      "source_type": "website",
+      "source_status": "needs_fix",
+      "enabled": false,
+      "status_reason": "逐源抓取失败：configuration_missing；run e3f6940c-52f7-44b8-8566-f4fdc2ad4aa0",
+      "duplicate_of": null,
+      "verified_at": null
+    },
+    {
+      "source_id": "1209803e-bc2a-4c5b-96bf-7ef7f472aa14",
+      "media_id": "83abca40-dd7a-4e2d-8ee4-4307632964b9",
+      "source_type": "website",
+      "source_status": "needs_fix",
+      "enabled": false,
+      "status_reason": "逐源抓取失败：empty_list；run e3f6940c-52f7-44b8-8566-f4fdc2ad4aa0",
+      "duplicate_of": null,
+      "verified_at": null
+    },
+    {
+      "source_id": "12dcbd8b-279f-43bd-b720-3f4fe4f430b1",
+      "media_id": "51fd9095-83ce-4f49-a663-660f174800f8",
+      "source_type": "website",
+      "source_status": "duplicate",
+      "enabled": false,
+      "status_reason": "同媒体、同规范化 URL、同 source_type 重复；保留 eb6a6a38-c7d7-43dc-bedb-4617038cbf05",
+      "duplicate_of": "eb6a6a38-c7d7-43dc-bedb-4617038cbf05",
+      "verified_at": null
+    },
+    {
+      "source_id": "146ffa8d-5d80-40c2-9b5b-b1596777b76f",
+      "media_id": "9e880afd-a36a-40c6-9714-a27d128e25cd",
+      "source_type": "epaper",
+      "source_status": "needs_fix",
+      "enabled": false,
+      "status_reason": "当前为 manual 抓取配置，未通过自动采集验证",
+      "duplicate_of": null,
+      "verified_at": null
+    },
+    {
+      "source_id": "15fc5d8e-9e54-4ac3-ba65-d84af0250141",
+      "media_id": "029ab681-1e94-4c44-afb6-876fe0dccf20",
+      "source_type": "website",
+      "source_status": "needs_fix",
+      "enabled": false,
+      "status_reason": "逐源抓取失败：empty_list；run e3f6940c-52f7-44b8-8566-f4fdc2ad4aa0",
+      "duplicate_of": null,
+      "verified_at": null
+    },
+    {
+      "source_id": "18508e26-7b48-44ee-b7fd-a013c2ac024f",
+      "media_id": "845d2237-6bf9-45a3-97d1-c30515d39dad",
+      "source_type": "website",
+      "source_status": "active",
+      "enabled": true,
+      "status_reason": "逐源真实抓取与入库成功；run e3f6940c-52f7-44b8-8566-f4fdc2ad4aa0",
+      "duplicate_of": null,
+      "verified_at": "2026-09-24T07:51:27.169Z"
+    },
+    {
+      "source_id": "1954afb6-db52-4715-b4e1-51150a5183f6",
+      "media_id": "8340ddea-f0a7-46a0-9032-59baaccd9c0d",
+      "source_type": "website",
+      "source_status": "active",
+      "enabled": true,
+      "status_reason": "逐源真实抓取与入库成功；run 8461282f-8bf9-4010-8530-f2345fdc2726",
+      "duplicate_of": null,
+      "verified_at": "2026-09-24T08:38:51.850Z"
+    },
+    {
+      "source_id": "195f5aa5-c140-4972-9be1-aacf643f1878",
+      "media_id": "50c0bdff-f1a4-4399-93b9-c0db265454af",
+      "source_type": "website",
+      "source_status": "needs_fix",
+      "enabled": false,
+      "status_reason": "逐源抓取失败：configuration_missing；run e3f6940c-52f7-44b8-8566-f4fdc2ad4aa0",
+      "duplicate_of": null,
+      "verified_at": null
+    },
+    {
+      "source_id": "19e19f93-ce54-4b8b-8fb3-78eecde9ea36",
+      "media_id": "c8ef46ce-4f9a-4043-b790-a1c6be1e8f5f",
+      "source_type": "website",
+      "source_status": "needs_fix",
+      "enabled": false,
+      "status_reason": "逐源抓取失败：configuration_missing；run e3f6940c-52f7-44b8-8566-f4fdc2ad4aa0",
+      "duplicate_of": null,
+      "verified_at": null
+    },
+    {
+      "source_id": "1a5cc69d-f74e-4955-af5e-65bb58d1c4d7",
+      "media_id": "79abc807-a570-40fd-8553-ef487b754761",
+      "source_type": "epaper",
+      "source_status": "needs_fix",
+      "enabled": false,
+      "status_reason": "尚无当前逐源真实抓取成功证据，待验证/修复",
+      "duplicate_of": null,
+      "verified_at": null
+    },
+    {
+      "source_id": "1aa8154a-3961-472a-8cb1-5690800b50c5",
+      "media_id": "8a831626-f04f-4869-9261-6e8e0cd00ad1",
+      "source_type": "website",
+      "source_status": "needs_fix",
+      "enabled": false,
+      "status_reason": "逐源抓取失败：empty_list；run e3f6940c-52f7-44b8-8566-f4fdc2ad4aa0",
+      "duplicate_of": null,
+      "verified_at": null
+    },
+    {
+      "source_id": "1c542c4d-689f-4e2d-838a-a49745a40917",
+      "media_id": "111c1597-20fe-438c-bb44-31d551f71bbd",
+      "source_type": "website",
+      "source_status": "duplicate",
+      "enabled": false,
+      "status_reason": "同媒体、同规范化 URL、同 source_type 重复；保留 0b776882-f7c1-4e20-b9b7-1619cfa72d5b",
+      "duplicate_of": "0b776882-f7c1-4e20-b9b7-1619cfa72d5b",
+      "verified_at": null
+    },
+    {
+      "source_id": "1c73c5de-a50d-4a3b-bdcd-3a30ee8e8820",
+      "media_id": "d1f805e3-cf00-434b-99e1-a025a7c50ee4",
+      "source_type": "website",
+      "source_status": "active",
+      "enabled": true,
+      "status_reason": "逐源真实抓取与入库成功；run e3f6940c-52f7-44b8-8566-f4fdc2ad4aa0",
+      "duplicate_of": null,
+      "verified_at": "2026-09-24T05:55:33.950Z"
+    },
+    {
+      "source_id": "1c89bfc7-71e0-478a-9f20-c2d357f05749",
+      "media_id": "cfd0c75c-8846-4ef9-bfeb-890452a5833c",
+      "source_type": "website",
+      "source_status": "active",
+      "enabled": true,
+      "status_reason": "逐源真实抓取与入库成功；run 8461282f-8bf9-4010-8530-f2345fdc2726",
+      "duplicate_of": null,
+      "verified_at": "2026-09-24T08:38:51.850Z"
+    },
+    {
+      "source_id": "1cb985c0-cdaf-49b4-bd24-1123bb172cea",
+      "media_id": "54e96b2b-25aa-4d86-9435-7145041356b3",
+      "source_type": "website",
+      "source_status": "active",
+      "enabled": true,
+      "status_reason": "逐源真实抓取与入库成功；run e3f6940c-52f7-44b8-8566-f4fdc2ad4aa0",
+      "duplicate_of": null,
+      "verified_at": "2026-09-24T06:14:10.152Z"
+    },
+    {
+      "source_id": "1e5e73a9-128f-4c15-ad5e-976657784b36",
+      "media_id": "19a562bd-c048-4ad8-907c-a3d072682c30",
+      "source_type": "website",
+      "source_status": "needs_fix",
+      "enabled": false,
+      "status_reason": "逐源抓取失败：configuration_missing；run e3f6940c-52f7-44b8-8566-f4fdc2ad4aa0",
+      "duplicate_of": null,
+      "verified_at": null
+    },
+    {
+      "source_id": "1f890937-4311-4bc2-9103-99f03c3eaece",
+      "media_id": "736ef9bc-40ef-4ee6-8264-39d6efb50ac3",
+      "source_type": "website",
+      "source_status": "duplicate",
+      "enabled": false,
+      "status_reason": "同媒体、同规范化 URL、同 source_type 重复；保留 3b3e8713-d9d1-4b60-b727-d942f755b3ac",
+      "duplicate_of": "3b3e8713-d9d1-4b60-b727-d942f755b3ac",
+      "verified_at": null
+    },
+    {
+      "source_id": "21c0bd38-4146-40f6-8c10-2c46d51ff29b",
+      "media_id": "c728024b-01ff-49d6-bfd2-bc3ffa3cf4aa",
+      "source_type": "website",
+      "source_status": "duplicate",
+      "enabled": false,
+      "status_reason": "同媒体、同规范化 URL、同 source_type 重复；保留 cdb7460b-ad73-4396-919f-a73b76811c4f",
+      "duplicate_of": "cdb7460b-ad73-4396-919f-a73b76811c4f",
+      "verified_at": null
+    },
+    {
+      "source_id": "21ec8650-92b4-47c9-8615-8575faeb0fe9",
+      "media_id": "c04ce106-14a3-4dc4-8c53-9c9a2999c1f0",
+      "source_type": "website",
+      "source_status": "active",
+      "enabled": true,
+      "status_reason": "逐源真实抓取与入库成功；run e3f6940c-52f7-44b8-8566-f4fdc2ad4aa0",
+      "duplicate_of": null,
+      "verified_at": "2026-09-24T08:13:54.195Z"
+    },
+    {
+      "source_id": "22c34aa8-0496-4354-a7e5-30c8715441e3",
+      "media_id": "a3d48480-d15f-4103-9dd8-4ff96ccde282",
+      "source_type": "website",
+      "source_status": "active",
+      "enabled": true,
+      "status_reason": "逐源真实抓取与入库成功；run 77b269c5-9b38-4b61-97ae-68373562b070",
+      "duplicate_of": null,
+      "verified_at": "2026-09-24T08:45:31.625Z"
+    },
+    {
+      "source_id": "233879a9-5733-47f6-b295-149ed6334055",
+      "media_id": "3529bf46-b3f8-4be7-bfc7-4bcd3843cfc4",
+      "source_type": "website",
+      "source_status": "duplicate",
+      "enabled": false,
+      "status_reason": "同媒体、同规范化 URL、同 source_type 重复；保留 415535c6-0280-44a5-8aed-ed5dd01c4819",
+      "duplicate_of": "415535c6-0280-44a5-8aed-ed5dd01c4819",
+      "verified_at": null
+    },
+    {
+      "source_id": "234c65a1-6c67-4531-a665-806c27bfb8e8",
+      "media_id": "fd1d18c7-f390-4cd0-8b87-d72a7e0a984c",
+      "source_type": "website",
+      "source_status": "active",
+      "enabled": true,
+      "status_reason": "逐源真实抓取与入库成功；run e3f6940c-52f7-44b8-8566-f4fdc2ad4aa0",
+      "duplicate_of": null,
+      "verified_at": "2026-09-24T05:44:25.738Z"
+    },
+    {
+      "source_id": "238071ef-bf94-483d-9d41-c7971110c253",
+      "media_id": "b027702f-1c50-434a-971e-0d032727013e",
+      "source_type": "website",
+      "source_status": "duplicate",
+      "enabled": false,
+      "status_reason": "同媒体、同规范化 URL、同 source_type 重复；保留 d0b99757-7c2e-45a1-bc97-4a6577091b02",
+      "duplicate_of": "d0b99757-7c2e-45a1-bc97-4a6577091b02",
+      "verified_at": null
+    },
+    {
+      "source_id": "24106efe-5518-4b83-9e83-79c750e50fbe",
+      "media_id": "ea77f662-16b0-409e-80f1-70ef9e8bd71d",
+      "source_type": "website",
+      "source_status": "needs_fix",
+      "enabled": false,
+      "status_reason": "逐源抓取失败：configuration_missing；run e3f6940c-52f7-44b8-8566-f4fdc2ad4aa0",
+      "duplicate_of": null,
+      "verified_at": null
+    },
+    {
+      "source_id": "25aa058e-2913-4ad5-84a5-a39e8f6b625e",
+      "media_id": "4bece79e-7ee1-4d58-aa7b-72dabc6ba517",
+      "source_type": "website",
+      "source_status": "duplicate",
+      "enabled": false,
+      "status_reason": "同媒体、同规范化 URL、同 source_type 重复；保留 28e2c835-3f34-4ced-8994-c294c31c7145",
+      "duplicate_of": "28e2c835-3f34-4ced-8994-c294c31c7145",
+      "verified_at": null
+    },
+    {
+      "source_id": "25e2a75a-8265-4546-8150-6f1fc205143f",
+      "media_id": "add06f79-b43b-4526-9df6-ddcd68e4026d",
+      "source_type": "website",
+      "source_status": "active",
+      "enabled": true,
+      "status_reason": "逐源真实抓取与入库成功；run e3f6940c-52f7-44b8-8566-f4fdc2ad4aa0",
+      "duplicate_of": null,
+      "verified_at": "2026-09-24T06:02:32.718Z"
+    },
+    {
+      "source_id": "2655bafd-fe9f-4353-8e35-a3690ee63d8c",
+      "media_id": "5fdd99b1-a9a9-4314-a93f-1bba505b442f",
+      "source_type": "website",
+      "source_status": "needs_fix",
+      "enabled": false,
+      "status_reason": "逐源抓取失败：empty_list；run e3f6940c-52f7-44b8-8566-f4fdc2ad4aa0",
+      "duplicate_of": null,
+      "verified_at": null
+    },
+    {
+      "source_id": "28e2c835-3f34-4ced-8994-c294c31c7145",
+      "media_id": "4bece79e-7ee1-4d58-aa7b-72dabc6ba517",
+      "source_type": "website",
+      "source_status": "needs_fix",
+      "enabled": false,
+      "status_reason": "逐源抓取失败：empty_list；run e3f6940c-52f7-44b8-8566-f4fdc2ad4aa0",
+      "duplicate_of": null,
+      "verified_at": null
+    },
+    {
+      "source_id": "296bf4a5-e959-4c12-9636-2cd8f5883b1d",
+      "media_id": "e6733651-51d8-4e8b-a155-fab58275a37a",
+      "source_type": "website",
+      "source_status": "active",
+      "enabled": true,
+      "status_reason": "逐源真实抓取与入库成功；run e3f6940c-52f7-44b8-8566-f4fdc2ad4aa0",
+      "duplicate_of": null,
+      "verified_at": "2026-09-24T06:21:25.560Z"
+    },
+    {
+      "source_id": "2a2eee38-a807-4771-b510-4831d7e41e23",
+      "media_id": "c94bae33-0e38-465f-9ce2-f82f31095a5f",
+      "source_type": "website",
+      "source_status": "needs_fix",
+      "enabled": false,
+      "status_reason": "逐源抓取失败：configuration_missing；run e3f6940c-52f7-44b8-8566-f4fdc2ad4aa0",
+      "duplicate_of": null,
+      "verified_at": null
+    },
+    {
+      "source_id": "2bb2ca0e-4999-4516-bf5b-3a5e6c8826eb",
+      "media_id": "2cce0d71-709c-45f4-b27b-f4736dbaab96",
+      "source_type": "website",
+      "source_status": "duplicate",
+      "enabled": false,
+      "status_reason": "同媒体、同规范化 URL、同 source_type 重复；保留 91b12444-4be6-44b5-8147-ac02d5e678ba",
+      "duplicate_of": "91b12444-4be6-44b5-8147-ac02d5e678ba",
+      "verified_at": null
+    },
+    {
+      "source_id": "2c3210ab-d049-4b37-98b7-b53a9aa255b0",
+      "media_id": "d9f2c0ac-13ee-4e08-ae85-cf7b888d1f64",
+      "source_type": "website",
+      "source_status": "active",
+      "enabled": true,
+      "status_reason": "逐源真实抓取与入库成功；run e3f6940c-52f7-44b8-8566-f4fdc2ad4aa0",
+      "duplicate_of": null,
+      "verified_at": "2026-09-24T05:58:06.399Z"
+    },
+    {
+      "source_id": "2dfa3495-262b-426c-a49a-57b9bb6c12bc",
+      "media_id": "78426f53-ffb5-4ef2-9f20-7c71fdcc3588",
+      "source_type": "website",
+      "source_status": "active",
+      "enabled": true,
+      "status_reason": "逐源真实抓取与入库成功；run e3f6940c-52f7-44b8-8566-f4fdc2ad4aa0",
+      "duplicate_of": null,
+      "verified_at": "2026-09-24T06:43:46.618Z"
+    },
+    {
+      "source_id": "2e814381-d86c-4806-876e-f41db00d1809",
+      "media_id": "169e4529-b024-4959-8321-a74c79a2df7a",
+      "source_type": "epaper",
+      "source_status": "needs_fix",
+      "enabled": false,
+      "status_reason": "当前为 manual 抓取配置，未通过自动采集验证",
+      "duplicate_of": null,
+      "verified_at": null
+    },
+    {
+      "source_id": "2e91d12e-4c8c-4d4a-9c58-c360692da6d8",
+      "media_id": "d77d7043-06db-4ea6-b447-df265734e645",
+      "source_type": "epaper",
+      "source_status": "needs_fix",
+      "enabled": false,
+      "status_reason": "尚无当前逐源真实抓取成功证据，待验证/修复",
+      "duplicate_of": null,
+      "verified_at": null
+    },
+    {
+      "source_id": "2ed214ca-bebc-49fb-a60e-5c69e8ec5c3c",
+      "media_id": "79abc807-a570-40fd-8553-ef487b754761",
+      "source_type": "website",
+      "source_status": "active",
+      "enabled": true,
+      "status_reason": "逐源真实抓取与入库成功；run e3f6940c-52f7-44b8-8566-f4fdc2ad4aa0",
+      "duplicate_of": null,
+      "verified_at": "2026-09-24T07:54:57.786Z"
+    },
+    {
+      "source_id": "2f65d84e-bd75-4155-a5c4-b996a84e4015",
+      "media_id": "029ab681-1e94-4c44-afb6-876fe0dccf20",
+      "source_type": "website",
+      "source_status": "needs_fix",
+      "enabled": false,
+      "status_reason": "逐源抓取失败：empty_list；run e3f6940c-52f7-44b8-8566-f4fdc2ad4aa0",
+      "duplicate_of": null,
+      "verified_at": null
+    },
+    {
+      "source_id": "2f9127cf-ac48-456a-b4cb-b658cc155c43",
+      "media_id": "50d755d6-b643-4e90-af7d-6a9756c0a5a3",
+      "source_type": "website",
+      "source_status": "active",
+      "enabled": true,
+      "status_reason": "逐源真实抓取与入库成功；run e3f6940c-52f7-44b8-8566-f4fdc2ad4aa0",
+      "duplicate_of": null,
+      "verified_at": "2026-09-24T07:51:24.384Z"
+    },
+    {
+      "source_id": "30af6b43-ae6c-45ec-b4b3-25b8991dd212",
+      "media_id": "9e880afd-a36a-40c6-9714-a27d128e25cd",
+      "source_type": "website",
+      "source_status": "needs_fix",
+      "enabled": false,
+      "status_reason": "逐源抓取失败：empty_list；run e3f6940c-52f7-44b8-8566-f4fdc2ad4aa0",
+      "duplicate_of": null,
+      "verified_at": null
+    },
+    {
+      "source_id": "320d860a-3f04-4b78-92e1-9265a4590955",
+      "media_id": "675ffbd4-db8a-4b6b-879e-bf0211278dfa",
+      "source_type": "website",
+      "source_status": "duplicate",
+      "enabled": false,
+      "status_reason": "同媒体、同规范化 URL、同 source_type 重复；保留 5648f0b2-41b8-4767-bc7c-97ec35754f5f",
+      "duplicate_of": "5648f0b2-41b8-4767-bc7c-97ec35754f5f",
+      "verified_at": null
+    },
+    {
+      "source_id": "32abe8aa-c3d5-43aa-a9e1-64476bcc028c",
+      "media_id": "8a831626-f04f-4869-9261-6e8e0cd00ad1",
+      "source_type": "website",
+      "source_status": "needs_fix",
+      "enabled": false,
+      "status_reason": "逐源抓取失败：empty_list；run e3f6940c-52f7-44b8-8566-f4fdc2ad4aa0",
+      "duplicate_of": null,
+      "verified_at": null
+    },
+    {
+      "source_id": "32fd2a6d-6ed2-4378-926c-87426be00b05",
+      "media_id": "ea07008d-9e15-4283-b05f-0e03adc77a8b",
+      "source_type": "epaper",
+      "source_status": "needs_fix",
+      "enabled": false,
+      "status_reason": "尚无当前逐源真实抓取成功证据，待验证/修复",
+      "duplicate_of": null,
+      "verified_at": null
+    },
+    {
+      "source_id": "337a4f67-cea7-445b-8764-7fd12d49e885",
+      "media_id": "db15e67e-2ab3-49d1-a83d-c798f97d486e",
+      "source_type": "epaper",
+      "source_status": "needs_fix",
+      "enabled": false,
+      "status_reason": "当前为 manual 抓取配置，未通过自动采集验证",
+      "duplicate_of": null,
+      "verified_at": null
+    },
+    {
+      "source_id": "33d8a471-1c89-4ca9-bb53-3aa821b0c4d7",
+      "media_id": "c9c53c02-70aa-457c-ba39-bd3af0b05220",
+      "source_type": "epaper",
+      "source_status": "needs_fix",
+      "enabled": false,
+      "status_reason": "尚无当前逐源真实抓取成功证据，待验证/修复",
+      "duplicate_of": null,
+      "verified_at": null
+    },
+    {
+      "source_id": "34357650-ec67-4c9a-8b01-f6a4f338c30b",
+      "media_id": "0fbc62c6-8b98-47b1-b244-7377e3487e6c",
+      "source_type": "website",
+      "source_status": "duplicate",
+      "enabled": false,
+      "status_reason": "同媒体、同规范化 URL、同 source_type 重复；保留 0bc828f6-4dba-42b1-b7a2-40f26f8295fd",
+      "duplicate_of": "0bc828f6-4dba-42b1-b7a2-40f26f8295fd",
+      "verified_at": null
+    },
+    {
+      "source_id": "3526b315-9247-428d-a089-e6e11b03b879",
+      "media_id": "7645d54d-bae2-461a-862a-b8121499b847",
+      "source_type": "website",
+      "source_status": "active",
+      "enabled": true,
+      "status_reason": "逐源真实抓取与入库成功；run e3f6940c-52f7-44b8-8566-f4fdc2ad4aa0",
+      "duplicate_of": null,
+      "verified_at": "2026-09-24T06:00:18.118Z"
+    },
+    {
+      "source_id": "36681df7-c1c6-4354-8ce4-46cb7afcc6fb",
+      "media_id": "8dc51d7f-70e7-4866-8d4b-092eee142ebc",
+      "source_type": "epaper",
+      "source_status": "needs_fix",
+      "enabled": false,
+      "status_reason": "当前为 manual 抓取配置，未通过自动采集验证",
+      "duplicate_of": null,
+      "verified_at": null
+    },
+    {
+      "source_id": "36f7fbcd-50ea-4f93-8822-ae6f6c13b541",
+      "media_id": "a3d48480-d15f-4103-9dd8-4ff96ccde282",
+      "source_type": "website",
+      "source_status": "duplicate",
+      "enabled": false,
+      "status_reason": "同媒体、同规范化 URL、同 source_type 重复；保留 22c34aa8-0496-4354-a7e5-30c8715441e3",
+      "duplicate_of": "22c34aa8-0496-4354-a7e5-30c8715441e3",
+      "verified_at": null
+    },
+    {
+      "source_id": "3871334c-c367-47a6-9b48-0b3867c60988",
+      "media_id": "5fdd99b1-a9a9-4314-a93f-1bba505b442f",
+      "source_type": "epaper",
+      "source_status": "needs_fix",
+      "enabled": false,
+      "status_reason": "当前为 manual 抓取配置，未通过自动采集验证",
+      "duplicate_of": null,
+      "verified_at": null
+    },
+    {
+      "source_id": "39089b76-7b95-44a4-90d9-bce4652e48ca",
+      "media_id": "5025d254-63e9-4d8d-ac6d-e7a15f1f26b8",
+      "source_type": "website",
+      "source_status": "needs_fix",
+      "enabled": false,
+      "status_reason": "逐源抓取失败：configuration_missing；run e3f6940c-52f7-44b8-8566-f4fdc2ad4aa0",
+      "duplicate_of": null,
+      "verified_at": null
+    },
+    {
+      "source_id": "390ff44f-77d4-4610-891b-af5acfbe86ad",
+      "media_id": "8a831626-f04f-4869-9261-6e8e0cd00ad1",
+      "source_type": "epaper",
+      "source_status": "needs_fix",
+      "enabled": false,
+      "status_reason": "当前为 manual 抓取配置，未通过自动采集验证",
+      "duplicate_of": null,
+      "verified_at": null
+    },
+    {
+      "source_id": "3994763a-0708-4c33-88ad-ea51991bdd1b",
+      "media_id": "af998816-98e2-4114-b64e-71742048c06c",
+      "source_type": "website",
+      "source_status": "active",
+      "enabled": true,
+      "status_reason": "逐源真实抓取与入库成功；run e3f6940c-52f7-44b8-8566-f4fdc2ad4aa0",
+      "duplicate_of": null,
+      "verified_at": "2026-09-24T06:43:49.142Z"
+    },
+    {
+      "source_id": "3b3e8713-d9d1-4b60-b727-d942f755b3ac",
+      "media_id": "736ef9bc-40ef-4ee6-8264-39d6efb50ac3",
+      "source_type": "website",
+      "source_status": "active",
+      "enabled": true,
+      "status_reason": "逐源真实抓取与入库成功；run e3f6940c-52f7-44b8-8566-f4fdc2ad4aa0",
+      "duplicate_of": null,
+      "verified_at": "2026-09-24T08:17:36.971Z"
+    },
+    {
+      "source_id": "3bfa0117-84dd-4f83-8ebd-76889cafd63b",
+      "media_id": "df4a8c1f-3f07-4b08-9bb9-5d9e631bb60f",
+      "source_type": "website",
+      "source_status": "needs_fix",
+      "enabled": false,
+      "status_reason": "逐源抓取失败：empty_list；run e3f6940c-52f7-44b8-8566-f4fdc2ad4aa0",
+      "duplicate_of": null,
+      "verified_at": null
+    },
+    {
+      "source_id": "3d881b65-30dd-4bde-917a-2c69aae72ce5",
+      "media_id": "243344d4-fce9-4787-a32c-ad6f5291b194",
+      "source_type": "website",
+      "source_status": "needs_fix",
+      "enabled": false,
+      "status_reason": "逐源抓取失败：configuration_missing；run e3f6940c-52f7-44b8-8566-f4fdc2ad4aa0",
+      "duplicate_of": null,
+      "verified_at": null
+    },
+    {
+      "source_id": "3e031367-ebd5-435f-ae68-c60337449499",
+      "media_id": "f2467aa6-7d5f-4b08-b43b-37f8122cf1c0",
+      "source_type": "website",
+      "source_status": "duplicate",
+      "enabled": false,
+      "status_reason": "同媒体、同规范化 URL、同 source_type 重复；保留 10ec9e4c-fd47-49bb-ae8e-65e016b1b1a1",
+      "duplicate_of": "10ec9e4c-fd47-49bb-ae8e-65e016b1b1a1",
+      "verified_at": null
+    },
+    {
+      "source_id": "3e82b8c3-9c1b-40a7-bc68-b64bf738aff8",
+      "media_id": "84500184-6a31-42fa-8c39-a33c57135057",
+      "source_type": "website",
+      "source_status": "duplicate",
+      "enabled": false,
+      "status_reason": "同媒体、同规范化 URL、同 source_type 重复；保留 9efe1520-f823-4068-9be0-2d3594095542",
+      "duplicate_of": "9efe1520-f823-4068-9be0-2d3594095542",
+      "verified_at": null
+    },
+    {
+      "source_id": "3fdfe6a8-6696-4809-812a-492d82ff0dde",
+      "media_id": "169e4529-b024-4959-8321-a74c79a2df7a",
+      "source_type": "website",
+      "source_status": "duplicate",
+      "enabled": false,
+      "status_reason": "同媒体、同规范化 URL、同 source_type 重复；保留 01ade713-0acc-44a4-8443-58e70841746e",
+      "duplicate_of": "01ade713-0acc-44a4-8443-58e70841746e",
+      "verified_at": null
+    },
+    {
+      "source_id": "415535c6-0280-44a5-8aed-ed5dd01c4819",
+      "media_id": "3529bf46-b3f8-4be7-bfc7-4bcd3843cfc4",
+      "source_type": "website",
+      "source_status": "active",
+      "enabled": true,
+      "status_reason": "逐源真实抓取与入库成功；run e3f6940c-52f7-44b8-8566-f4fdc2ad4aa0",
+      "duplicate_of": null,
+      "verified_at": "2026-09-24T05:54:24.461Z"
+    },
+    {
+      "source_id": "417a65ed-6c1a-469b-91c6-1016648a760d",
+      "media_id": "1856ca2a-93aa-4075-a1e5-3c88d00c96bc",
+      "source_type": "website",
+      "source_status": "active",
+      "enabled": true,
+      "status_reason": "逐源真实抓取与入库成功；run e3f6940c-52f7-44b8-8566-f4fdc2ad4aa0",
+      "duplicate_of": null,
+      "verified_at": "2026-09-24T08:03:45.650Z"
+    },
+    {
+      "source_id": "419c9f3c-e25b-4134-b242-57ea5cfefe61",
+      "media_id": "ff0e8737-3a4f-47f5-b97e-7ad8e2de83a5",
+      "source_type": "website",
+      "source_status": "duplicate",
+      "enabled": false,
+      "status_reason": "同媒体、同规范化 URL、同 source_type 重复；保留 7a0caa4d-ff34-4063-8439-356ae774e0e2",
+      "duplicate_of": "7a0caa4d-ff34-4063-8439-356ae774e0e2",
+      "verified_at": null
+    },
+    {
+      "source_id": "4231d731-0deb-4626-9aa4-66696a37ea12",
+      "media_id": "1868d59d-c4e4-41b2-a188-37abb88a75b6",
+      "source_type": "website",
+      "source_status": "duplicate",
+      "enabled": false,
+      "status_reason": "同媒体、同规范化 URL、同 source_type 重复；保留 dcbb89ca-777c-4ecf-835f-91ab445b908b",
+      "duplicate_of": "dcbb89ca-777c-4ecf-835f-91ab445b908b",
+      "verified_at": null
+    },
+    {
+      "source_id": "426ee21e-2005-4f74-9ebc-6b3c74479a7f",
+      "media_id": "ae8431dd-dc68-4483-a61c-05e4bf77f3b5",
+      "source_type": "website",
+      "source_status": "active",
+      "enabled": true,
+      "status_reason": "逐源真实抓取与入库成功；run e3f6940c-52f7-44b8-8566-f4fdc2ad4aa0",
+      "duplicate_of": null,
+      "verified_at": "2026-09-24T08:05:46.988Z"
+    },
+    {
+      "source_id": "43a5b304-566d-4e28-b681-5ddb2b0fe632",
+      "media_id": "921f1b28-a033-4a35-9242-4b35f4121173",
+      "source_type": "website",
+      "source_status": "active",
+      "enabled": true,
+      "status_reason": "逐源真实抓取与入库成功；run e3f6940c-52f7-44b8-8566-f4fdc2ad4aa0",
+      "duplicate_of": null,
+      "verified_at": "2026-09-24T05:54:34.128Z"
+    },
+    {
+      "source_id": "43c9802e-3ef2-4e2d-b4e7-dcf8610c67e5",
+      "media_id": "3354b7ab-400e-421f-9291-b9dbac1aa75f",
+      "source_type": "epaper",
+      "source_status": "needs_fix",
+      "enabled": false,
+      "status_reason": "当前为 manual 抓取配置，未通过自动采集验证",
+      "duplicate_of": null,
+      "verified_at": null
+    },
+    {
+      "source_id": "43f9f894-8b41-43cf-ae55-33384f859190",
+      "media_id": "c94bae33-0e38-465f-9ce2-f82f31095a5f",
+      "source_type": "website",
+      "source_status": "needs_fix",
+      "enabled": false,
+      "status_reason": "逐源抓取失败：configuration_missing；run e3f6940c-52f7-44b8-8566-f4fdc2ad4aa0",
+      "duplicate_of": null,
+      "verified_at": null
+    },
+    {
+      "source_id": "4649be6e-b8b0-497d-8e0f-863846af11f4",
+      "media_id": "f0339351-e426-4be9-b35b-77d6880d17ad",
+      "source_type": "website",
+      "source_status": "needs_fix",
+      "enabled": false,
+      "status_reason": "逐源抓取失败：empty_list；run e3f6940c-52f7-44b8-8566-f4fdc2ad4aa0",
+      "duplicate_of": null,
+      "verified_at": null
+    },
+    {
+      "source_id": "46d98481-3931-47c2-bb2f-b0b8e727d8e5",
+      "media_id": "7c6c7a10-256c-4d04-aa8d-54cf4d08e1ce",
+      "source_type": "website",
+      "source_status": "duplicate",
+      "enabled": false,
+      "status_reason": "同媒体、同规范化 URL、同 source_type 重复；保留 4700d44f-45d8-4527-a45d-edd9f4abc986",
+      "duplicate_of": "4700d44f-45d8-4527-a45d-edd9f4abc986",
+      "verified_at": null
+    },
+    {
+      "source_id": "4700d44f-45d8-4527-a45d-edd9f4abc986",
+      "media_id": "7c6c7a10-256c-4d04-aa8d-54cf4d08e1ce",
+      "source_type": "website",
+      "source_status": "active",
+      "enabled": true,
+      "status_reason": "逐源真实抓取与入库成功；run e3f6940c-52f7-44b8-8566-f4fdc2ad4aa0",
+      "duplicate_of": null,
+      "verified_at": "2026-09-24T07:56:42.883Z"
+    },
+    {
+      "source_id": "47cc51ca-0879-4f42-9ca1-fa3ddbe9deed",
+      "media_id": "5e64a5bd-5dcc-4402-925e-11bcf414638d",
+      "source_type": "website",
+      "source_status": "duplicate",
+      "enabled": false,
+      "status_reason": "同媒体、同规范化 URL、同 source_type 重复；保留 fddba8cb-abe9-4fb5-a62d-63a2c0c4268d",
+      "duplicate_of": "fddba8cb-abe9-4fb5-a62d-63a2c0c4268d",
+      "verified_at": null
+    },
+    {
+      "source_id": "4884f74c-4d86-484e-9f86-dd0eac0f429e",
+      "media_id": "eef09c2b-600b-4398-82e7-f56a694d08b8",
+      "source_type": "website",
+      "source_status": "duplicate",
+      "enabled": false,
+      "status_reason": "同媒体、同规范化 URL、同 source_type 重复；保留 c3fd441b-87c6-4b87-9bc0-542c19b4913a",
+      "duplicate_of": "c3fd441b-87c6-4b87-9bc0-542c19b4913a",
+      "verified_at": null
+    },
+    {
+      "source_id": "489dda1a-b77b-4a4c-993e-b1c6dd9ae603",
+      "media_id": "03726bf2-e039-4b23-9cd7-796cb5817afe",
+      "source_type": "epaper",
+      "source_status": "needs_fix",
+      "enabled": false,
+      "status_reason": "当前为 manual 抓取配置，未通过自动采集验证",
+      "duplicate_of": null,
+      "verified_at": null
+    },
+    {
+      "source_id": "4a3f8200-f4cc-4446-8815-6ed6210d234a",
+      "media_id": "21287208-464c-4e2b-bb83-07f1ccb2ce07",
+      "source_type": "website",
+      "source_status": "needs_fix",
+      "enabled": false,
+      "status_reason": "逐源抓取失败：empty_list；run e3f6940c-52f7-44b8-8566-f4fdc2ad4aa0",
+      "duplicate_of": null,
+      "verified_at": null
+    },
+    {
+      "source_id": "4a5c22ff-8819-4db4-ac72-1430aea1a93e",
+      "media_id": "3d9bbf13-f0c4-41b2-bd7f-a0718c602a00",
+      "source_type": "website",
+      "source_status": "needs_fix",
+      "enabled": false,
+      "status_reason": "逐源抓取失败：empty_list；run e3f6940c-52f7-44b8-8566-f4fdc2ad4aa0",
+      "duplicate_of": null,
+      "verified_at": null
+    },
+    {
+      "source_id": "4b2f2ca9-8ec1-4271-a6a2-caba0d208576",
+      "media_id": "2b177acf-d7e4-4385-aa7d-031168cbf64d",
+      "source_type": "website",
+      "source_status": "needs_fix",
+      "enabled": false,
+      "status_reason": "逐源抓取失败：configuration_missing；run e3f6940c-52f7-44b8-8566-f4fdc2ad4aa0",
+      "duplicate_of": null,
+      "verified_at": null
+    },
+    {
+      "source_id": "4c97f4f1-aeea-4ef1-899e-9509fdd966d8",
+      "media_id": "5296caf5-2b0b-4205-b882-c13b3c12e233",
+      "source_type": "website",
+      "source_status": "duplicate",
+      "enabled": false,
+      "status_reason": "同媒体、同规范化 URL、同 source_type 重复；保留 ac105550-3aec-46f4-9739-4d73b29ea091",
+      "duplicate_of": "ac105550-3aec-46f4-9739-4d73b29ea091",
+      "verified_at": null
+    },
+    {
+      "source_id": "4d7f94b3-48f3-45c2-9431-f5fee615b297",
+      "media_id": "629381a5-0666-4bb9-b05c-c3820e3c3b94",
+      "source_type": "website",
+      "source_status": "active",
+      "enabled": true,
+      "status_reason": "逐源真实抓取与入库成功；run e3f6940c-52f7-44b8-8566-f4fdc2ad4aa0",
+      "duplicate_of": null,
+      "verified_at": "2026-09-24T08:34:48.255Z"
+    },
+    {
+      "source_id": "4e715551-c0de-4481-87ba-e7ffe14d0146",
+      "media_id": "8f4eb856-e513-40d9-ad58-052ba44aa46b",
+      "source_type": "website",
+      "source_status": "active",
+      "enabled": true,
+      "status_reason": "逐源真实抓取与入库成功；run e3f6940c-52f7-44b8-8566-f4fdc2ad4aa0",
+      "duplicate_of": null,
+      "verified_at": "2026-09-24T07:59:09.702Z"
+    },
+    {
+      "source_id": "4e9287bd-86da-404b-818b-fb03cf6872e5",
+      "media_id": "3ca72104-30ce-4592-810c-5e06aeaa4a78",
+      "source_type": "website",
+      "source_status": "active",
+      "enabled": true,
+      "status_reason": "逐源真实抓取与入库成功；run e3f6940c-52f7-44b8-8566-f4fdc2ad4aa0",
+      "duplicate_of": null,
+      "verified_at": "2026-09-24T05:57:08.077Z"
+    },
+    {
+      "source_id": "4f0b06e7-d9e3-495f-a90f-b4e55c44157d",
+      "media_id": "921f1b28-a033-4a35-9242-4b35f4121173",
+      "source_type": "website",
+      "source_status": "needs_fix",
+      "enabled": false,
+      "status_reason": "逐源抓取失败：empty_list；run e3f6940c-52f7-44b8-8566-f4fdc2ad4aa0",
+      "duplicate_of": null,
+      "verified_at": null
+    },
+    {
+      "source_id": "51747cdc-d794-4004-a529-ef4a2572339b",
+      "media_id": "db15e67e-2ab3-49d1-a83d-c798f97d486e",
+      "source_type": "website",
+      "source_status": "active",
+      "enabled": true,
+      "status_reason": "逐源真实抓取与入库成功；run e3f6940c-52f7-44b8-8566-f4fdc2ad4aa0",
+      "duplicate_of": null,
+      "verified_at": "2026-09-24T07:57:03.491Z"
+    },
+    {
+      "source_id": "51c8c6f1-faef-4957-b248-e98128214731",
+      "media_id": "2105dbb8-6633-44ad-a6a8-b72b5e41a2de",
+      "source_type": "website",
+      "source_status": "duplicate",
+      "enabled": false,
+      "status_reason": "同媒体、同规范化 URL、同 source_type 重复；保留 db73920f-9887-4ab6-a6bc-dc8682b40455",
+      "duplicate_of": "db73920f-9887-4ab6-a6bc-dc8682b40455",
+      "verified_at": null
+    },
+    {
+      "source_id": "530cd61b-356a-49aa-8c6a-ecfc843e9325",
+      "media_id": "e6f0cd68-56ed-4589-8fde-3d59a317c7af",
+      "source_type": "website",
+      "source_status": "needs_fix",
+      "enabled": false,
+      "status_reason": "逐源抓取失败：configuration_missing；run e3f6940c-52f7-44b8-8566-f4fdc2ad4aa0",
+      "duplicate_of": null,
+      "verified_at": null
+    },
+    {
+      "source_id": "531e5237-a016-4fc2-b52b-bdce687c4693",
+      "media_id": "3d9bbf13-f0c4-41b2-bd7f-a0718c602a00",
+      "source_type": "website",
+      "source_status": "needs_fix",
+      "enabled": false,
+      "status_reason": "逐源抓取失败：empty_list；run e3f6940c-52f7-44b8-8566-f4fdc2ad4aa0",
+      "duplicate_of": null,
+      "verified_at": null
+    },
+    {
+      "source_id": "54cfbdaa-1ec6-49c1-aeee-9a22dfca2daf",
+      "media_id": "7152abd8-cc2b-4b46-ae05-df10e02ce25d",
+      "source_type": "website",
+      "source_status": "duplicate",
+      "enabled": false,
+      "status_reason": "同媒体、同规范化 URL、同 source_type 重复；保留 ff679027-1451-45a2-89a1-3e18c389e79a",
+      "duplicate_of": "ff679027-1451-45a2-89a1-3e18c389e79a",
+      "verified_at": null
+    },
+    {
+      "source_id": "550139e0-2ef6-47bc-9809-c8abb9616b30",
+      "media_id": "072b06e9-a72c-43b1-8a94-07de664702ea",
+      "source_type": "website",
+      "source_status": "active",
+      "enabled": true,
+      "status_reason": "逐源真实抓取与入库成功；run e3f6940c-52f7-44b8-8566-f4fdc2ad4aa0",
+      "duplicate_of": null,
+      "verified_at": "2026-09-24T08:07:47.713Z"
+    },
+    {
+      "source_id": "55a86b20-f146-4770-84d8-9093e0975e99",
+      "media_id": "74f624e9-daac-43b4-b6c9-9a06593ae328",
+      "source_type": "website",
+      "source_status": "duplicate",
+      "enabled": false,
+      "status_reason": "同媒体、同规范化 URL、同 source_type 重复；保留 82e2f6c3-5ae8-4270-907f-063a8c280572",
+      "duplicate_of": "82e2f6c3-5ae8-4270-907f-063a8c280572",
+      "verified_at": null
+    },
+    {
+      "source_id": "5648f0b2-41b8-4767-bc7c-97ec35754f5f",
+      "media_id": "675ffbd4-db8a-4b6b-879e-bf0211278dfa",
+      "source_type": "website",
+      "source_status": "active",
+      "enabled": true,
+      "status_reason": "逐源真实抓取与入库成功；run e3f6940c-52f7-44b8-8566-f4fdc2ad4aa0",
+      "duplicate_of": null,
+      "verified_at": "2026-09-24T05:47:20.984Z"
+    },
+    {
+      "source_id": "56681003-4cd5-4f6e-8494-1fb60ddd3799",
+      "media_id": "707fa244-d7da-4d3d-8b43-60c808f8aa66",
+      "source_type": "website",
+      "source_status": "needs_fix",
+      "enabled": false,
+      "status_reason": "逐源抓取失败：empty_list；run e3f6940c-52f7-44b8-8566-f4fdc2ad4aa0",
+      "duplicate_of": null,
+      "verified_at": null
+    },
+    {
+      "source_id": "577047b8-e4c0-45de-a4fd-028c6f8a576c",
+      "media_id": "3d9bbf13-f0c4-41b2-bd7f-a0718c602a00",
+      "source_type": "epaper",
+      "source_status": "needs_fix",
+      "enabled": false,
+      "status_reason": "当前为 manual 抓取配置，未通过自动采集验证",
+      "duplicate_of": null,
+      "verified_at": null
+    },
+    {
+      "source_id": "5878737f-a633-42db-850d-0341e29c1f8b",
+      "media_id": "23178c9a-b916-4a03-9dce-079eb426ee21",
+      "source_type": "website",
+      "source_status": "duplicate",
+      "enabled": false,
+      "status_reason": "同媒体、同规范化 URL、同 source_type 重复；保留 ad7a164d-2508-4afd-a3ac-a1da99f24c5a",
+      "duplicate_of": "ad7a164d-2508-4afd-a3ac-a1da99f24c5a",
+      "verified_at": null
+    },
+    {
+      "source_id": "59a06a6c-e63a-4331-8f16-a49ec3c9d989",
+      "media_id": "df4a8c1f-3f07-4b08-9bb9-5d9e631bb60f",
+      "source_type": "epaper",
+      "source_status": "needs_fix",
+      "enabled": false,
+      "status_reason": "当前为 manual 抓取配置，未通过自动采集验证",
+      "duplicate_of": null,
+      "verified_at": null
+    },
+    {
+      "source_id": "5a03a436-e657-4314-bb54-97191d9bffd8",
+      "media_id": "19a562bd-c048-4ad8-907c-a3d072682c30",
+      "source_type": "website",
+      "source_status": "duplicate",
+      "enabled": false,
+      "status_reason": "同媒体、同规范化 URL、同 source_type 重复；保留 1e5e73a9-128f-4c15-ad5e-976657784b36",
+      "duplicate_of": "1e5e73a9-128f-4c15-ad5e-976657784b36",
+      "verified_at": null
+    },
+    {
+      "source_id": "5aa1e8ed-5ab3-4155-a685-c9dfc8fe6a8d",
+      "media_id": "03726bf2-e039-4b23-9cd7-796cb5817afe",
+      "source_type": "website",
+      "source_status": "needs_fix",
+      "enabled": false,
+      "status_reason": "逐源抓取失败：empty_list；run e3f6940c-52f7-44b8-8566-f4fdc2ad4aa0",
+      "duplicate_of": null,
+      "verified_at": null
+    },
+    {
+      "source_id": "5aa968b9-2ba4-4224-b4d8-0e211c59bb4a",
+      "media_id": "9f9f11a1-9ad7-482a-a939-a0a73eae2498",
+      "source_type": "website",
+      "source_status": "needs_fix",
+      "enabled": false,
+      "status_reason": "逐源抓取失败：configuration_missing；run e3f6940c-52f7-44b8-8566-f4fdc2ad4aa0",
+      "duplicate_of": null,
+      "verified_at": null
+    },
+    {
+      "source_id": "5b231dec-f22b-47f8-8950-b7b69c823f11",
+      "media_id": "8340ddea-f0a7-46a0-9032-59baaccd9c0d",
+      "source_type": "website",
+      "source_status": "duplicate",
+      "enabled": false,
+      "status_reason": "同媒体、同规范化 URL、同 source_type 重复；保留 1954afb6-db52-4715-b4e1-51150a5183f6",
+      "duplicate_of": "1954afb6-db52-4715-b4e1-51150a5183f6",
+      "verified_at": null
+    },
+    {
+      "source_id": "5bccc91a-8adf-4f3f-8fbe-77441f5bd37b",
+      "media_id": "9be28e9e-aac2-4619-862a-1378c45921d8",
+      "source_type": "website",
+      "source_status": "needs_fix",
+      "enabled": false,
+      "status_reason": "逐源抓取失败：empty_list；run e3f6940c-52f7-44b8-8566-f4fdc2ad4aa0",
+      "duplicate_of": null,
+      "verified_at": null
+    },
+    {
+      "source_id": "5c644490-89ad-493c-83e5-c9da82dc7884",
+      "media_id": "83abca40-dd7a-4e2d-8ee4-4307632964b9",
+      "source_type": "epaper",
+      "source_status": "needs_fix",
+      "enabled": false,
+      "status_reason": "当前为 manual 抓取配置，未通过自动采集验证",
+      "duplicate_of": null,
+      "verified_at": null
+    },
+    {
+      "source_id": "5decbaa3-11f5-4284-8d4b-69a2e1688b67",
+      "media_id": "736ef9bc-40ef-4ee6-8264-39d6efb50ac3",
+      "source_type": "website",
+      "source_status": "active",
+      "enabled": true,
+      "status_reason": "逐源真实抓取与入库成功；run e3f6940c-52f7-44b8-8566-f4fdc2ad4aa0",
+      "duplicate_of": null,
+      "verified_at": "2026-09-24T08:10:19.361Z"
+    },
+    {
+      "source_id": "5e92e756-f307-451b-98db-5d27e7e9df07",
+      "media_id": "53ad7842-8878-4b65-bbe2-b727ff053a3e",
+      "source_type": "website",
+      "source_status": "needs_fix",
+      "enabled": false,
+      "status_reason": "逐源抓取失败：no_valid_articles；run e3f6940c-52f7-44b8-8566-f4fdc2ad4aa0",
+      "duplicate_of": null,
+      "verified_at": null
+    },
+    {
+      "source_id": "5e972965-1e69-489b-9324-2b8496864833",
+      "media_id": "3354b7ab-400e-421f-9291-b9dbac1aa75f",
+      "source_type": "website",
+      "source_status": "needs_fix",
+      "enabled": false,
+      "status_reason": "逐源抓取失败：empty_list；run e3f6940c-52f7-44b8-8566-f4fdc2ad4aa0",
+      "duplicate_of": null,
+      "verified_at": null
+    },
+    {
+      "source_id": "5f70c9ac-2e7d-4c48-aff8-f0da21c456ba",
+      "media_id": "9be28e9e-aac2-4619-862a-1378c45921d8",
+      "source_type": "website",
+      "source_status": "duplicate",
+      "enabled": false,
+      "status_reason": "同媒体、同规范化 URL、同 source_type 重复；保留 cfc66d9f-74c6-4d6e-a5f7-48acddbc3b26",
+      "duplicate_of": "cfc66d9f-74c6-4d6e-a5f7-48acddbc3b26",
+      "verified_at": null
+    },
+    {
+      "source_id": "602b96fe-1a78-474d-9895-400a9f75948f",
+      "media_id": "7948c361-4c35-4a2a-b29c-0eda94915992",
+      "source_type": "website",
+      "source_status": "duplicate",
+      "enabled": false,
+      "status_reason": "同媒体、同规范化 URL、同 source_type 重复；保留 7eb21735-e20c-4c50-abd8-048db026331c",
+      "duplicate_of": "7eb21735-e20c-4c50-abd8-048db026331c",
+      "verified_at": null
+    },
+    {
+      "source_id": "60a4f608-c27a-4353-9bee-7617a7f6741f",
+      "media_id": "d5e810ad-f278-421a-b0e3-229159700f94",
+      "source_type": "website",
+      "source_status": "active",
+      "enabled": true,
+      "status_reason": "逐源真实抓取与入库成功；run e3f6940c-52f7-44b8-8566-f4fdc2ad4aa0",
+      "duplicate_of": null,
+      "verified_at": "2026-09-24T08:33:02.617Z"
+    },
+    {
+      "source_id": "619273bc-93e0-4a6d-b507-e643c5d2e070",
+      "media_id": "d9f2c0ac-13ee-4e08-ae85-cf7b888d1f64",
+      "source_type": "epaper",
+      "source_status": "needs_fix",
+      "enabled": false,
+      "status_reason": "当前为 manual 抓取配置，未通过自动采集验证",
+      "duplicate_of": null,
+      "verified_at": null
+    },
+    {
+      "source_id": "625971eb-1ec7-42b4-ab7c-00f238e110cf",
+      "media_id": "507e4e81-42d6-4a4d-8c84-7dcac3c36c2b",
+      "source_type": "website",
+      "source_status": "active",
+      "enabled": true,
+      "status_reason": "逐源真实抓取与入库成功；run e3f6940c-52f7-44b8-8566-f4fdc2ad4aa0",
+      "duplicate_of": null,
+      "verified_at": "2026-09-24T07:58:05.462Z"
+    },
+    {
+      "source_id": "626c9703-d713-4520-8123-0cedff7eada5",
+      "media_id": "7e08e4b1-bf5b-4f83-a12d-9c7c2863057f",
+      "source_type": "website",
+      "source_status": "active",
+      "enabled": true,
+      "status_reason": "逐源真实抓取与入库成功；run e3f6940c-52f7-44b8-8566-f4fdc2ad4aa0",
+      "duplicate_of": null,
+      "verified_at": "2026-09-24T08:11:31.538Z"
+    },
+    {
+      "source_id": "6379d28d-501c-46ce-a819-6b7bb0d0e4fb",
+      "media_id": "53ad7842-8878-4b65-bbe2-b727ff053a3e",
+      "source_type": "website",
+      "source_status": "needs_fix",
+      "enabled": false,
+      "status_reason": "逐源抓取失败：empty_list；run e3f6940c-52f7-44b8-8566-f4fdc2ad4aa0",
+      "duplicate_of": null,
+      "verified_at": null
+    },
+    {
+      "source_id": "64e84caf-328b-4d47-8a2a-f0f24f2fde5f",
+      "media_id": "a1b67d3e-b993-43fd-9af3-e5975b78ebec",
+      "source_type": "website",
+      "source_status": "active",
+      "enabled": true,
+      "status_reason": "逐源真实抓取与入库成功；run e3f6940c-52f7-44b8-8566-f4fdc2ad4aa0",
+      "duplicate_of": null,
+      "verified_at": "2026-09-24T05:53:02.236Z"
+    },
+    {
+      "source_id": "651abe46-e60e-47dd-8e64-28c0eec1b596",
+      "media_id": "90de8b1a-a9c1-4a66-b124-368ad3f8044b",
+      "source_type": "website",
+      "source_status": "active",
+      "enabled": true,
+      "status_reason": "逐源真实抓取与入库成功；run e3f6940c-52f7-44b8-8566-f4fdc2ad4aa0",
+      "duplicate_of": null,
+      "verified_at": "2026-09-24T08:20:56.125Z"
+    },
+    {
+      "source_id": "676ab035-59e2-4989-b8f8-2a7abbea9e97",
+      "media_id": "072b06e9-a72c-43b1-8a94-07de664702ea",
+      "source_type": "website",
+      "source_status": "active",
+      "enabled": true,
+      "status_reason": "逐源真实抓取与入库成功；run e3f6940c-52f7-44b8-8566-f4fdc2ad4aa0",
+      "duplicate_of": null,
+      "verified_at": "2026-09-24T08:10:53.953Z"
+    },
+    {
+      "source_id": "68d4af59-5f1e-487d-b9c5-346b43037e68",
+      "media_id": "26789265-f88c-47d8-a30d-bec664b22355",
+      "source_type": "website",
+      "source_status": "duplicate",
+      "enabled": false,
+      "status_reason": "同媒体、同规范化 URL、同 source_type 重复；保留 da0a95b1-ea0b-465d-bd3d-4ea146d00a94",
+      "duplicate_of": "da0a95b1-ea0b-465d-bd3d-4ea146d00a94",
+      "verified_at": null
+    },
+    {
+      "source_id": "696920cd-92cb-4bd2-9c2b-7022d5c9a97a",
+      "media_id": "7e37bfdb-94cb-47e5-b372-ee718931094d",
+      "source_type": "website",
+      "source_status": "duplicate",
+      "enabled": false,
+      "status_reason": "同媒体、同规范化 URL、同 source_type 重复；保留 6c3d2281-b98e-4870-9066-86fc6a3a618a",
+      "duplicate_of": "6c3d2281-b98e-4870-9066-86fc6a3a618a",
+      "verified_at": null
+    },
+    {
+      "source_id": "6b3e1417-6973-4fcb-bfd6-6acfc510b1f6",
+      "media_id": "8460b917-a077-4d49-825b-0a8bd816ba66",
+      "source_type": "website",
+      "source_status": "duplicate",
+      "enabled": false,
+      "status_reason": "同媒体、同规范化 URL、同 source_type 重复；保留 7d04bbd9-21ba-4be1-bf6d-715e25f486c7",
+      "duplicate_of": "7d04bbd9-21ba-4be1-bf6d-715e25f486c7",
+      "verified_at": null
+    },
+    {
+      "source_id": "6bcbd9b0-26a7-470a-a827-21d33bf685d0",
+      "media_id": "0dbfb32e-0c32-4a79-ae3a-aede5232fe86",
+      "source_type": "epaper",
+      "source_status": "needs_fix",
+      "enabled": false,
+      "status_reason": "当前为 manual 抓取配置，未通过自动采集验证",
+      "duplicate_of": null,
+      "verified_at": null
+    },
+    {
+      "source_id": "6c039ad2-065a-461c-99d6-77ca17bd12c6",
+      "media_id": "f04a4d70-cc2c-4a1c-97dd-540c381d7532",
+      "source_type": "website",
+      "source_status": "needs_fix",
+      "enabled": false,
+      "status_reason": "逐源抓取失败：empty_list；run e3f6940c-52f7-44b8-8566-f4fdc2ad4aa0",
+      "duplicate_of": null,
+      "verified_at": null
+    },
+    {
+      "source_id": "6c3d2281-b98e-4870-9066-86fc6a3a618a",
+      "media_id": "7e37bfdb-94cb-47e5-b372-ee718931094d",
+      "source_type": "website",
+      "source_status": "active",
+      "enabled": true,
+      "status_reason": "逐源真实抓取与入库成功；run e3f6940c-52f7-44b8-8566-f4fdc2ad4aa0",
+      "duplicate_of": null,
+      "verified_at": "2026-09-24T06:00:18.482Z"
+    },
+    {
+      "source_id": "6cbabd63-d2ec-4577-b459-867d80161a9d",
+      "media_id": "66fb35f0-84d1-494c-971c-c00a97177ba6",
+      "source_type": "website",
+      "source_status": "duplicate",
+      "enabled": false,
+      "status_reason": "同媒体、同规范化 URL、同 source_type 重复；保留 ce10b415-2b18-4dbc-a4d1-ed4fe2ac71f7",
+      "duplicate_of": "ce10b415-2b18-4dbc-a4d1-ed4fe2ac71f7",
+      "verified_at": null
+    },
+    {
+      "source_id": "6ce12ebe-a41e-47e1-b515-ab886f2dc9d9",
+      "media_id": "4bceb8de-a659-4b56-877c-978a8602d167",
+      "source_type": "website",
+      "source_status": "duplicate",
+      "enabled": false,
+      "status_reason": "同媒体、同规范化 URL、同 source_type 重复；保留 f632c210-8ab1-4f64-8b9e-6317cf9bddad",
+      "duplicate_of": "f632c210-8ab1-4f64-8b9e-6317cf9bddad",
+      "verified_at": null
+    },
+    {
+      "source_id": "6d77e808-c44b-4304-a114-ea8cde202f8f",
+      "media_id": "add06f79-b43b-4526-9df6-ddcd68e4026d",
+      "source_type": "website",
+      "source_status": "duplicate",
+      "enabled": false,
+      "status_reason": "同媒体、同规范化 URL、同 source_type 重复；保留 25e2a75a-8265-4546-8150-6f1fc205143f",
+      "duplicate_of": "25e2a75a-8265-4546-8150-6f1fc205143f",
+      "verified_at": null
+    },
+    {
+      "source_id": "6f518a63-b136-4919-83aa-9db4058b0739",
+      "media_id": "e1a06f69-691c-403a-8866-0a373bef182c",
+      "source_type": "website",
+      "source_status": "active",
+      "enabled": true,
+      "status_reason": "逐源真实抓取与入库成功；run e3f6940c-52f7-44b8-8566-f4fdc2ad4aa0",
+      "duplicate_of": null,
+      "verified_at": "2026-09-24T06:13:47.999Z"
+    },
+    {
+      "source_id": "6f7af13b-e89a-46c0-b6fb-13637731723b",
+      "media_id": "5d3a7017-fb42-4c4c-a6d7-04d4556b414d",
+      "source_type": "website",
+      "source_status": "duplicate",
+      "enabled": false,
+      "status_reason": "同媒体、同规范化 URL、同 source_type 重复；保留 c3034c4a-0188-4620-963d-6d3ff203d112",
+      "duplicate_of": "c3034c4a-0188-4620-963d-6d3ff203d112",
+      "verified_at": null
+    },
+    {
+      "source_id": "6fdcbac0-dac1-4816-aafb-b96e14b9bee1",
+      "media_id": "2b177acf-d7e4-4385-aa7d-031168cbf64d",
+      "source_type": "website",
+      "source_status": "duplicate",
+      "enabled": false,
+      "status_reason": "同媒体、同规范化 URL、同 source_type 重复；保留 4b2f2ca9-8ec1-4271-a6a2-caba0d208576",
+      "duplicate_of": "4b2f2ca9-8ec1-4271-a6a2-caba0d208576",
+      "verified_at": null
+    },
+    {
+      "source_id": "701a8aa4-8126-4e0e-9567-2554ed8c0c52",
+      "media_id": "abd83467-befb-464a-afa9-2f28e3052f0b",
+      "source_type": "website",
+      "source_status": "active",
+      "enabled": true,
+      "status_reason": "逐源真实抓取与入库成功；run e3f6940c-52f7-44b8-8566-f4fdc2ad4aa0",
+      "duplicate_of": null,
+      "verified_at": "2026-09-24T08:03:46.895Z"
+    },
+    {
+      "source_id": "70b04246-a6e7-411e-830b-7ca418f36a3d",
+      "media_id": "0dbfb32e-0c32-4a79-ae3a-aede5232fe86",
+      "source_type": "website",
+      "source_status": "active",
+      "enabled": true,
+      "status_reason": "逐源真实抓取与入库成功；run e3f6940c-52f7-44b8-8566-f4fdc2ad4aa0",
+      "duplicate_of": null,
+      "verified_at": "2026-09-24T05:55:11.492Z"
+    },
+    {
+      "source_id": "70bbc948-f93c-47dd-a35e-3af48844a0e5",
+      "media_id": "c728024b-01ff-49d6-bfd2-bc3ffa3cf4aa",
+      "source_type": "website",
+      "source_status": "duplicate",
+      "enabled": false,
+      "status_reason": "同媒体、同规范化 URL、同 source_type 重复；保留 cdb7460b-ad73-4396-919f-a73b76811c4f",
+      "duplicate_of": "cdb7460b-ad73-4396-919f-a73b76811c4f",
+      "verified_at": null
+    },
+    {
+      "source_id": "70e7de9e-d955-459d-8706-95086e9db0d6",
+      "media_id": "af998816-98e2-4114-b64e-71742048c06c",
+      "source_type": "website",
+      "source_status": "duplicate",
+      "enabled": false,
+      "status_reason": "同媒体、同规范化 URL、同 source_type 重复；保留 3994763a-0708-4c33-88ad-ea51991bdd1b",
+      "duplicate_of": "3994763a-0708-4c33-88ad-ea51991bdd1b",
+      "verified_at": null
+    },
+    {
+      "source_id": "71800c5f-47f5-4b22-8d0f-e56caaf70cce",
+      "media_id": "91696414-b9ee-47ae-906d-bd3771bb3adc",
+      "source_type": "website",
+      "source_status": "needs_fix",
+      "enabled": false,
+      "status_reason": "逐源抓取失败：configuration_missing；run e3f6940c-52f7-44b8-8566-f4fdc2ad4aa0",
+      "duplicate_of": null,
+      "verified_at": null
+    },
+    {
+      "source_id": "72b79bb9-729f-4ffc-b123-d78454a1d3b8",
+      "media_id": "0fae45e4-46b7-4ece-9de9-8b5c25f47806",
+      "source_type": "website",
+      "source_status": "needs_fix",
+      "enabled": false,
+      "status_reason": "逐源抓取失败：configuration_missing；run e3f6940c-52f7-44b8-8566-f4fdc2ad4aa0",
+      "duplicate_of": null,
+      "verified_at": null
+    },
+    {
+      "source_id": "7420743f-1e4b-4b4d-895e-dd40d50e1ca2",
+      "media_id": "3ca72104-30ce-4592-810c-5e06aeaa4a78",
+      "source_type": "epaper",
+      "source_status": "needs_fix",
+      "enabled": false,
+      "status_reason": "当前为 manual 抓取配置，未通过自动采集验证",
+      "duplicate_of": null,
+      "verified_at": null
+    },
+    {
+      "source_id": "74602362-0599-4a34-856b-8a37fa23d694",
+      "media_id": "911602f0-723d-42f8-818e-6465d2e27fbd",
+      "source_type": "website",
+      "source_status": "needs_fix",
+      "enabled": false,
+      "status_reason": "逐源抓取失败：no_valid_articles；run e3f6940c-52f7-44b8-8566-f4fdc2ad4aa0",
+      "duplicate_of": null,
+      "verified_at": null
+    },
+    {
+      "source_id": "75d0fa60-1fec-4f0d-8e54-572f44284c12",
+      "media_id": "5e4bb677-916b-4ca7-b4c7-da837be1a6ba",
+      "source_type": "website",
+      "source_status": "active",
+      "enabled": true,
+      "status_reason": "逐源真实抓取与入库成功；run e3f6940c-52f7-44b8-8566-f4fdc2ad4aa0",
+      "duplicate_of": null,
+      "verified_at": "2026-09-24T05:53:51.465Z"
+    },
+    {
+      "source_id": "76a7e0ed-1f83-426c-855d-5e72b3f6cdd6",
+      "media_id": "cfd0c75c-8846-4ef9-bfeb-890452a5833c",
+      "source_type": "website",
+      "source_status": "duplicate",
+      "enabled": false,
+      "status_reason": "同媒体、同规范化 URL、同 source_type 重复；保留 1c89bfc7-71e0-478a-9f20-c2d357f05749",
+      "duplicate_of": "1c89bfc7-71e0-478a-9f20-c2d357f05749",
+      "verified_at": null
+    },
+    {
+      "source_id": "781c4759-7ea7-40d1-8deb-25ef87ffa30a",
+      "media_id": "4bece79e-7ee1-4d58-aa7b-72dabc6ba517",
+      "source_type": "website",
+      "source_status": "needs_fix",
+      "enabled": false,
+      "status_reason": "逐源抓取失败：empty_list；run e3f6940c-52f7-44b8-8566-f4fdc2ad4aa0",
+      "duplicate_of": null,
+      "verified_at": null
+    },
+    {
+      "source_id": "79db5362-50c8-4f24-bf9c-412bb2a29423",
+      "media_id": "c9c53c02-70aa-457c-ba39-bd3af0b05220",
+      "source_type": "website",
+      "source_status": "active",
+      "enabled": true,
+      "status_reason": "逐源真实抓取与入库成功；run e3f6940c-52f7-44b8-8566-f4fdc2ad4aa0",
+      "duplicate_of": null,
+      "verified_at": "2026-09-24T06:14:48.690Z"
+    },
+    {
+      "source_id": "7a0caa4d-ff34-4063-8439-356ae774e0e2",
+      "media_id": "ff0e8737-3a4f-47f5-b97e-7ad8e2de83a5",
+      "source_type": "website",
+      "source_status": "active",
+      "enabled": true,
+      "status_reason": "逐源真实抓取与入库成功；run e3f6940c-52f7-44b8-8566-f4fdc2ad4aa0",
+      "duplicate_of": null,
+      "verified_at": "2026-09-24T06:43:06.442Z"
+    },
+    {
+      "source_id": "7bb9dd05-6801-47ff-ad2c-af2616cf951a",
+      "media_id": "50d755d6-b643-4e90-af7d-6a9756c0a5a3",
+      "source_type": "website",
+      "source_status": "duplicate",
+      "enabled": false,
+      "status_reason": "同媒体、同规范化 URL、同 source_type 重复；保留 2f9127cf-ac48-456a-b4cb-b658cc155c43",
+      "duplicate_of": "2f9127cf-ac48-456a-b4cb-b658cc155c43",
+      "verified_at": null
+    },
+    {
+      "source_id": "7bce761c-916b-4981-97a4-4b55fc2aaefb",
+      "media_id": "3609236d-2d86-40ba-8dc9-b715fcc4a61e",
+      "source_type": "website",
+      "source_status": "duplicate",
+      "enabled": false,
+      "status_reason": "同媒体、同规范化 URL、同 source_type 重复；保留 ccef2051-e3ca-4f49-95df-67d5d0c3ec45",
+      "duplicate_of": "ccef2051-e3ca-4f49-95df-67d5d0c3ec45",
+      "verified_at": null
+    },
+    {
+      "source_id": "7c30674b-a07c-42d9-ba06-22e4fb538867",
+      "media_id": "ea16bfb0-384e-4d09-a00a-f543d7bd822b",
+      "source_type": "website",
+      "source_status": "duplicate",
+      "enabled": false,
+      "status_reason": "同媒体、同规范化 URL、同 source_type 重复；保留 eefc1945-bb0f-4d61-bb95-7c42476f8f50",
+      "duplicate_of": "eefc1945-bb0f-4d61-bb95-7c42476f8f50",
+      "verified_at": null
+    },
+    {
+      "source_id": "7d04bbd9-21ba-4be1-bf6d-715e25f486c7",
+      "media_id": "8460b917-a077-4d49-825b-0a8bd816ba66",
+      "source_type": "website",
+      "source_status": "needs_fix",
+      "enabled": false,
+      "status_reason": "逐源抓取失败：configuration_missing；run e3f6940c-52f7-44b8-8566-f4fdc2ad4aa0",
+      "duplicate_of": null,
+      "verified_at": null
+    },
+    {
+      "source_id": "7e0aaca5-7a69-47c9-aab2-dccf91861bdb",
+      "media_id": "648f29df-a491-4332-90e3-6fda61ba79fa",
+      "source_type": "website",
+      "source_status": "active",
+      "enabled": true,
+      "status_reason": "逐源真实抓取与入库成功；run e3f6940c-52f7-44b8-8566-f4fdc2ad4aa0",
+      "duplicate_of": null,
+      "verified_at": "2026-09-24T08:34:52.596Z"
+    },
+    {
+      "source_id": "7eb21735-e20c-4c50-abd8-048db026331c",
+      "media_id": "7948c361-4c35-4a2a-b29c-0eda94915992",
+      "source_type": "website",
+      "source_status": "active",
+      "enabled": true,
+      "status_reason": "逐源真实抓取与入库成功；run e3f6940c-52f7-44b8-8566-f4fdc2ad4aa0",
+      "duplicate_of": null,
+      "verified_at": "2026-09-24T05:49:50.770Z"
+    },
+    {
+      "source_id": "7ee70b31-16b2-4c3a-b11d-dfca44c2b711",
+      "media_id": "ccbc3bb6-69e8-412a-80b5-8ecccc4c7eee",
+      "source_type": "website",
+      "source_status": "needs_fix",
+      "enabled": false,
+      "status_reason": "逐源抓取失败：empty_list；run e3f6940c-52f7-44b8-8566-f4fdc2ad4aa0",
+      "duplicate_of": null,
+      "verified_at": null
+    },
+    {
+      "source_id": "824f31e6-5efb-430b-bd5c-4bbbc9535962",
+      "media_id": "62d913fb-9839-4aa0-b17b-22a0f3d012c6",
+      "source_type": "website",
+      "source_status": "needs_fix",
+      "enabled": false,
+      "status_reason": "逐源抓取失败：empty_list；run e3f6940c-52f7-44b8-8566-f4fdc2ad4aa0",
+      "duplicate_of": null,
+      "verified_at": null
+    },
+    {
+      "source_id": "82e2f6c3-5ae8-4270-907f-063a8c280572",
+      "media_id": "74f624e9-daac-43b4-b6c9-9a06593ae328",
+      "source_type": "website",
+      "source_status": "needs_fix",
+      "enabled": false,
+      "status_reason": "逐源抓取失败：empty_list；run e3f6940c-52f7-44b8-8566-f4fdc2ad4aa0",
+      "duplicate_of": null,
+      "verified_at": null
+    },
+    {
+      "source_id": "88db6c96-e629-41aa-af16-c42f08219c04",
+      "media_id": "d8782739-5d66-446d-b7dc-a8145babf0bc",
+      "source_type": "website",
+      "source_status": "duplicate",
+      "enabled": false,
+      "status_reason": "同媒体、同规范化 URL、同 source_type 重复；保留 f6deb4f6-0360-4bb4-a880-561eb551bf4c",
+      "duplicate_of": "f6deb4f6-0360-4bb4-a880-561eb551bf4c",
+      "verified_at": null
+    },
+    {
+      "source_id": "89518fc7-1fca-49f6-9125-506ebc5be8d4",
+      "media_id": "51fd9095-83ce-4f49-a663-660f174800f8",
+      "source_type": "epaper",
+      "source_status": "needs_fix",
+      "enabled": false,
+      "status_reason": "尚无当前逐源真实抓取成功证据，待验证/修复",
+      "duplicate_of": null,
+      "verified_at": null
+    },
+    {
+      "source_id": "89886127-f98c-46e7-afa1-1cc97bb3d043",
+      "media_id": "6377308c-a6a6-4ebb-96af-329611ce73b6",
+      "source_type": "website",
+      "source_status": "active",
+      "enabled": true,
+      "status_reason": "逐源真实抓取与入库成功；run e3f6940c-52f7-44b8-8566-f4fdc2ad4aa0",
+      "duplicate_of": null,
+      "verified_at": "2026-09-24T07:58:28.771Z"
+    },
+    {
+      "source_id": "8a4e5086-2d8b-43bc-9b9b-126e8e25a2c8",
+      "media_id": "bf36bedb-3c7c-4805-98b7-5167f30e5b30",
+      "source_type": "website",
+      "source_status": "needs_fix",
+      "enabled": false,
+      "status_reason": "逐源抓取失败：configuration_missing；run e3f6940c-52f7-44b8-8566-f4fdc2ad4aa0",
+      "duplicate_of": null,
+      "verified_at": null
+    },
+    {
+      "source_id": "8a7bf076-3a46-4e5d-92e9-ad2108d883bf",
+      "media_id": "05b0159a-2f62-4f79-b887-ca7a1e1f9cf5",
+      "source_type": "website",
+      "source_status": "duplicate",
+      "enabled": false,
+      "status_reason": "同媒体、同规范化 URL、同 source_type 重复；保留 c9715174-3d3f-4438-9cae-2131ccd2509f",
+      "duplicate_of": "c9715174-3d3f-4438-9cae-2131ccd2509f",
+      "verified_at": null
+    },
+    {
+      "source_id": "8a906243-15af-4996-ab85-3cf8d99b5d9f",
+      "media_id": "392bd6a7-f4c3-4892-8c75-f69398be69b2",
+      "source_type": "website",
+      "source_status": "duplicate",
+      "enabled": false,
+      "status_reason": "同媒体、同规范化 URL、同 source_type 重复；保留 a8d72a09-8f77-436a-8dac-1b0f480bd506",
+      "duplicate_of": "a8d72a09-8f77-436a-8dac-1b0f480bd506",
+      "verified_at": null
+    },
+    {
+      "source_id": "8b95aea9-ba61-459f-846c-eac870373dbf",
+      "media_id": "18415fb5-a68b-4781-96f9-84c9d17cf35a",
+      "source_type": "website",
+      "source_status": "duplicate",
+      "enabled": false,
+      "status_reason": "同媒体、同规范化 URL、同 source_type 重复；保留 c7fb44f1-52bb-465d-a4c1-22f365645b7d",
+      "duplicate_of": "c7fb44f1-52bb-465d-a4c1-22f365645b7d",
+      "verified_at": null
+    },
+    {
+      "source_id": "8c0f6bd0-5baf-4ce2-8067-7b3e1e6953e6",
+      "media_id": "90de8b1a-a9c1-4a66-b124-368ad3f8044b",
+      "source_type": "epaper",
+      "source_status": "needs_fix",
+      "enabled": false,
+      "status_reason": "尚无当前逐源真实抓取成功证据，待验证/修复",
+      "duplicate_of": null,
+      "verified_at": null
+    },
+    {
+      "source_id": "8dde8351-61ba-4476-9cb7-ee501944988b",
+      "media_id": "8dc51d7f-70e7-4866-8d4b-092eee142ebc",
+      "source_type": "website",
+      "source_status": "active",
+      "enabled": true,
+      "status_reason": "逐源真实抓取与入库成功；run e3f6940c-52f7-44b8-8566-f4fdc2ad4aa0",
+      "duplicate_of": null,
+      "verified_at": "2026-09-24T05:55:42.936Z"
+    },
+    {
+      "source_id": "8defe366-e756-42f6-859c-ea2bf98e9cc4",
+      "media_id": "51650397-b16e-4b20-baa2-5b996785ef68",
+      "source_type": "website",
+      "source_status": "duplicate",
+      "enabled": false,
+      "status_reason": "同媒体、同规范化 URL、同 source_type 重复；保留 fb176cf9-f1f5-457d-b346-3aa30e253259",
+      "duplicate_of": "fb176cf9-f1f5-457d-b346-3aa30e253259",
+      "verified_at": null
+    },
+    {
+      "source_id": "8e7506de-a594-483a-b1c1-9eeec2ca5285",
+      "media_id": "5fdd99b1-a9a9-4314-a93f-1bba505b442f",
+      "source_type": "website",
+      "source_status": "needs_fix",
+      "enabled": false,
+      "status_reason": "逐源抓取失败：empty_list；run e3f6940c-52f7-44b8-8566-f4fdc2ad4aa0",
+      "duplicate_of": null,
+      "verified_at": null
+    },
+    {
+      "source_id": "8ffa92a9-f80e-4b4e-afe5-21a5f845c235",
+      "media_id": "a4e07cc2-9277-4d07-8809-15f59e088e22",
+      "source_type": "website",
+      "source_status": "needs_fix",
+      "enabled": false,
+      "status_reason": "逐源抓取失败：configuration_missing；run e3f6940c-52f7-44b8-8566-f4fdc2ad4aa0",
+      "duplicate_of": null,
+      "verified_at": null
+    },
+    {
+      "source_id": "90370bc3-3b81-49c5-b59d-159524c917a0",
+      "media_id": "3c8e29b9-a0b3-4464-ac42-63508d08312f",
+      "source_type": "website",
+      "source_status": "active",
+      "enabled": true,
+      "status_reason": "逐源真实抓取与入库成功；run e3f6940c-52f7-44b8-8566-f4fdc2ad4aa0",
+      "duplicate_of": null,
+      "verified_at": "2026-09-24T07:59:43.149Z"
+    },
+    {
+      "source_id": "90a0e2c7-5812-483d-8d3f-16a771999028",
+      "media_id": "cb710aa9-0d89-4b9d-b4b6-146249e5acfb",
+      "source_type": "website",
+      "source_status": "needs_fix",
+      "enabled": false,
+      "status_reason": "逐源抓取失败：empty_list；run e3f6940c-52f7-44b8-8566-f4fdc2ad4aa0",
+      "duplicate_of": null,
+      "verified_at": null
+    },
+    {
+      "source_id": "90d8f489-7707-41fa-83b6-55d8721bc149",
+      "media_id": "3a05e66b-78ee-4391-b61d-b3b48c073393",
+      "source_type": "website",
+      "source_status": "duplicate",
+      "enabled": false,
+      "status_reason": "同媒体、同规范化 URL、同 source_type 重复；保留 974480ac-4eba-4988-97dd-36b30e8feaff",
+      "duplicate_of": "974480ac-4eba-4988-97dd-36b30e8feaff",
+      "verified_at": null
+    },
+    {
+      "source_id": "90efe654-236b-40bf-93a6-ec25054a49fa",
+      "media_id": "d7fbb7e4-9985-416a-92a3-a07913188d43",
+      "source_type": "website",
+      "source_status": "needs_fix",
+      "enabled": false,
+      "status_reason": "逐源抓取失败：empty_list；run e3f6940c-52f7-44b8-8566-f4fdc2ad4aa0",
+      "duplicate_of": null,
+      "verified_at": null
+    },
+    {
+      "source_id": "9107eb61-1648-4e8b-b249-6353e881cc06",
+      "media_id": "fd1d18c7-f390-4cd0-8b87-d72a7e0a984c",
+      "source_type": "website",
+      "source_status": "duplicate",
+      "enabled": false,
+      "status_reason": "同媒体、同规范化 URL、同 source_type 重复；保留 234c65a1-6c67-4531-a665-806c27bfb8e8",
+      "duplicate_of": "234c65a1-6c67-4531-a665-806c27bfb8e8",
+      "verified_at": null
+    },
+    {
+      "source_id": "91b12444-4be6-44b5-8147-ac02d5e678ba",
+      "media_id": "2cce0d71-709c-45f4-b27b-f4736dbaab96",
+      "source_type": "website",
+      "source_status": "active",
+      "enabled": true,
+      "status_reason": "逐源真实抓取与入库成功；run e3f6940c-52f7-44b8-8566-f4fdc2ad4aa0",
+      "duplicate_of": null,
+      "verified_at": "2026-09-24T08:32:39.688Z"
+    },
+    {
+      "source_id": "96266c07-c051-411c-90c1-572213cba632",
+      "media_id": "3529bf46-b3f8-4be7-bfc7-4bcd3843cfc4",
+      "source_type": "website",
+      "source_status": "duplicate",
+      "enabled": false,
+      "status_reason": "同媒体、同规范化 URL、同 source_type 重复；保留 415535c6-0280-44a5-8aed-ed5dd01c4819",
+      "duplicate_of": "415535c6-0280-44a5-8aed-ed5dd01c4819",
+      "verified_at": null
+    },
+    {
+      "source_id": "96750a98-5d90-4b9d-b42d-83d5d88a8599",
+      "media_id": "d7fbb7e4-9985-416a-92a3-a07913188d43",
+      "source_type": "website",
+      "source_status": "active",
+      "enabled": true,
+      "status_reason": "逐源真实抓取与入库成功；run e3f6940c-52f7-44b8-8566-f4fdc2ad4aa0",
+      "duplicate_of": null,
+      "verified_at": "2026-09-24T07:58:58.614Z"
+    },
+    {
+      "source_id": "974480ac-4eba-4988-97dd-36b30e8feaff",
+      "media_id": "3a05e66b-78ee-4391-b61d-b3b48c073393",
+      "source_type": "website",
+      "source_status": "active",
+      "enabled": true,
+      "status_reason": "逐源真实抓取与入库成功；run e3f6940c-52f7-44b8-8566-f4fdc2ad4aa0",
+      "duplicate_of": null,
+      "verified_at": "2026-09-24T07:48:36.077Z"
+    },
+    {
+      "source_id": "97525118-a931-4f9b-928f-17d9c7a7e2fa",
+      "media_id": "ccbc3bb6-69e8-412a-80b5-8ecccc4c7eee",
+      "source_type": "website",
+      "source_status": "active",
+      "enabled": true,
+      "status_reason": "逐源真实抓取与入库成功；run e3f6940c-52f7-44b8-8566-f4fdc2ad4aa0",
+      "duplicate_of": null,
+      "verified_at": "2026-09-24T05:49:21.587Z"
+    },
+    {
+      "source_id": "981915e6-1108-418c-bac4-913dcfd974c0",
+      "media_id": "2aa5c046-818e-4af0-8d47-72312861a5f6",
+      "source_type": "website",
+      "source_status": "duplicate",
+      "enabled": false,
+      "status_reason": "同媒体、同规范化 URL、同 source_type 重复；保留 0a09ee31-7f44-4011-a328-569491c86be2",
+      "duplicate_of": "0a09ee31-7f44-4011-a328-569491c86be2",
+      "verified_at": null
+    },
+    {
+      "source_id": "9a3c4d34-e3e0-424d-815a-6e76b3e6a418",
+      "media_id": "d8eb91ec-b093-4f15-941e-4ee8d4b3448a",
+      "source_type": "website",
+      "source_status": "duplicate",
+      "enabled": false,
+      "status_reason": "同媒体、同规范化 URL、同 source_type 重复；保留 01c122dd-2489-4f96-985d-f6e364eca45f",
+      "duplicate_of": "01c122dd-2489-4f96-985d-f6e364eca45f",
+      "verified_at": null
+    },
+    {
+      "source_id": "9a8d571d-6584-411f-97c3-4c46a1defc32",
+      "media_id": "03726bf2-e039-4b23-9cd7-796cb5817afe",
+      "source_type": "website",
+      "source_status": "needs_fix",
+      "enabled": false,
+      "status_reason": "逐源抓取失败：empty_list；run e3f6940c-52f7-44b8-8566-f4fdc2ad4aa0",
+      "duplicate_of": null,
+      "verified_at": null
+    },
+    {
+      "source_id": "9ab1eb07-de9f-4f94-a1e0-0bcf1027d3a1",
+      "media_id": "64ac51ff-ea58-48f6-84a4-013c7680bc5c",
+      "source_type": "website",
+      "source_status": "active",
+      "enabled": true,
+      "status_reason": "逐源真实抓取与入库成功；run e3f6940c-52f7-44b8-8566-f4fdc2ad4aa0",
+      "duplicate_of": null,
+      "verified_at": "2026-09-24T07:48:58.451Z"
+    },
+    {
+      "source_id": "9c259287-10be-4684-8583-eafeb1249c3f",
+      "media_id": "b46b5c33-ceaa-4e94-95fd-f49873cb99f2",
+      "source_type": "website",
+      "source_status": "active",
+      "enabled": true,
+      "status_reason": "逐源真实抓取与入库成功；run e3f6940c-52f7-44b8-8566-f4fdc2ad4aa0",
+      "duplicate_of": null,
+      "verified_at": "2026-09-24T08:03:01.405Z"
+    },
+    {
+      "source_id": "9ddaa46c-d7f8-491f-ac72-88274bb1131c",
+      "media_id": "df4a8c1f-3f07-4b08-9bb9-5d9e631bb60f",
+      "source_type": "website",
+      "source_status": "active",
+      "enabled": true,
+      "status_reason": "逐源真实抓取与入库成功；run e3f6940c-52f7-44b8-8566-f4fdc2ad4aa0",
+      "duplicate_of": null,
+      "verified_at": "2026-09-24T08:00:07.050Z"
+    },
+    {
+      "source_id": "9efe1520-f823-4068-9be0-2d3594095542",
+      "media_id": "84500184-6a31-42fa-8c39-a33c57135057",
+      "source_type": "website",
+      "source_status": "needs_fix",
+      "enabled": false,
+      "status_reason": "逐源抓取失败：configuration_missing；run e3f6940c-52f7-44b8-8566-f4fdc2ad4aa0",
+      "duplicate_of": null,
+      "verified_at": null
+    },
+    {
+      "source_id": "a02cc683-e0c5-4fb3-b519-cb5ed9f20d2b",
+      "media_id": "d8899a65-7cc9-4707-876d-6ceb2aa00e52",
+      "source_type": "website",
+      "source_status": "needs_fix",
+      "enabled": false,
+      "status_reason": "逐源抓取失败：configuration_missing；run e3f6940c-52f7-44b8-8566-f4fdc2ad4aa0",
+      "duplicate_of": null,
+      "verified_at": null
+    },
+    {
+      "source_id": "a12c64f1-a5f5-4d90-a748-c4f707854d44",
+      "media_id": "0dbfb32e-0c32-4a79-ae3a-aede5232fe86",
+      "source_type": "website",
+      "source_status": "duplicate",
+      "enabled": false,
+      "status_reason": "同媒体、同规范化 URL、同 source_type 重复；保留 70b04246-a6e7-411e-830b-7ca418f36a3d",
+      "duplicate_of": "70b04246-a6e7-411e-830b-7ca418f36a3d",
+      "verified_at": null
+    },
+    {
+      "source_id": "a26a69e8-3d75-4859-9a7e-d36a178497f3",
+      "media_id": "d77d7043-06db-4ea6-b447-df265734e645",
+      "source_type": "website",
+      "source_status": "needs_fix",
+      "enabled": false,
+      "status_reason": "逐源抓取失败：configuration_missing；run e3f6940c-52f7-44b8-8566-f4fdc2ad4aa0",
+      "duplicate_of": null,
+      "verified_at": null
+    },
+    {
+      "source_id": "a293c344-e0b9-4dc9-9ce9-103114c2750e",
+      "media_id": "f04a4d70-cc2c-4a1c-97dd-540c381d7532",
+      "source_type": "website",
+      "source_status": "duplicate",
+      "enabled": false,
+      "status_reason": "同媒体、同规范化 URL、同 source_type 重复；保留 6c039ad2-065a-461c-99d6-77ca17bd12c6",
+      "duplicate_of": "6c039ad2-065a-461c-99d6-77ca17bd12c6",
+      "verified_at": null
+    },
+    {
+      "source_id": "a2cb1288-480e-490b-a067-4b6a3f57097c",
+      "media_id": "05b0159a-2f62-4f79-b887-ca7a1e1f9cf5",
+      "source_type": "website",
+      "source_status": "duplicate",
+      "enabled": false,
+      "status_reason": "同媒体、同规范化 URL、同 source_type 重复；保留 c9715174-3d3f-4438-9cae-2131ccd2509f",
+      "duplicate_of": "c9715174-3d3f-4438-9cae-2131ccd2509f",
+      "verified_at": null
+    },
+    {
+      "source_id": "a2e5e1ec-867d-4928-babb-b894f8e56ca3",
+      "media_id": "78426f53-ffb5-4ef2-9f20-7c71fdcc3588",
+      "source_type": "website",
+      "source_status": "duplicate",
+      "enabled": false,
+      "status_reason": "同媒体、同规范化 URL、同 source_type 重复；保留 2dfa3495-262b-426c-a49a-57b9bb6c12bc",
+      "duplicate_of": "2dfa3495-262b-426c-a49a-57b9bb6c12bc",
+      "verified_at": null
+    },
+    {
+      "source_id": "a2efcfea-cd51-4294-b64a-325abf7f1369",
+      "media_id": "bd760b1a-4d94-4ec0-9bb3-9c08592a2c7e",
+      "source_type": "website",
+      "source_status": "active",
+      "enabled": true,
+      "status_reason": "逐源真实抓取与入库成功；run e3f6940c-52f7-44b8-8566-f4fdc2ad4aa0",
+      "duplicate_of": null,
+      "verified_at": "2026-09-24T06:00:48.360Z"
+    },
+    {
+      "source_id": "a582584e-fc8a-466c-82ab-3aed793d3f8d",
+      "media_id": "845d2237-6bf9-45a3-97d1-c30515d39dad",
+      "source_type": "website",
+      "source_status": "duplicate",
+      "enabled": false,
+      "status_reason": "同媒体、同规范化 URL、同 source_type 重复；保留 18508e26-7b48-44ee-b7fd-a013c2ac024f",
+      "duplicate_of": "18508e26-7b48-44ee-b7fd-a013c2ac024f",
+      "verified_at": null
+    },
+    {
+      "source_id": "a68a0a25-d30d-4c96-b97f-04ce2466dfe6",
+      "media_id": "7e08e4b1-bf5b-4f83-a12d-9c7c2863057f",
+      "source_type": "website",
+      "source_status": "needs_fix",
+      "enabled": false,
+      "status_reason": "逐源抓取失败：no_valid_articles；run e3f6940c-52f7-44b8-8566-f4fdc2ad4aa0",
+      "duplicate_of": null,
+      "verified_at": null
+    },
+    {
+      "source_id": "a6f6d5f3-b5e9-46c3-8317-b10c35b3ef83",
+      "media_id": "1856ca2a-93aa-4075-a1e5-3c88d00c96bc",
+      "source_type": "website",
+      "source_status": "active",
+      "enabled": true,
+      "status_reason": "逐源真实抓取与入库成功；run e3f6940c-52f7-44b8-8566-f4fdc2ad4aa0",
+      "duplicate_of": null,
+      "verified_at": "2026-09-24T07:57:40.038Z"
+    },
+    {
+      "source_id": "a7eecada-fb58-4d73-8864-d70792dc46a4",
+      "media_id": "91a2278d-617e-4193-a817-a4cb00adfcd0",
+      "source_type": "website",
+      "source_status": "duplicate",
+      "enabled": false,
+      "status_reason": "同媒体、同规范化 URL、同 source_type 重复；保留 edf92267-797e-4424-9542-9e138cd4feba",
+      "duplicate_of": "edf92267-797e-4424-9542-9e138cd4feba",
+      "verified_at": null
+    },
+    {
+      "source_id": "a866f38a-aa2d-443b-ba8c-f49e583bbbcc",
+      "media_id": "9e880afd-a36a-40c6-9714-a27d128e25cd",
+      "source_type": "website",
+      "source_status": "active",
+      "enabled": true,
+      "status_reason": "逐源真实抓取与入库成功；run e3f6940c-52f7-44b8-8566-f4fdc2ad4aa0",
+      "duplicate_of": null,
+      "verified_at": "2026-09-24T05:55:49.902Z"
+    },
+    {
+      "source_id": "a8983718-a171-4cce-966b-fc13f3faa978",
+      "media_id": "aee7a687-b424-45ff-9658-209f2dacec17",
+      "source_type": "website",
+      "source_status": "active",
+      "enabled": true,
+      "status_reason": "逐源真实抓取与入库成功；run e3f6940c-52f7-44b8-8566-f4fdc2ad4aa0",
+      "duplicate_of": null,
+      "verified_at": "2026-09-24T07:58:12.418Z"
+    },
+    {
+      "source_id": "a8d72a09-8f77-436a-8dac-1b0f480bd506",
+      "media_id": "392bd6a7-f4c3-4892-8c75-f69398be69b2",
+      "source_type": "website",
+      "source_status": "active",
+      "enabled": true,
+      "status_reason": "逐源真实抓取与入库成功；run e3f6940c-52f7-44b8-8566-f4fdc2ad4aa0",
+      "duplicate_of": null,
+      "verified_at": "2026-09-24T08:31:39.285Z"
+    },
+    {
+      "source_id": "aa7ae184-3fbb-4ace-99c0-9e9b30f9df4d",
+      "media_id": "648f29df-a491-4332-90e3-6fda61ba79fa",
+      "source_type": "website",
+      "source_status": "duplicate",
+      "enabled": false,
+      "status_reason": "同媒体、同规范化 URL、同 source_type 重复；保留 7e0aaca5-7a69-47c9-aab2-dccf91861bdb",
+      "duplicate_of": "7e0aaca5-7a69-47c9-aab2-dccf91861bdb",
+      "verified_at": null
+    },
+    {
+      "source_id": "aba72198-c379-4a91-b9bd-d63ff1c06957",
+      "media_id": "a4e07cc2-9277-4d07-8809-15f59e088e22",
+      "source_type": "website",
+      "source_status": "duplicate",
+      "enabled": false,
+      "status_reason": "同媒体、同规范化 URL、同 source_type 重复；保留 8ffa92a9-f80e-4b4e-afe5-21a5f845c235",
+      "duplicate_of": "8ffa92a9-f80e-4b4e-afe5-21a5f845c235",
+      "verified_at": null
+    },
+    {
+      "source_id": "ac105550-3aec-46f4-9739-4d73b29ea091",
+      "media_id": "5296caf5-2b0b-4205-b882-c13b3c12e233",
+      "source_type": "website",
+      "source_status": "active",
+      "enabled": true,
+      "status_reason": "逐源真实抓取与入库成功；run e3f6940c-52f7-44b8-8566-f4fdc2ad4aa0",
+      "duplicate_of": null,
+      "verified_at": "2026-09-24T05:59:59.693Z"
+    },
+    {
+      "source_id": "ad7a164d-2508-4afd-a3ac-a1da99f24c5a",
+      "media_id": "23178c9a-b916-4a03-9dce-079eb426ee21",
+      "source_type": "website",
+      "source_status": "active",
+      "enabled": true,
+      "status_reason": "逐源真实抓取与入库成功；run e3f6940c-52f7-44b8-8566-f4fdc2ad4aa0",
+      "duplicate_of": null,
+      "verified_at": "2026-09-24T07:46:34.301Z"
+    },
+    {
+      "source_id": "adaefd5c-5c05-45b0-a063-c0295fc1f9ca",
+      "media_id": "6f4a44ac-21ee-44de-b1b5-807f6e0a6237",
+      "source_type": "website",
+      "source_status": "needs_fix",
+      "enabled": false,
+      "status_reason": "逐源抓取失败：configuration_missing；run e3f6940c-52f7-44b8-8566-f4fdc2ad4aa0",
+      "duplicate_of": null,
+      "verified_at": null
+    },
+    {
+      "source_id": "af8805cc-ccdc-47fc-bef5-49794c293ee6",
+      "media_id": "f0339351-e426-4be9-b35b-77d6880d17ad",
+      "source_type": "website",
+      "source_status": "needs_fix",
+      "enabled": false,
+      "status_reason": "逐源抓取失败：empty_list；run e3f6940c-52f7-44b8-8566-f4fdc2ad4aa0",
+      "duplicate_of": null,
+      "verified_at": null
+    },
+    {
+      "source_id": "b00a7966-bd76-46d3-9e74-d7953df8e0dd",
+      "media_id": "67a4c3f2-6cb1-45d5-a8a4-1f32eed1c796",
+      "source_type": "epaper",
+      "source_status": "needs_fix",
+      "enabled": false,
+      "status_reason": "尚无当前逐源真实抓取成功证据，待验证/修复",
+      "duplicate_of": null,
+      "verified_at": null
+    },
+    {
+      "source_id": "b128a33b-3860-400e-b2e8-2e941d8e81d2",
+      "media_id": "70f60567-7a72-4b51-987f-8ee6a21660e8",
+      "source_type": "website",
+      "source_status": "needs_fix",
+      "enabled": false,
+      "status_reason": "逐源抓取失败：configuration_missing；run e3f6940c-52f7-44b8-8566-f4fdc2ad4aa0",
+      "duplicate_of": null,
+      "verified_at": null
+    },
+    {
+      "source_id": "b1baf07e-8878-479b-bad5-861623771fac",
+      "media_id": "392bd6a7-f4c3-4892-8c75-f69398be69b2",
+      "source_type": "website",
+      "source_status": "active",
+      "enabled": true,
+      "status_reason": "逐源真实抓取与入库成功；run e3f6940c-52f7-44b8-8566-f4fdc2ad4aa0",
+      "duplicate_of": null,
+      "verified_at": "2026-09-24T08:31:39.381Z"
+    },
+    {
+      "source_id": "b25fc002-05cf-49ef-a39a-f1875e12f886",
+      "media_id": "eef09c2b-600b-4398-82e7-f56a694d08b8",
+      "source_type": "website",
+      "source_status": "needs_fix",
+      "enabled": false,
+      "status_reason": "逐源抓取失败：empty_list；run e3f6940c-52f7-44b8-8566-f4fdc2ad4aa0",
+      "duplicate_of": null,
+      "verified_at": null
+    },
+    {
+      "source_id": "b3230c00-8b83-4ffc-b460-b44e6eff4817",
+      "media_id": "21287208-464c-4e2b-bb83-07f1ccb2ce07",
+      "source_type": "website",
+      "source_status": "active",
+      "enabled": true,
+      "status_reason": "逐源真实抓取与入库成功；run e3f6940c-52f7-44b8-8566-f4fdc2ad4aa0",
+      "duplicate_of": null,
+      "verified_at": "2026-09-24T05:52:36.071Z"
+    },
+    {
+      "source_id": "b3384275-6da0-46cf-9195-d9874cd22dcb",
+      "media_id": "fd0590b3-4858-4136-a6c2-7128438f030d",
+      "source_type": "epaper",
+      "source_status": "needs_fix",
+      "enabled": false,
+      "status_reason": "尚无当前逐源真实抓取成功证据，待验证/修复",
+      "duplicate_of": null,
+      "verified_at": null
+    },
+    {
+      "source_id": "b3d9dfa9-2f35-431d-8d7a-617327191917",
+      "media_id": "74f624e9-daac-43b4-b6c9-9a06593ae328",
+      "source_type": "website",
+      "source_status": "active",
+      "enabled": true,
+      "status_reason": "逐源真实抓取与入库成功；run e3f6940c-52f7-44b8-8566-f4fdc2ad4aa0",
+      "duplicate_of": null,
+      "verified_at": "2026-09-24T08:05:08.184Z"
+    },
+    {
+      "source_id": "b404c528-8930-4beb-b7a3-07e1c4bdb49a",
+      "media_id": "629381a5-0666-4bb9-b05c-c3820e3c3b94",
+      "source_type": "website",
+      "source_status": "duplicate",
+      "enabled": false,
+      "status_reason": "同媒体、同规范化 URL、同 source_type 重复；保留 4d7f94b3-48f3-45c2-9431-f5fee615b297",
+      "duplicate_of": "4d7f94b3-48f3-45c2-9431-f5fee615b297",
+      "verified_at": null
+    },
+    {
+      "source_id": "b5387863-f152-4117-955b-f9412b6b4a92",
+      "media_id": "62d913fb-9839-4aa0-b17b-22a0f3d012c6",
+      "source_type": "website",
+      "source_status": "needs_fix",
+      "enabled": false,
+      "status_reason": "逐源抓取失败：empty_list；run e3f6940c-52f7-44b8-8566-f4fdc2ad4aa0",
+      "duplicate_of": null,
+      "verified_at": null
+    },
+    {
+      "source_id": "b6b1f28c-320a-4aec-8169-b4b00ed97a5f",
+      "media_id": "f0339351-e426-4be9-b35b-77d6880d17ad",
+      "source_type": "website",
+      "source_status": "needs_fix",
+      "enabled": false,
+      "status_reason": "逐源抓取失败：empty_list；run e3f6940c-52f7-44b8-8566-f4fdc2ad4aa0",
+      "duplicate_of": null,
+      "verified_at": null
+    },
+    {
+      "source_id": "b6c5ccef-68ba-47b9-a2aa-53734fef90ad",
+      "media_id": "526786e5-c0eb-4882-b676-94c6b6366514",
+      "source_type": "epaper",
+      "source_status": "needs_fix",
+      "enabled": false,
+      "status_reason": "尚无当前逐源真实抓取成功证据，待验证/修复",
+      "duplicate_of": null,
+      "verified_at": null
+    },
+    {
+      "source_id": "ba0366d2-f9ce-42e7-8804-309018b8b4da",
+      "media_id": "3354b7ab-400e-421f-9291-b9dbac1aa75f",
+      "source_type": "website",
+      "source_status": "active",
+      "enabled": true,
+      "status_reason": "逐源真实抓取与入库成功；run e3f6940c-52f7-44b8-8566-f4fdc2ad4aa0",
+      "duplicate_of": null,
+      "verified_at": "2026-09-24T05:56:47.705Z"
+    },
+    {
+      "source_id": "baeb412b-6e2f-4380-b8bc-fd70d9a60045",
+      "media_id": "0f30e346-0a6d-4692-8cf7-8ca7529237cc",
+      "source_type": "website",
+      "source_status": "needs_fix",
+      "enabled": false,
+      "status_reason": "逐源抓取失败：configuration_missing；run e3f6940c-52f7-44b8-8566-f4fdc2ad4aa0",
+      "duplicate_of": null,
+      "verified_at": null
+    },
+    {
+      "source_id": "bb2648c3-9958-462a-86e8-c16af956faa3",
+      "media_id": "d7fbb7e4-9985-416a-92a3-a07913188d43",
+      "source_type": "epaper",
+      "source_status": "needs_fix",
+      "enabled": false,
+      "status_reason": "当前为 manual 抓取配置，未通过自动采集验证",
+      "duplicate_of": null,
+      "verified_at": null
+    },
+    {
+      "source_id": "bb909c0a-8629-4cdb-bd21-48eafe64aad7",
+      "media_id": "8f4eb856-e513-40d9-ad58-052ba44aa46b",
+      "source_type": "epaper",
+      "source_status": "needs_fix",
+      "enabled": false,
+      "status_reason": "当前为 manual 抓取配置，未通过自动采集验证",
+      "duplicate_of": null,
+      "verified_at": null
+    },
+    {
+      "source_id": "bbfd79ed-0b05-4d02-95f0-9ce442a7cfcd",
+      "media_id": "2c78ef92-7057-40c9-b2b3-759a474c9ef6",
+      "source_type": "website",
+      "source_status": "duplicate",
+      "enabled": false,
+      "status_reason": "同媒体、同规范化 URL、同 source_type 重复；保留 dc290974-b8b6-4de0-b317-b0e183148422",
+      "duplicate_of": "dc290974-b8b6-4de0-b317-b0e183148422",
+      "verified_at": null
+    },
+    {
+      "source_id": "bc248474-68ad-40a8-b20c-562bbb88f803",
+      "media_id": "ae8431dd-dc68-4483-a61c-05e4bf77f3b5",
+      "source_type": "website",
+      "source_status": "duplicate",
+      "enabled": false,
+      "status_reason": "同媒体、同规范化 URL、同 source_type 重复；保留 426ee21e-2005-4f74-9ebc-6b3c74479a7f",
+      "duplicate_of": "426ee21e-2005-4f74-9ebc-6b3c74479a7f",
+      "verified_at": null
+    },
+    {
+      "source_id": "bc8af55b-2b4e-4e46-af84-b491ab17f45a",
+      "media_id": "53ad7842-8878-4b65-bbe2-b727ff053a3e",
+      "source_type": "website",
+      "source_status": "needs_fix",
+      "enabled": false,
+      "status_reason": "逐源抓取失败：no_valid_articles；run e3f6940c-52f7-44b8-8566-f4fdc2ad4aa0",
+      "duplicate_of": null,
+      "verified_at": null
+    },
+    {
+      "source_id": "bdc7ef1a-750c-4262-ac3d-6a2ed9d5443e",
+      "media_id": "6f4a44ac-21ee-44de-b1b5-807f6e0a6237",
+      "source_type": "website",
+      "source_status": "duplicate",
+      "enabled": false,
+      "status_reason": "同媒体、同规范化 URL、同 source_type 重复；保留 adaefd5c-5c05-45b0-a063-c0295fc1f9ca",
+      "duplicate_of": "adaefd5c-5c05-45b0-a063-c0295fc1f9ca",
+      "verified_at": null
+    },
+    {
+      "source_id": "c03b5786-44f3-4634-8b41-4dd6533866a0",
+      "media_id": "5e4bb677-916b-4ca7-b4c7-da837be1a6ba",
+      "source_type": "website",
+      "source_status": "needs_fix",
+      "enabled": false,
+      "status_reason": "逐源抓取失败：empty_list；run e3f6940c-52f7-44b8-8566-f4fdc2ad4aa0",
+      "duplicate_of": null,
+      "verified_at": null
+    },
+    {
+      "source_id": "c09bc541-51dc-421e-a1af-2c1337044137",
+      "media_id": "7e08e4b1-bf5b-4f83-a12d-9c7c2863057f",
+      "source_type": "website",
+      "source_status": "duplicate",
+      "enabled": false,
+      "status_reason": "同媒体、同规范化 URL、同 source_type 重复；保留 a68a0a25-d30d-4c96-b97f-04ce2466dfe6",
+      "duplicate_of": "a68a0a25-d30d-4c96-b97f-04ce2466dfe6",
+      "verified_at": null
+    },
+    {
+      "source_id": "c0dad72d-5215-493a-a9c5-0bff27c90ce2",
+      "media_id": "d1f805e3-cf00-434b-99e1-a025a7c50ee4",
+      "source_type": "website",
+      "source_status": "needs_fix",
+      "enabled": false,
+      "status_reason": "逐源抓取失败：empty_list；run e3f6940c-52f7-44b8-8566-f4fdc2ad4aa0",
+      "duplicate_of": null,
+      "verified_at": null
+    },
+    {
+      "source_id": "c15e47a9-5af6-48bf-8cc3-ab2f9841c11c",
+      "media_id": "911602f0-723d-42f8-818e-6465d2e27fbd",
+      "source_type": "website",
+      "source_status": "duplicate",
+      "enabled": false,
+      "status_reason": "同媒体、同规范化 URL、同 source_type 重复；保留 74602362-0599-4a34-856b-8a37fa23d694",
+      "duplicate_of": "74602362-0599-4a34-856b-8a37fa23d694",
+      "verified_at": null
+    },
+    {
+      "source_id": "c1a8577e-adfe-4ee6-aa97-d5efceefcb65",
+      "media_id": "e1a06f69-691c-403a-8866-0a373bef182c",
+      "source_type": "website",
+      "source_status": "duplicate",
+      "enabled": false,
+      "status_reason": "同媒体、同规范化 URL、同 source_type 重复；保留 6f518a63-b136-4919-83aa-9db4058b0739",
+      "duplicate_of": "6f518a63-b136-4919-83aa-9db4058b0739",
+      "verified_at": null
+    },
+    {
+      "source_id": "c1c6806a-ae77-46d7-80f9-4deee21ef6fc",
+      "media_id": "83abca40-dd7a-4e2d-8ee4-4307632964b9",
+      "source_type": "website",
+      "source_status": "needs_fix",
+      "enabled": false,
+      "status_reason": "逐源抓取失败：empty_list；run e3f6940c-52f7-44b8-8566-f4fdc2ad4aa0",
+      "duplicate_of": null,
+      "verified_at": null
+    },
+    {
+      "source_id": "c25c2167-8be7-4c06-b399-d4dd537d2e12",
+      "media_id": "ae8431dd-dc68-4483-a61c-05e4bf77f3b5",
+      "source_type": "website",
+      "source_status": "duplicate",
+      "enabled": false,
+      "status_reason": "同媒体、同规范化 URL、同 source_type 重复；保留 426ee21e-2005-4f74-9ebc-6b3c74479a7f",
+      "duplicate_of": "426ee21e-2005-4f74-9ebc-6b3c74479a7f",
+      "verified_at": null
+    },
+    {
+      "source_id": "c2eba501-2be8-4f83-925c-86395c65baf8",
+      "media_id": "b027702f-1c50-434a-971e-0d032727013e",
+      "source_type": "website",
+      "source_status": "active",
+      "enabled": true,
+      "status_reason": "逐源真实抓取与入库成功；run e3f6940c-52f7-44b8-8566-f4fdc2ad4aa0",
+      "duplicate_of": null,
+      "verified_at": "2026-09-24T05:57:10.428Z"
+    },
+    {
+      "source_id": "c3034c4a-0188-4620-963d-6d3ff203d112",
+      "media_id": "5d3a7017-fb42-4c4c-a6d7-04d4556b414d",
+      "source_type": "website",
+      "source_status": "active",
+      "enabled": true,
+      "status_reason": "逐源真实抓取与入库成功；run e3f6940c-52f7-44b8-8566-f4fdc2ad4aa0",
+      "duplicate_of": null,
+      "verified_at": "2026-09-24T07:50:36.013Z"
+    },
+    {
+      "source_id": "c354a630-9913-4aab-9184-f3bea75628ba",
+      "media_id": "029ab681-1e94-4c44-afb6-876fe0dccf20",
+      "source_type": "website",
+      "source_status": "duplicate",
+      "enabled": false,
+      "status_reason": "同媒体、同规范化 URL、同 source_type 重复；保留 15fc5d8e-9e54-4ac3-ba65-d84af0250141",
+      "duplicate_of": "15fc5d8e-9e54-4ac3-ba65-d84af0250141",
+      "verified_at": null
+    },
+    {
+      "source_id": "c3fd441b-87c6-4b87-9bc0-542c19b4913a",
+      "media_id": "eef09c2b-600b-4398-82e7-f56a694d08b8",
+      "source_type": "website",
+      "source_status": "needs_fix",
+      "enabled": false,
+      "status_reason": "逐源抓取失败：empty_list；run e3f6940c-52f7-44b8-8566-f4fdc2ad4aa0",
+      "duplicate_of": null,
+      "verified_at": null
+    },
+    {
+      "source_id": "c48e42d3-ff35-4eaa-8b38-c2a6f41f9165",
+      "media_id": "3d1d7222-8662-42ed-8d4b-0940dba54f6d",
+      "source_type": "website",
+      "source_status": "duplicate",
+      "enabled": false,
+      "status_reason": "同媒体、同规范化 URL、同 source_type 重复；保留 e6ca3778-c11a-49a4-b69b-34f265fc8082",
+      "duplicate_of": "e6ca3778-c11a-49a4-b69b-34f265fc8082",
+      "verified_at": null
+    },
+    {
+      "source_id": "c4baf45e-8b40-4fb7-aa0f-83efa84ac8d2",
+      "media_id": "5e4bb677-916b-4ca7-b4c7-da837be1a6ba",
+      "source_type": "epaper",
+      "source_status": "needs_fix",
+      "enabled": false,
+      "status_reason": "当前为 manual 抓取配置，未通过自动采集验证",
+      "duplicate_of": null,
+      "verified_at": null
+    },
+    {
+      "source_id": "c6970c61-9673-46c8-a4d3-3096a0113eba",
+      "media_id": "ccbc3bb6-69e8-412a-80b5-8ecccc4c7eee",
+      "source_type": "website",
+      "source_status": "duplicate",
+      "enabled": false,
+      "status_reason": "同媒体、同规范化 URL、同 source_type 重复；保留 97525118-a931-4f9b-928f-17d9c7a7e2fa",
+      "duplicate_of": "97525118-a931-4f9b-928f-17d9c7a7e2fa",
+      "verified_at": null
+    },
+    {
+      "source_id": "c72caaed-ca57-480e-8e2a-fa5a0e40561d",
+      "media_id": "b46b5c33-ceaa-4e94-95fd-f49873cb99f2",
+      "source_type": "website",
+      "source_status": "duplicate",
+      "enabled": false,
+      "status_reason": "同媒体、同规范化 URL、同 source_type 重复；保留 9c259287-10be-4684-8583-eafeb1249c3f",
+      "duplicate_of": "9c259287-10be-4684-8583-eafeb1249c3f",
+      "verified_at": null
+    },
+    {
+      "source_id": "c78d88de-b566-4dd9-93ef-2fff29f7111a",
+      "media_id": "64ac51ff-ea58-48f6-84a4-013c7680bc5c",
+      "source_type": "website",
+      "source_status": "duplicate",
+      "enabled": false,
+      "status_reason": "同媒体、同规范化 URL、同 source_type 重复；保留 9ab1eb07-de9f-4f94-a1e0-0bcf1027d3a1",
+      "duplicate_of": "9ab1eb07-de9f-4f94-a1e0-0bcf1027d3a1",
+      "verified_at": null
+    },
+    {
+      "source_id": "c7ab056d-d395-411c-8f50-b66e13704b79",
+      "media_id": "a1b67d3e-b993-43fd-9af3-e5975b78ebec",
+      "source_type": "website",
+      "source_status": "duplicate",
+      "enabled": false,
+      "status_reason": "同媒体、同规范化 URL、同 source_type 重复；保留 060b95e5-770d-41d3-a806-acc90d8c5f5b",
+      "duplicate_of": "060b95e5-770d-41d3-a806-acc90d8c5f5b",
+      "verified_at": null
+    },
+    {
+      "source_id": "c7fb44f1-52bb-465d-a4c1-22f365645b7d",
+      "media_id": "18415fb5-a68b-4781-96f9-84c9d17cf35a",
+      "source_type": "website",
+      "source_status": "active",
+      "enabled": true,
+      "status_reason": "逐源真实抓取与入库成功；run e3f6940c-52f7-44b8-8566-f4fdc2ad4aa0",
+      "duplicate_of": null,
+      "verified_at": "2026-09-24T08:18:35.633Z"
+    },
+    {
+      "source_id": "c899c5e6-a957-4273-a7a9-ebe57c02753f",
+      "media_id": "6c9bcc8d-2da2-404e-87b6-fddd86feebb6",
+      "source_type": "epaper",
+      "source_status": "needs_fix",
+      "enabled": false,
+      "status_reason": "尚无当前逐源真实抓取成功证据，待验证/修复",
+      "duplicate_of": null,
+      "verified_at": null
+    },
+    {
+      "source_id": "c922b766-29d1-48dd-a775-43ca6e770eb4",
+      "media_id": "3ca72104-30ce-4592-810c-5e06aeaa4a78",
+      "source_type": "website",
+      "source_status": "needs_fix",
+      "enabled": false,
+      "status_reason": "逐源抓取失败：empty_list；run e3f6940c-52f7-44b8-8566-f4fdc2ad4aa0",
+      "duplicate_of": null,
+      "verified_at": null
+    },
+    {
+      "source_id": "c9715174-3d3f-4438-9cae-2131ccd2509f",
+      "media_id": "05b0159a-2f62-4f79-b887-ca7a1e1f9cf5",
+      "source_type": "website",
+      "source_status": "needs_fix",
+      "enabled": false,
+      "status_reason": "逐源抓取失败：empty_list；run e3f6940c-52f7-44b8-8566-f4fdc2ad4aa0",
+      "duplicate_of": null,
+      "verified_at": null
+    },
+    {
+      "source_id": "c9e74975-16de-4d03-90c6-d4b3d58f44c0",
+      "media_id": "d8899a65-7cc9-4707-876d-6ceb2aa00e52",
+      "source_type": "website",
+      "source_status": "duplicate",
+      "enabled": false,
+      "status_reason": "同媒体、同规范化 URL、同 source_type 重复；保留 a02cc683-e0c5-4fb3-b519-cb5ed9f20d2b",
+      "duplicate_of": "a02cc683-e0c5-4fb3-b519-cb5ed9f20d2b",
+      "verified_at": null
+    },
+    {
+      "source_id": "c9f01e1b-94f9-4c13-9669-b4815ecedcb7",
+      "media_id": "0f30e346-0a6d-4692-8cf7-8ca7529237cc",
+      "source_type": "website",
+      "source_status": "duplicate",
+      "enabled": false,
+      "status_reason": "同媒体、同规范化 URL、同 source_type 重复；保留 baeb412b-6e2f-4380-b8bc-fd70d9a60045",
+      "duplicate_of": "baeb412b-6e2f-4380-b8bc-fd70d9a60045",
+      "verified_at": null
+    },
+    {
+      "source_id": "ca50c4a4-7682-4d85-94a6-03abdd1e8e43",
+      "media_id": "d1f805e3-cf00-434b-99e1-a025a7c50ee4",
+      "source_type": "website",
+      "source_status": "duplicate",
+      "enabled": false,
+      "status_reason": "同媒体、同规范化 URL、同 source_type 重复；保留 c0dad72d-5215-493a-a9c5-0bff27c90ce2",
+      "duplicate_of": "c0dad72d-5215-493a-a9c5-0bff27c90ce2",
+      "verified_at": null
+    },
+    {
+      "source_id": "ca932ded-5497-46b7-a8e1-f03eafe4ce60",
+      "media_id": "507e4e81-42d6-4a4d-8c84-7dcac3c36c2b",
+      "source_type": "website",
+      "source_status": "needs_fix",
+      "enabled": false,
+      "status_reason": "逐源抓取失败：empty_list；run e3f6940c-52f7-44b8-8566-f4fdc2ad4aa0",
+      "duplicate_of": null,
+      "verified_at": null
+    },
+    {
+      "source_id": "cb9f3c8a-6948-494b-b762-74489da1383e",
+      "media_id": "526786e5-c0eb-4882-b676-94c6b6366514",
+      "source_type": "website",
+      "source_status": "active",
+      "enabled": true,
+      "status_reason": "逐源真实抓取与入库成功；run e3f6940c-52f7-44b8-8566-f4fdc2ad4aa0",
+      "duplicate_of": null,
+      "verified_at": "2026-09-24T07:54:57.865Z"
+    },
+    {
+      "source_id": "cbe9f3f4-5330-436f-9abb-ee761d89da10",
+      "media_id": "707fa244-d7da-4d3d-8b43-60c808f8aa66",
+      "source_type": "website",
+      "source_status": "needs_fix",
+      "enabled": false,
+      "status_reason": "逐源抓取失败：empty_list；run e3f6940c-52f7-44b8-8566-f4fdc2ad4aa0",
+      "duplicate_of": null,
+      "verified_at": null
+    },
+    {
+      "source_id": "ccef2051-e3ca-4f49-95df-67d5d0c3ec45",
+      "media_id": "3609236d-2d86-40ba-8dc9-b715fcc4a61e",
+      "source_type": "website",
+      "source_status": "active",
+      "enabled": true,
+      "status_reason": "逐源真实抓取与入库成功；run e3f6940c-52f7-44b8-8566-f4fdc2ad4aa0",
+      "duplicate_of": null,
+      "verified_at": "2026-09-24T08:31:36.732Z"
+    },
+    {
+      "source_id": "cdb7460b-ad73-4396-919f-a73b76811c4f",
+      "media_id": "c728024b-01ff-49d6-bfd2-bc3ffa3cf4aa",
+      "source_type": "website",
+      "source_status": "active",
+      "enabled": true,
+      "status_reason": "逐源真实抓取与入库成功；run e3f6940c-52f7-44b8-8566-f4fdc2ad4aa0",
+      "duplicate_of": null,
+      "verified_at": "2026-09-24T05:44:18.702Z"
+    },
+    {
+      "source_id": "ce10b415-2b18-4dbc-a4d1-ed4fe2ac71f7",
+      "media_id": "66fb35f0-84d1-494c-971c-c00a97177ba6",
+      "source_type": "website",
+      "source_status": "needs_fix",
+      "enabled": false,
+      "status_reason": "逐源抓取失败：configuration_missing；run e3f6940c-52f7-44b8-8566-f4fdc2ad4aa0",
+      "duplicate_of": null,
+      "verified_at": null
+    },
+    {
+      "source_id": "cfc66d9f-74c6-4d6e-a5f7-48acddbc3b26",
+      "media_id": "9be28e9e-aac2-4619-862a-1378c45921d8",
+      "source_type": "website",
+      "source_status": "needs_fix",
+      "enabled": false,
+      "status_reason": "逐源抓取失败：empty_list；run e3f6940c-52f7-44b8-8566-f4fdc2ad4aa0",
+      "duplicate_of": null,
+      "verified_at": null
+    },
+    {
+      "source_id": "d07eddef-8b5c-4783-96f4-13dcac77ed19",
+      "media_id": "3c8e29b9-a0b3-4464-ac42-63508d08312f",
+      "source_type": "website",
+      "source_status": "needs_fix",
+      "enabled": false,
+      "status_reason": "逐源抓取失败：empty_list；run e3f6940c-52f7-44b8-8566-f4fdc2ad4aa0",
+      "duplicate_of": null,
+      "verified_at": null
+    },
+    {
+      "source_id": "d099dd03-e277-4c51-bbea-7d4328667f67",
+      "media_id": "921f1b28-a033-4a35-9242-4b35f4121173",
+      "source_type": "epaper",
+      "source_status": "needs_fix",
+      "enabled": false,
+      "status_reason": "当前为 manual 抓取配置，未通过自动采集验证",
+      "duplicate_of": null,
+      "verified_at": null
+    },
+    {
+      "source_id": "d0b99757-7c2e-45a1-bc97-4a6577091b02",
+      "media_id": "b027702f-1c50-434a-971e-0d032727013e",
+      "source_type": "website",
+      "source_status": "needs_fix",
+      "enabled": false,
+      "status_reason": "逐源抓取失败：empty_list；run e3f6940c-52f7-44b8-8566-f4fdc2ad4aa0",
+      "duplicate_of": null,
+      "verified_at": null
+    },
+    {
+      "source_id": "d3fe6108-0d6d-41f7-8061-62a9bdcf5018",
+      "media_id": "92a14871-1203-468e-994c-f3fcb9f947eb",
+      "source_type": "website",
+      "source_status": "duplicate",
+      "enabled": false,
+      "status_reason": "同媒体、同规范化 URL、同 source_type 重复；保留 05178bdc-85c1-495c-92b1-aebf3cc55930",
+      "duplicate_of": "05178bdc-85c1-495c-92b1-aebf3cc55930",
+      "verified_at": null
+    },
+    {
+      "source_id": "d598e6d3-e3d0-484c-9e5e-1d3912fc8060",
+      "media_id": "54e96b2b-25aa-4d86-9435-7145041356b3",
+      "source_type": "epaper",
+      "source_status": "needs_fix",
+      "enabled": false,
+      "status_reason": "尚无当前逐源真实抓取成功证据，待验证/修复",
+      "duplicate_of": null,
+      "verified_at": null
+    },
+    {
+      "source_id": "d6cf2deb-a181-4afd-8b07-1c0f7e90dee4",
+      "media_id": "ea77f662-16b0-409e-80f1-70ef9e8bd71d",
+      "source_type": "website",
+      "source_status": "duplicate",
+      "enabled": false,
+      "status_reason": "同媒体、同规范化 URL、同 source_type 重复；保留 24106efe-5518-4b83-9e83-79c750e50fbe",
+      "duplicate_of": "24106efe-5518-4b83-9e83-79c750e50fbe",
+      "verified_at": null
+    },
+    {
+      "source_id": "d8e67302-4188-4b62-a70d-d9e999c4bf5b",
+      "media_id": "6e06221e-c293-42c3-8615-5465e1031737",
+      "source_type": "website",
+      "source_status": "active",
+      "enabled": true,
+      "status_reason": "逐源真实抓取与入库成功；run e3f6940c-52f7-44b8-8566-f4fdc2ad4aa0",
+      "duplicate_of": null,
+      "verified_at": "2026-09-24T08:14:44.926Z"
+    },
+    {
+      "source_id": "d9078301-e6dc-4954-a7df-20f7037ef7cd",
+      "media_id": "bf36bedb-3c7c-4805-98b7-5167f30e5b30",
+      "source_type": "website",
+      "source_status": "duplicate",
+      "enabled": false,
+      "status_reason": "同媒体、同规范化 URL、同 source_type 重复；保留 8a4e5086-2d8b-43bc-9b9b-126e8e25a2c8",
+      "duplicate_of": "8a4e5086-2d8b-43bc-9b9b-126e8e25a2c8",
+      "verified_at": null
+    },
+    {
+      "source_id": "d9ec8081-73c2-4460-a374-93fba15760ed",
+      "media_id": "fd0590b3-4858-4136-a6c2-7128438f030d",
+      "source_type": "website",
+      "source_status": "needs_fix",
+      "enabled": false,
+      "status_reason": "逐源抓取失败：no_valid_articles；run e3f6940c-52f7-44b8-8566-f4fdc2ad4aa0",
+      "duplicate_of": null,
+      "verified_at": null
+    },
+    {
+      "source_id": "da0a95b1-ea0b-465d-bd3d-4ea146d00a94",
+      "media_id": "26789265-f88c-47d8-a30d-bec664b22355",
+      "source_type": "website",
+      "source_status": "active",
+      "enabled": true,
+      "status_reason": "逐源真实抓取与入库成功；run e3f6940c-52f7-44b8-8566-f4fdc2ad4aa0",
+      "duplicate_of": null,
+      "verified_at": "2026-09-24T06:43:07.324Z"
+    },
+    {
+      "source_id": "da79ced7-4887-446c-9dc2-2895e715a96f",
+      "media_id": "707fa244-d7da-4d3d-8b43-60c808f8aa66",
+      "source_type": "website",
+      "source_status": "duplicate",
+      "enabled": false,
+      "status_reason": "同媒体、同规范化 URL、同 source_type 重复；保留 cbe9f3f4-5330-436f-9abb-ee761d89da10",
+      "duplicate_of": "cbe9f3f4-5330-436f-9abb-ee761d89da10",
+      "verified_at": null
+    },
+    {
+      "source_id": "dab0f84c-69d8-4bcc-a4d3-9d104e264fb4",
+      "media_id": "21287208-464c-4e2b-bb83-07f1ccb2ce07",
+      "source_type": "epaper",
+      "source_status": "needs_fix",
+      "enabled": false,
+      "status_reason": "当前为 manual 抓取配置，未通过自动采集验证",
+      "duplicate_of": null,
+      "verified_at": null
+    },
+    {
+      "source_id": "db53b904-5199-44e7-bc1e-f84f698b6f43",
+      "media_id": "70f60567-7a72-4b51-987f-8ee6a21660e8",
+      "source_type": "website",
+      "source_status": "duplicate",
+      "enabled": false,
+      "status_reason": "同媒体、同规范化 URL、同 source_type 重复；保留 b128a33b-3860-400e-b2e8-2e941d8e81d2",
+      "duplicate_of": "b128a33b-3860-400e-b2e8-2e941d8e81d2",
+      "verified_at": null
+    },
+    {
+      "source_id": "db73920f-9887-4ab6-a6bc-dc8682b40455",
+      "media_id": "2105dbb8-6633-44ad-a6a8-b72b5e41a2de",
+      "source_type": "website",
+      "source_status": "needs_fix",
+      "enabled": false,
+      "status_reason": "逐源抓取失败：configuration_missing；run e3f6940c-52f7-44b8-8566-f4fdc2ad4aa0",
+      "duplicate_of": null,
+      "verified_at": null
+    },
+    {
+      "source_id": "dc19851a-a3d5-4a2a-9286-3bff323908ab",
+      "media_id": "aee7a687-b424-45ff-9658-209f2dacec17",
+      "source_type": "website",
+      "source_status": "needs_fix",
+      "enabled": false,
+      "status_reason": "逐源抓取失败：empty_list；run e3f6940c-52f7-44b8-8566-f4fdc2ad4aa0",
+      "duplicate_of": null,
+      "verified_at": null
+    },
+    {
+      "source_id": "dc290974-b8b6-4de0-b317-b0e183148422",
+      "media_id": "2c78ef92-7057-40c9-b2b3-759a474c9ef6",
+      "source_type": "website",
+      "source_status": "needs_fix",
+      "enabled": false,
+      "status_reason": "逐源抓取失败：configuration_missing；run e3f6940c-52f7-44b8-8566-f4fdc2ad4aa0",
+      "duplicate_of": null,
+      "verified_at": null
+    },
+    {
+      "source_id": "dc889cf5-d70e-4d19-98d8-8e869dd06fbd",
+      "media_id": "b12a8d29-b9cd-4305-b4da-6509fdeb52b6",
+      "source_type": "website",
+      "source_status": "duplicate",
+      "enabled": false,
+      "status_reason": "同媒体、同规范化 URL、同 source_type 重复；保留 fd7bb5eb-7a02-45c2-8ddb-755ef0808f01",
+      "duplicate_of": "fd7bb5eb-7a02-45c2-8ddb-755ef0808f01",
+      "verified_at": null
+    },
+    {
+      "source_id": "dcbb89ca-777c-4ecf-835f-91ab445b908b",
+      "media_id": "1868d59d-c4e4-41b2-a188-37abb88a75b6",
+      "source_type": "website",
+      "source_status": "active",
+      "enabled": true,
+      "status_reason": "逐源真实抓取与入库成功；run e3f6940c-52f7-44b8-8566-f4fdc2ad4aa0",
+      "duplicate_of": null,
+      "verified_at": "2026-09-24T07:48:12.284Z"
+    },
+    {
+      "source_id": "dd9ffcbc-7720-44a3-a217-8122c6ade043",
+      "media_id": "8dc51d7f-70e7-4866-8d4b-092eee142ebc",
+      "source_type": "website",
+      "source_status": "needs_fix",
+      "enabled": false,
+      "status_reason": "逐源抓取失败：empty_list；run e3f6940c-52f7-44b8-8566-f4fdc2ad4aa0",
+      "duplicate_of": null,
+      "verified_at": null
+    },
+    {
+      "source_id": "de2b403d-03e3-4119-b385-9bdd10827396",
+      "media_id": "cf09900f-3b1c-4438-b247-4ddec184fde9",
+      "source_type": "website",
+      "source_status": "active",
+      "enabled": true,
+      "status_reason": "逐源真实抓取与入库成功；run e3f6940c-52f7-44b8-8566-f4fdc2ad4aa0",
+      "duplicate_of": null,
+      "verified_at": "2026-09-24T08:16:52.420Z"
+    },
+    {
+      "source_id": "e0a135ea-e4d8-4aa4-a85a-7e0a889b63da",
+      "media_id": "db15e67e-2ab3-49d1-a83d-c798f97d486e",
+      "source_type": "website",
+      "source_status": "active",
+      "enabled": true,
+      "status_reason": "逐源真实抓取与入库成功；run e3f6940c-52f7-44b8-8566-f4fdc2ad4aa0",
+      "duplicate_of": null,
+      "verified_at": "2026-09-24T08:01:15.574Z"
+    },
+    {
+      "source_id": "e1da3f11-ef7c-4602-94f2-9277b70031b0",
+      "media_id": "3c8e29b9-a0b3-4464-ac42-63508d08312f",
+      "source_type": "epaper",
+      "source_status": "needs_fix",
+      "enabled": false,
+      "status_reason": "当前为 manual 抓取配置，未通过自动采集验证",
+      "duplicate_of": null,
+      "verified_at": null
+    },
+    {
+      "source_id": "e33acb19-46e7-4497-8272-0b98d3949b74",
+      "media_id": "7645d54d-bae2-461a-862a-b8121499b847",
+      "source_type": "website",
+      "source_status": "duplicate",
+      "enabled": false,
+      "status_reason": "同媒体、同规范化 URL、同 source_type 重复；保留 3526b315-9247-428d-a089-e6e11b03b879",
+      "duplicate_of": "3526b315-9247-428d-a089-e6e11b03b879",
+      "verified_at": null
+    },
+    {
+      "source_id": "e36d5e3a-7169-4f4f-bbba-144ba1e57e35",
+      "media_id": "911602f0-723d-42f8-818e-6465d2e27fbd",
+      "source_type": "epaper",
+      "source_status": "needs_fix",
+      "enabled": false,
+      "status_reason": "当前为 manual 抓取配置，未通过自动采集验证",
+      "duplicate_of": null,
+      "verified_at": null
+    },
+    {
+      "source_id": "e64be86c-98e8-4e00-848f-6f1c88b64675",
+      "media_id": "d5e810ad-f278-421a-b0e3-229159700f94",
+      "source_type": "website",
+      "source_status": "duplicate",
+      "enabled": false,
+      "status_reason": "同媒体、同规范化 URL、同 source_type 重复；保留 60a4f608-c27a-4353-9bee-7617a7f6741f",
+      "duplicate_of": "60a4f608-c27a-4353-9bee-7617a7f6741f",
+      "verified_at": null
+    },
+    {
+      "source_id": "e69e1ebd-f5ab-4113-af20-84b8c57b0338",
+      "media_id": "91696414-b9ee-47ae-906d-bd3771bb3adc",
+      "source_type": "website",
+      "source_status": "duplicate",
+      "enabled": false,
+      "status_reason": "同媒体、同规范化 URL、同 source_type 重复；保留 71800c5f-47f5-4b22-8d0f-e56caaf70cce",
+      "duplicate_of": "71800c5f-47f5-4b22-8d0f-e56caaf70cce",
+      "verified_at": null
+    },
+    {
+      "source_id": "e6ca3778-c11a-49a4-b69b-34f265fc8082",
+      "media_id": "3d1d7222-8662-42ed-8d4b-0940dba54f6d",
+      "source_type": "website",
+      "source_status": "active",
+      "enabled": true,
+      "status_reason": "逐源真实抓取与入库成功；run e3f6940c-52f7-44b8-8566-f4fdc2ad4aa0",
+      "duplicate_of": null,
+      "verified_at": "2026-09-24T08:34:34.165Z"
+    },
+    {
+      "source_id": "e6f33de8-7d0c-411d-a11f-4c838faab4ff",
+      "media_id": "ea07008d-9e15-4283-b05f-0e03adc77a8b",
+      "source_type": "website",
+      "source_status": "active",
+      "enabled": true,
+      "status_reason": "逐源真实抓取与入库成功；run e3f6940c-52f7-44b8-8566-f4fdc2ad4aa0",
+      "duplicate_of": null,
+      "verified_at": "2026-09-24T06:14:18.872Z"
+    },
+    {
+      "source_id": "e86e123c-7822-4902-865e-2a0cf80295ef",
+      "media_id": "62d913fb-9839-4aa0-b17b-22a0f3d012c6",
+      "source_type": "website",
+      "source_status": "duplicate",
+      "enabled": false,
+      "status_reason": "同媒体、同规范化 URL、同 source_type 重复；保留 b5387863-f152-4117-955b-f9412b6b4a92",
+      "duplicate_of": "b5387863-f152-4117-955b-f9412b6b4a92",
+      "verified_at": null
+    },
+    {
+      "source_id": "e88a2818-9ddf-4f66-90d0-fc2c1cec69c4",
+      "media_id": "c04ce106-14a3-4dc4-8c53-9c9a2999c1f0",
+      "source_type": "website",
+      "source_status": "duplicate",
+      "enabled": false,
+      "status_reason": "同媒体、同规范化 URL、同 source_type 重复；保留 21ec8650-92b4-47c9-8615-8575faeb0fe9",
+      "duplicate_of": "21ec8650-92b4-47c9-8615-8575faeb0fe9",
+      "verified_at": null
+    },
+    {
+      "source_id": "e8deb2ad-6753-4732-aa7a-61beda2a38a0",
+      "media_id": "c04ce106-14a3-4dc4-8c53-9c9a2999c1f0",
+      "source_type": "website",
+      "source_status": "active",
+      "enabled": true,
+      "status_reason": "逐源真实抓取与入库成功；run e3f6940c-52f7-44b8-8566-f4fdc2ad4aa0",
+      "duplicate_of": null,
+      "verified_at": "2026-09-24T08:08:24.873Z"
+    },
+    {
+      "source_id": "eb6a6a38-c7d7-43dc-bedb-4617038cbf05",
+      "media_id": "51fd9095-83ce-4f49-a663-660f174800f8",
+      "source_type": "website",
+      "source_status": "active",
+      "enabled": true,
+      "status_reason": "逐源真实抓取与入库成功；run e3f6940c-52f7-44b8-8566-f4fdc2ad4aa0",
+      "duplicate_of": null,
+      "verified_at": "2026-09-24T05:47:19.118Z"
+    },
+    {
+      "source_id": "ebe3da58-1e98-46b0-9ce9-4b93d8c5bded",
+      "media_id": "072b06e9-a72c-43b1-8a94-07de664702ea",
+      "source_type": "website",
+      "source_status": "duplicate",
+      "enabled": false,
+      "status_reason": "同媒体、同规范化 URL、同 source_type 重复；保留 550139e0-2ef6-47bc-9809-c8abb9616b30",
+      "duplicate_of": "550139e0-2ef6-47bc-9809-c8abb9616b30",
+      "verified_at": null
+    },
+    {
+      "source_id": "ecf74c6c-1385-40df-b2a6-bf3e7794c88b",
+      "media_id": "50c0bdff-f1a4-4399-93b9-c0db265454af",
+      "source_type": "website",
+      "source_status": "duplicate",
+      "enabled": false,
+      "status_reason": "同媒体、同规范化 URL、同 source_type 重复；保留 195f5aa5-c140-4972-9be1-aacf643f1878",
+      "duplicate_of": "195f5aa5-c140-4972-9be1-aacf643f1878",
+      "verified_at": null
+    },
+    {
+      "source_id": "ede21331-8dd4-485c-9cff-5e6e75f8218d",
+      "media_id": "2aa5c046-818e-4af0-8d47-72312861a5f6",
+      "source_type": "epaper",
+      "source_status": "needs_fix",
+      "enabled": false,
+      "status_reason": "当前为 manual 抓取配置，未通过自动采集验证",
+      "duplicate_of": null,
+      "verified_at": null
+    },
+    {
+      "source_id": "edf92267-797e-4424-9542-9e138cd4feba",
+      "media_id": "91a2278d-617e-4193-a817-a4cb00adfcd0",
+      "source_type": "website",
+      "source_status": "active",
+      "enabled": true,
+      "status_reason": "逐源真实抓取与入库成功；run e3f6940c-52f7-44b8-8566-f4fdc2ad4aa0",
+      "duplicate_of": null,
+      "verified_at": "2026-09-24T06:01:06.957Z"
+    },
+    {
+      "source_id": "ee3356a7-dfa4-447b-b636-cf39df7f4893",
+      "media_id": "0fae45e4-46b7-4ece-9de9-8b5c25f47806",
+      "source_type": "website",
+      "source_status": "duplicate",
+      "enabled": false,
+      "status_reason": "同媒体、同规范化 URL、同 source_type 重复；保留 72b79bb9-729f-4ffc-b123-d78454a1d3b8",
+      "duplicate_of": "72b79bb9-729f-4ffc-b123-d78454a1d3b8",
+      "verified_at": null
+    },
+    {
+      "source_id": "eefc1945-bb0f-4d61-bb95-7c42476f8f50",
+      "media_id": "ea16bfb0-384e-4d09-a00a-f543d7bd822b",
+      "source_type": "website",
+      "source_status": "active",
+      "enabled": true,
+      "status_reason": "逐源真实抓取与入库成功；run e3f6940c-52f7-44b8-8566-f4fdc2ad4aa0",
+      "duplicate_of": null,
+      "verified_at": "2026-09-24T08:20:56.732Z"
+    },
+    {
+      "source_id": "f12289a0-2e8b-4838-9c13-09b7b2410c76",
+      "media_id": "5801bac8-ccc0-42dd-8cd3-14e583a7a245",
+      "source_type": "website",
+      "source_status": "active",
+      "enabled": true,
+      "status_reason": "逐源真实抓取与入库成功；run e3f6940c-52f7-44b8-8566-f4fdc2ad4aa0",
+      "duplicate_of": null,
+      "verified_at": "2026-09-24T06:21:26.126Z"
+    },
+    {
+      "source_id": "f341e81d-2568-4a24-b237-09b4b0090d68",
+      "media_id": "675ffbd4-db8a-4b6b-879e-bf0211278dfa",
+      "source_type": "website",
+      "source_status": "duplicate",
+      "enabled": false,
+      "status_reason": "同媒体、同规范化 URL、同 source_type 重复；保留 5648f0b2-41b8-4767-bc7c-97ec35754f5f",
+      "duplicate_of": "5648f0b2-41b8-4767-bc7c-97ec35754f5f",
+      "verified_at": null
+    },
+    {
+      "source_id": "f5ce6a9e-5267-4fdb-9e94-7bb38932f2ef",
+      "media_id": "8f4eb856-e513-40d9-ad58-052ba44aa46b",
+      "source_type": "website",
+      "source_status": "needs_fix",
+      "enabled": false,
+      "status_reason": "逐源抓取失败：empty_list；run e3f6940c-52f7-44b8-8566-f4fdc2ad4aa0",
+      "duplicate_of": null,
+      "verified_at": null
+    },
+    {
+      "source_id": "f632c210-8ab1-4f64-8b9e-6317cf9bddad",
+      "media_id": "4bceb8de-a659-4b56-877c-978a8602d167",
+      "source_type": "website",
+      "source_status": "active",
+      "enabled": true,
+      "status_reason": "逐源真实抓取与入库成功；run e3f6940c-52f7-44b8-8566-f4fdc2ad4aa0",
+      "duplicate_of": null,
+      "verified_at": "2026-09-24T07:51:28.537Z"
+    },
+    {
+      "source_id": "f6deb4f6-0360-4bb4-a880-561eb551bf4c",
+      "media_id": "d8782739-5d66-446d-b7dc-a8145babf0bc",
+      "source_type": "website",
+      "source_status": "active",
+      "enabled": true,
+      "status_reason": "逐源真实抓取与入库成功；run e3f6940c-52f7-44b8-8566-f4fdc2ad4aa0",
+      "duplicate_of": null,
+      "verified_at": "2026-09-24T06:13:38.419Z"
+    },
+    {
+      "source_id": "f7991213-b86e-4ec1-9131-2f1f10c33931",
+      "media_id": "aee7a687-b424-45ff-9658-209f2dacec17",
+      "source_type": "epaper",
+      "source_status": "needs_fix",
+      "enabled": false,
+      "status_reason": "当前为 manual 抓取配置，未通过自动采集验证",
+      "duplicate_of": null,
+      "verified_at": null
+    },
+    {
+      "source_id": "f8266677-f5d5-4972-9224-39fef7e931e7",
+      "media_id": "e6f0cd68-56ed-4589-8fde-3d59a317c7af",
+      "source_type": "website",
+      "source_status": "duplicate",
+      "enabled": false,
+      "status_reason": "同媒体、同规范化 URL、同 source_type 重复；保留 530cd61b-356a-49aa-8c6a-ecfc843e9325",
+      "duplicate_of": "530cd61b-356a-49aa-8c6a-ecfc843e9325",
+      "verified_at": null
+    },
+    {
+      "source_id": "f92573e2-b959-4bad-bc51-1facc8e4c709",
+      "media_id": "507e4e81-42d6-4a4d-8c84-7dcac3c36c2b",
+      "source_type": "epaper",
+      "source_status": "needs_fix",
+      "enabled": false,
+      "status_reason": "当前为 manual 抓取配置，未通过自动采集验证",
+      "duplicate_of": null,
+      "verified_at": null
+    },
+    {
+      "source_id": "f9305134-c7a5-4724-a02d-ca117e3129b7",
+      "media_id": "c1e36ab9-79ca-40fe-a824-6dbb26c6cf83",
+      "source_type": "website",
+      "source_status": "duplicate",
+      "enabled": false,
+      "status_reason": "同媒体、同规范化 URL、同 source_type 重复；保留 0bae6817-0fd9-4e75-97bf-f9e073e34fe0",
+      "duplicate_of": "0bae6817-0fd9-4e75-97bf-f9e073e34fe0",
+      "verified_at": null
+    },
+    {
+      "source_id": "f97647fa-df82-4761-8b24-123b991c1520",
+      "media_id": "111c1597-20fe-438c-bb44-31d551f71bbd",
+      "source_type": "website",
+      "source_status": "active",
+      "enabled": true,
+      "status_reason": "逐源真实抓取与入库成功；run e3f6940c-52f7-44b8-8566-f4fdc2ad4aa0",
+      "duplicate_of": null,
+      "verified_at": "2026-09-24T08:34:45.341Z"
+    },
+    {
+      "source_id": "f984e41f-524d-4aa5-acf0-c08b3cc8c63d",
+      "media_id": "67a4c3f2-6cb1-45d5-a8a4-1f32eed1c796",
+      "source_type": "website",
+      "source_status": "active",
+      "enabled": true,
+      "status_reason": "逐源真实抓取与入库成功；run e3f6940c-52f7-44b8-8566-f4fdc2ad4aa0",
+      "duplicate_of": null,
+      "verified_at": "2026-09-24T08:21:02.966Z"
+    },
+    {
+      "source_id": "fb176cf9-f1f5-457d-b346-3aa30e253259",
+      "media_id": "51650397-b16e-4b20-baa2-5b996785ef68",
+      "source_type": "website",
+      "source_status": "active",
+      "enabled": true,
+      "status_reason": "逐源真实抓取与入库成功；run e3f6940c-52f7-44b8-8566-f4fdc2ad4aa0",
+      "duplicate_of": null,
+      "verified_at": "2026-09-24T06:04:06.065Z"
+    },
+    {
+      "source_id": "fc5765ef-c737-40e4-ba83-65545e6880a3",
+      "media_id": "9f9f11a1-9ad7-482a-a939-a0a73eae2498",
+      "source_type": "website",
+      "source_status": "duplicate",
+      "enabled": false,
+      "status_reason": "同媒体、同规范化 URL、同 source_type 重复；保留 5aa968b9-2ba4-4224-b4d8-0e211c59bb4a",
+      "duplicate_of": "5aa968b9-2ba4-4224-b4d8-0e211c59bb4a",
+      "verified_at": null
+    },
+    {
+      "source_id": "fc7b783a-efbd-4081-b9a4-0cadadca9ea0",
+      "media_id": "243344d4-fce9-4787-a32c-ad6f5291b194",
+      "source_type": "website",
+      "source_status": "duplicate",
+      "enabled": false,
+      "status_reason": "同媒体、同规范化 URL、同 source_type 重复；保留 3d881b65-30dd-4bde-917a-2c69aae72ce5",
+      "duplicate_of": "3d881b65-30dd-4bde-917a-2c69aae72ce5",
+      "verified_at": null
+    },
+    {
+      "source_id": "fd7bb5eb-7a02-45c2-8ddb-755ef0808f01",
+      "media_id": "b12a8d29-b9cd-4305-b4da-6509fdeb52b6",
+      "source_type": "website",
+      "source_status": "active",
+      "enabled": true,
+      "status_reason": "逐源真实抓取与入库成功；run e3f6940c-52f7-44b8-8566-f4fdc2ad4aa0",
+      "duplicate_of": null,
+      "verified_at": "2026-09-24T07:47:48.362Z"
+    },
+    {
+      "source_id": "fddba8cb-abe9-4fb5-a62d-63a2c0c4268d",
+      "media_id": "5e64a5bd-5dcc-4402-925e-11bcf414638d",
+      "source_type": "website",
+      "source_status": "active",
+      "enabled": true,
+      "status_reason": "逐源真实抓取与入库成功；run e3f6940c-52f7-44b8-8566-f4fdc2ad4aa0",
+      "duplicate_of": null,
+      "verified_at": "2026-09-24T06:00:21.291Z"
+    },
+    {
+      "source_id": "ff39c985-2c2c-4d00-a3ac-756d66b8dd49",
+      "media_id": "5025d254-63e9-4d8d-ac6d-e7a15f1f26b8",
+      "source_type": "epaper",
+      "source_status": "needs_fix",
+      "enabled": false,
+      "status_reason": "当前为 manual 抓取配置，未通过自动采集验证",
+      "duplicate_of": null,
+      "verified_at": null
+    },
+    {
+      "source_id": "ff679027-1451-45a2-89a1-3e18c389e79a",
+      "media_id": "7152abd8-cc2b-4b46-ae05-df10e02ce25d",
+      "source_type": "website",
+      "source_status": "active",
+      "enabled": true,
+      "status_reason": "逐源真实抓取与入库成功；run e3f6940c-52f7-44b8-8566-f4fdc2ad4aa0",
+      "duplicate_of": null,
+      "verified_at": "2026-09-24T07:46:06.633Z"
+    },
+    {
+      "source_id": "ffd78ea3-5b4c-47ec-b890-aece4f334b7e",
+      "media_id": "3609236d-2d86-40ba-8dc9-b715fcc4a61e",
+      "source_type": "website",
+      "source_status": "active",
+      "enabled": true,
+      "status_reason": "逐源真实抓取与入库成功；run e3f6940c-52f7-44b8-8566-f4fdc2ad4aa0",
+      "duplicate_of": null,
+      "verified_at": "2026-09-24T08:19:39.393Z"
+    }
+  ],
+  "summary": {
+    "active": 101,
+    "needs_fix": 120,
+    "duplicate": 101,
+    "manual_disabled": 0,
+    "total": 322,
+    "retained_media": 135,
+    "active_media": 90,
+    "active_website": 101,
+    "active_epaper": 0,
+    "articles": 2161
+  },
+  "article_associations_unchanged": true
+}

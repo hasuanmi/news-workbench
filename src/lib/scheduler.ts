@@ -43,7 +43,7 @@ export interface JobDefinition {
 }
 
 export const JOB_DEFINITIONS: JobDefinition[] = [
-  { name: "calendar_recommend", title: "新闻日历 AI 推荐", description: "每天检索未来30～90天；历史规律与已取证权威页面，去重直接进入正式日历", defaultCron: "30 7 * * *" },
+  { name: "calendar_recommend", title: "新闻日历 AI 推荐", description: "补充当前年度动态会议、政策与活动；核实具体名称和来源后去重入库", defaultCron: "30 7 * * *" },
   {
     name: "clue_identify",
     title: "新闻线索 AI 识别",

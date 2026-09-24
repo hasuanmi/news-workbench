@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { requireAdmin } from "@/lib/require-admin";
 import { recommendCandidatesFromWeb } from "@/lib/calendar-candidate";
+import { calendarToday } from "@/lib/calendar-policy";
 
 /**
  * POST /api/admin/calendar/candidates/recommend
@@ -13,8 +14,8 @@ export async function POST(request: NextRequest) {
 
   const body = await request.json().catch(() => ({}));
   const targetYear = Number(body.targetYear) || (await (await import("@/lib/calendar-candidate")).getTargetYear());
-  if (!Number.isFinite(targetYear) || targetYear < 2000) {
-    return NextResponse.json({ error: "目标年度无效" }, { status: 400 });
+  if (targetYear !== calendarToday().getUTCFullYear()) {
+    return NextResponse.json({ error: "AI推荐仅补充当前年度动态事件；下一年度请预览固定或可推导节点" }, { status: 400 });
   }
 
   try {

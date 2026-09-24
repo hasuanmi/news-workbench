@@ -43,7 +43,7 @@ pnpm dev / pnpm build             # 开发 / 构建
   - 用户表 `app_user`（列 `enabled`，无 is_active）
   - 配置表 `app_config`（列 `key` / `value` / `description`）
   - 媒体表 `media`（列 `media_level`，非 level）
-  - 日历事件 `calendar_event`：用 `description`（无 background/notes）、`source_name`（无 source）、`event_year`（事件原始发生年，周年由 `target_year-event_year` 动态计算，名称只存事件主体不带"X周年"）、**无** planning_hint/tags/confidence 列；另有 `source`(来源标签)、`deleted_at`/`delete_reason`(软删除)、`date_status`/`event_month`(时间状态)
+  - 日历事件 `calendar_event`：用 `description`（无 background/notes）、`source_name`（无 source）、`event_year`（事件原始发生年，周年由 `target_year-event_year` 动态计算，名称只存事件主体不带"X周年"）、**无** planning_hint/confidence 列；现库含 `tags`（数组，`calendar-year:YYYY` 保存时间待定事项所属年度）；另有 `source`(来源标签)、`deleted_at`/`delete_reason`(软删除)、`date_status`/`event_month`(时间状态)
   - 分类表 `calendar_category`（含 `code`/`color`/`category_name`）
   - 选稿表 `review_draft`（report_date 唯一，draft JSONB、excluded_article_ids JSONB、status、media_ids/media_names JSONB）
 - **Supabase 外键嵌套关联查询不可用**（PostgREST 报 "Could not find a relationship"），关联数据一律用「主查询 + 按 id 批量二次查询 + Map 组装」的方式。
@@ -113,7 +113,7 @@ assets/                       # 媒体列表.xlsx、2024年新闻日历.docx（�
 
 1. **配置驱动**：工作流代码禁止出现业务阈值常量（14 天、0.85、2000 字、cron 时间等），运行时一律从 `getAppConfig()` 读取；改规则只改 `app_config` 或后台配置页。
 2. **AI 与规则分工**：确定性判断（14 天窗口、周年计算、字数、媒体启用、去重）走规则（纯函数 + 单测）；模糊判断（新栏目识别、同题聚类、评报写作）走 AI，AI 必须输出结构化 JSON + confidence，按 `ai.confidence_auto`(0.85) / `ai.confidence_review`(0.6) 路由。
-3. **日历规则引擎** `calendar-engine.ts` 是纯函数（输入事件数组 + 今天日期，不碰 DB），改动须同步 `calendar-engine.test.ts` 并跑通。
+3. **全年日历**：前台默认当前年全年，历史导入按原年回看，下一年只推导固定/可推导节点；未来30天仅作快捷筛选。AI 只补当前年具体动态事件，模糊名称留在“信息待补全”；不得平移历史会议届次或假期安排。 **日历规则引擎** `calendar-engine.ts` 是纯函数（输入事件数组 + 今天日期，不碰 DB），改动须同步 `calendar-engine.test.ts` 并跑通。
 4. **Middleware / Edge 约束**：`src/middleware.ts` 只能引用不依赖 `node:crypto` 的模块——会话逻辑在 `session.ts`（Web Crypto，HMAC SHA-256），密码哈希在 `password.ts`（scrypt，仅 API Route 用）。两者不可混用。
 5. **Hydration**：动态内容（当前日期、登录态）必须在客户端 useEffect 后渲染，禁止在服务端渲染期用 Date.now()/Math.random()/window。
 6. **类型严格**：禁隐式 any / as any；API 入参显式校验；所有 catch 错误收窄后再返回。

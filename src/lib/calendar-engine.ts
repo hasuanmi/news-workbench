@@ -1,5 +1,6 @@
 // 日历规则引擎：纯函数，确定性逻辑（不含任何 AI 判断）
 // 所有窗口天数、周年基准等均为入参，阈值由 app_config 注入
+import { isValidCalendarDate, isVagueName, recurringOccurrence } from "./calendar-policy";
 
 export interface CalendarRuleEvent {
   id: string;
@@ -23,6 +24,13 @@ export interface CalendarRuleEvent {
   tags?: unknown;
   source?: string | null;
   category?: unknown;
+  calendar_year?: number | null;
+  event_month?: number | null;
+  source_type?: string | null;
+  source_name?: string | null;
+  description?: string | null;
+  read_only?: boolean;
+  information_status?: "complete" | "needs_completion";
 }
 
 export interface Occurrence {
@@ -52,35 +60,31 @@ function diffDays(from: Date, to: Date): number {
  * - dynamic：直接用 event_date
  */
 export function computeOccurrence(event: CalendarRuleEvent, targetYear: number, today: Date): Occurrence | null {
-  if (event.event_type === "fixed") {
-    if (!event.original_date) return null;
-    const { y: oy, m, d } = parseDate(event.original_date);
-    const baseYear = event.event_year ?? event.anniversary_base_year ?? oy;
-    // 固定节点：取下一个 ≥ today 的同年月日（跨年滚动到明年），
-    // 这样"新闻日历"始终显示即将到来的发生日，而非被硬套到当前年变成过去。
-    let year = today.getUTCFullYear();
-    if (toDate(year, m, d).getTime() < today.getTime()) year += 1;
-    const date = `${year}-${String(m).padStart(2, "0")}-${String(d).padStart(2, "0")}`;
-    const anniversary = year - baseYear;
+  const recurring = recurringOccurrence(event, targetYear);
+  // 原年度的实际记录优先；跨年预览只使用明确可推导的规则。
+  const actualDate = event.event_type === "dynamic" ? event.event_date : event.original_date;
+  const recorded = actualDate?.startsWith(`${targetYear}-`) && isValidCalendarDate(actualDate) ? actualDate : null;
+  if (recurring && !recorded) {
+    const anniversary = recurring.baseYear == null ? null : targetYear - recurring.baseYear;
     return {
       event,
-      date,
-      anniversary: anniversary > 0 ? anniversary : null,
-      daysUntil: diffDays(today, toDate(year, m, d)),
+      date: recurring.date,
+      anniversary: anniversary != null && anniversary > 0 ? anniversary : null,
+      daysUntil: diffDays(today, new Date(`${recurring.date}T00:00:00Z`)),
     };
   }
   // dynamic
-  if (!event.event_date) return null;
-  const { y, m, d } = parseDate(event.event_date);
+  if (!recorded) return null;
+  const { y, m, d } = parseDate(recorded);
   return {
     event,
-    date: event.event_date,
-    anniversary: null,
+    date: recorded,
+    anniversary: recurring?.baseYear != null ? targetYear - recurring.baseYear || null : null,
     daysUntil: diffDays(today, toDate(y, m, d)),
   };
 }
 
-export type RangeView = "week" | "next14" | "month" | "all";
+export type RangeView = "year" | "next30" | "week" | "next14" | "month" | "all";
 
 /**
  * 生成日历视图：仅返回启用且未软删除的节点，落在窗口内；审核字段仅兼容。
@@ -92,7 +96,7 @@ export type RangeView = "week" | "next14" | "month" | "all";
  * 仅剥离别在末尾/任意位置紧贴数字+周年的片段，不匹配非周年文本。
  */
 export function normalizeEventName(name: string): string {
-  const cleaned = name.replace(/[第]?\d{1,4}\s*周年/g, "").trim();
+  const cleaned = name.replace(/第?(?:\d{1,4}|[零〇一二两三四五六七八九十百千]+)\s*周年/g, "").trim();
   return cleaned || name;
 }
 
@@ -115,20 +119,23 @@ export function buildCalendar(
   events: CalendarRuleEvent[],
   today: Date,
   view: RangeView,
-  horizonDays: number
+  horizonDays: number,
+  selectedYear = today.getUTCFullYear(),
 ): Occurrence[] {
   const horizon =
-    view === "week" ? 7 : view === "next14" ? horizonDays : view === "month" ? 30 : horizonDays;
+    view === "week" ? 7 : view === "month" || view === "next30" ? 30 : horizonDays;
   const targetYear = today.getUTCFullYear();
 
   const occurrences: Occurrence[] = [];
   for (const event of events) {
     if (event.enabled !== true || event.deleted_at != null) continue;
+    if (event.information_status === "needs_completion") continue;
+    if (isVagueName(event.event_name)) continue;
     if (event.date_status === "month_known" || event.date_status === "unknown") continue;
 
-    if (view === "all") {
+    if (view === "all" || view === "year") {
       // 全部视图：动态节点按自身日期；固定节点取目标年
-      const occ = computeOccurrence(event, targetYear, today);
+      const occ = computeOccurrence(event, selectedYear, today);
       if (occ) occurrences.push(occ);
       continue;
     }
@@ -138,8 +145,6 @@ export function buildCalendar(
     for (const yr of yearsToCheck) {
       const occ = computeOccurrence(event, yr, today);
       if (!occ) continue;
-      // 动态节点只在其实际年份
-      if (event.event_type === "dynamic" && parseDate(occ.date).y !== parseDate(event.event_date!).y) continue;
       if (occ.daysUntil >= 0 && occ.daysUntil <= horizon) {
         occurrences.push(occ);
         break;

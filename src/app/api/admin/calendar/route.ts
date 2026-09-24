@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { supabase } from "@/lib/db";
 import { requireAdmin } from "@/lib/require-admin";
 import { enqueueEnrich } from "@/lib/calendar-enrich";
+import { calendarToday, isVagueName, isValidCalendarDate } from "@/lib/calendar-policy";
 
 export async function GET(req: NextRequest) {
   const auth = await requireAdmin(req);
@@ -56,12 +57,17 @@ export async function POST(req: NextRequest) {
   const body = await req.json();
   const eventName = String(body.event_name ?? "").trim();
   if (!eventName) return NextResponse.json({ error: "节点名称必填" }, { status: 400 });
+  if (isVagueName(eventName)) return NextResponse.json({ information_status: "needs_completion", error: "信息待补全：请提供具体事件名称，模糊事项不能进入正式日历" }, { status: 422 });
 
   const eventType = body.event_type === "fixed" ? "fixed" : "dynamic";
-  const baseDate = String(body.original_date ?? body.event_date ?? "");
-  if (!/^\d{4}-\d{2}-\d{2}$/.test(baseDate)) {
+  const baseDate = String((eventType === "fixed" ? body.original_date : body.event_date) ?? "");
+  const dateStatus = eventType === "fixed" || !["month_known", "unknown"].includes(body.date_status) ? "confirmed" : body.date_status;
+  const calendarYear = dateStatus === "confirmed" ? Number(baseDate.slice(0, 4)) : Number(body.calendar_year ?? calendarToday().getUTCFullYear());
+  const eventMonth = dateStatus === "month_known" ? Number(body.event_month) : null;
+  if (dateStatus === "confirmed" && !isValidCalendarDate(baseDate)) {
     return NextResponse.json({ error: "请提供有效日期 (YYYY-MM-DD)" }, { status: 400 });
   }
+  if (!Number.isInteger(calendarYear) || calendarYear < 1900 || calendarYear > 2100 || (dateStatus === "month_known" && (!Number.isInteger(eventMonth) || eventMonth! < 1 || eventMonth! > 12))) return NextResponse.json({ error: "请提供有效所属年份和月份" }, { status: 400 });
 
   const sourceAliases: Record<string, string> = { historical_migration: "history_migrate", ai_supplement: "ai_recommend", manual: "user_add", pasted_text: "user_paste" };
   const sourceType = Object.hasOwn(sourceAliases, body.source_type ?? "") ? body.source_type :
@@ -73,13 +79,12 @@ export async function POST(req: NextRequest) {
     region: body.region === "local" ? "local" : "national",
     importance: ["S", "A", "B"].includes(body.importance) ? body.importance : "B",
     original_date: eventType === "fixed" ? baseDate : null,
-    event_date: eventType === "dynamic" ? baseDate : null,
+    event_date: eventType === "dynamic" && dateStatus === "confirmed" ? baseDate : null,
+    date_status: dateStatus, event_month: eventMonth, tags: [`calendar-year:${calendarYear}`],
     anniversary_base_year:
       eventType === "fixed" && body.anniversary_base_year
         ? Number(body.anniversary_base_year)
-        : eventType === "fixed"
-          ? Number(baseDate.slice(0, 4))
-          : null,
+        : null,
     event_year: body.event_year ? Number(body.event_year) : null,
     description: [body.background, body.notes].filter(Boolean).join("\n") || null,
     source_name: `manual:${auth.session.username}`,

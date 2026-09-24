@@ -1,0 +1,53 @@
+{
+  "run_id": "77b269c5-9b38-4b61-97ae-68373562b070",
+  "started_at": "2026-09-24T08:44:57.008Z",
+  "ended_at": "2026-09-24T08:45:31.625Z",
+  "source_id": "22c34aa8-0496-4354-a7e5-30c8715441e3",
+  "media_id": "a3d48480-d15f-4103-9dd8-4ff96ccde282",
+  "ok": true,
+  "identity_verified": true,
+  "attempted": 10,
+  "articles": 9,
+  "detail_failures": [
+    {
+      "stage": "detail",
+      "url": "https://live.qingdaonews.com/wap/indexv.html?id=5951",
+      "reason": "Page.goto: Timeout 15000ms exceeded.\nCall log:\n  - navigating to \"https://live.qingdaonews.com/wap/indexv.html?id=5951\", waiting until \"networkidle\"\n"
+    }
+  ],
+  "ingest": {
+    "success": true,
+    "schema_version": "article-v1",
+    "sources": 1,
+    "successSources": 1,
+    "failedSources": 0,
+    "inserted": 1,
+    "updated": 0,
+    "duplicated": 8,
+    "invalid": 0,
+    "failed": 0,
+    "perSource": [
+      {
+        "sourceId": "22c34aa8-0496-4354-a7e5-30c8715441e3",
+        "ok": true,
+        "inserted": 1,
+        "updated": 0,
+        "duplicated": 8,
+        "invalid": 0,
+        "failed": 0,
+        "warnings": []
+      }
+    ]
+  },
+  "urls": [
+    "http://news.qingdaonews.com/zonghe/2026-09/24/content_23758426.htm",
+    "http://news.qingdaonews.com/zonghe/2026-09/24/content_23758458.htm",
+    "http://news.qingdaonews.com/zonghe/2026-09/24/content_23758459.htm",
+    "http://news.qingdaonews.com/zonghe/2026-09/24/content_23758460.htm",
+    "http://news.qingdaonews.com/qingdao/2026-09/23/content_23758390.htm",
+    "http://news.qingdaonews.com/qingdao/2026-09/22/content_23758189.htm",
+    "http://news.qingdaonews.com/qingdao/2026-09/22/content_23758069.htm",
+    "http://news.qingdaonews.com/qingdao/2026-09/22/content_23757962.htm",
+    "http://house.qingdaonews.com/xinloupan/zixun/202609/24/item25345-923.htm"
+  ]
+}

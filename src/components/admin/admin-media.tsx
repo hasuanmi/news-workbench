@@ -1,5 +1,6 @@
 "use client";
 
+import { sourceStatusLabels, type SourceStatus } from "@/lib/source-policy";
 import { useCallback, useEffect, useState } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -33,6 +34,10 @@ import { toast } from "sonner";
 import { LoadingButton } from "@/components/common/loading-button";
 
 interface Source {
+  source_status: SourceStatus;
+  status_reason: string | null;
+  duplicate_of: string | null;
+  verified_at: string | null;
   id: string;
   source_type: string;
   source_url: string | null;
@@ -70,6 +75,9 @@ const crawlStatusLabel: Record<string, { text: string; cls: string }> = {
 };
 
 export function AdminMedia() {
+  const [dailyActivity, setDailyActivity] = useState<{ date: string; actualSources: number }[] | null>(null);
+  const [sourceFilter, setSourceFilter] = useState("all");
+  const [loadError, setLoadError] = useState<string | null>(null);
   const [items, setItems] = useState<Media[]>([]);
   const [loading, setLoading] = useState(true);
   const [level, setLevel] = useState("all");
@@ -107,9 +115,9 @@ export function AdminMedia() {
     if (level !== "all") params.set("level", level);
     if (keyword) params.set("keyword", keyword);
     fetch(`/api/admin/media?${params.toString()}`)
-      .then((r) => r.json())
-      .then((d) => setItems(d.items ?? []))
-      .catch(() => setItems([]))
+      .then(async (r) => { const d = await r.json(); if (!r.ok) throw new Error(d.error || "加载失败"); return d; })
+      .then((d) => { setItems(d.items ?? []); setDailyActivity(d.dailyActivity); setLoadError(null); })
+      .catch((e: Error) => setLoadError(e.message))
       .finally(() => setLoading(false));
   }, [level, keyword]);
 
@@ -148,20 +156,11 @@ export function AdminMedia() {
     }
   }
 
-  // 计算汇总统计
-  const stats = items.reduce(
-    (acc, m) => {
-      m.sources.forEach((s) => {
-        acc.total++;
-        if (s.crawl_status === "ok") acc.ok++;
-        else if (s.crawl_status === "warning") acc.warning++;
-        else if (s.crawl_status === "error") acc.error++;
-        else acc.untested++;
-      });
-      return acc;
-    },
-    { total: 0, ok: 0, warning: 0, error: 0, untested: 0 }
-  );
+  const stats = items.flatMap(m => m.sources).reduce((acc, s) => {
+    acc.total++; acc[s.source_status]++; return acc;
+  }, { total: 0, active: 0, needs_fix: 0, duplicate: 0, manual_disabled: 0 });
+  const visibleItems = items.map(m => ({ ...m, sources: m.sources.filter(s => sourceFilter === "all" || s.source_status === sourceFilter) }))
+    .filter(m => sourceFilter === "all" || m.sources.length);
 
   return (
     <div className="space-y-5">
@@ -191,6 +190,13 @@ export function AdminMedia() {
         </CardContent>
       </Card>
 
+      {loadError && <p role="alert" className="text-sm text-[var(--brand)]">{loadError}</p>}
+      <Card><CardContent className="pt-5 text-sm space-y-2">
+        <p>当前筛选范围内，每日任务可用 active source：<strong>{loading ? "加载中" : stats.active}</strong> 个。仅启用中数据源参与自动抓取。</p>
+        <p className="text-[var(--muted-foreground)]">每日实际参与抓取（北京时间、按 source_id 去重；全局统计，包含手动启动的每日任务）：</p>
+        {loading ? <p>加载执行记录…</p> : dailyActivity ? dailyActivity.map(d => <p key={d.date}>{d.date}：<strong>{d.actualSources}</strong> 个</p>) : <p>实际抓取日志暂时无法读取</p>}
+        <p className="text-xs text-[var(--muted-foreground)]">从本次状态治理生效后开始统计，旧 284 源运行不追认为 active 运行。可用数量不等于当天已执行数量。</p>
+      </CardContent></Card>
       {/* 汇总统计条 */}
       <Card>
         <CardContent className="pt-5">
@@ -200,26 +206,32 @@ export function AdminMedia() {
               <div className="text-xs text-[var(--muted-foreground)] mt-1">总计</div>
             </div>
             <div>
-              <div className="text-2xl font-bold text-[#3f7d5c]">{stats.ok}</div>
-              <div className="text-xs text-[var(--muted-foreground)] mt-1">✅ 正常</div>
+              <div className="text-2xl font-bold text-[#3f7d5c]">{stats.active}</div>
+              <div className="text-xs text-[var(--muted-foreground)] mt-1">启用中</div>
             </div>
             <div>
-              <div className="text-2xl font-bold text-[#b8860b]">{stats.warning}</div>
-              <div className="text-xs text-[var(--muted-foreground)] mt-1">⚠️ 警告</div>
+              <div className="text-2xl font-bold text-[#b8860b]">{stats.needs_fix}</div>
+              <div className="text-xs text-[var(--muted-foreground)] mt-1">待修复</div>
             </div>
             <div>
-              <div className="text-2xl font-bold text-[var(--brand)]">{stats.error}</div>
-              <div className="text-xs text-[var(--muted-foreground)] mt-1">❌ 失败</div>
+              <div className="text-2xl font-bold text-[var(--brand)]">{stats.duplicate}</div>
+              <div className="text-xs text-[var(--muted-foreground)] mt-1">重复停用</div>
             </div>
             <div>
-              <div className="text-2xl font-bold text-[var(--muted-foreground)]">{stats.untested}</div>
-              <div className="text-xs text-[var(--muted-foreground)] mt-1">️ 待测</div>
+              <div className="text-2xl font-bold text-[var(--muted-foreground)]">{stats.manual_disabled}</div>
+              <div className="text-xs text-[var(--muted-foreground)] mt-1">人工停用</div>
             </div>
           </div>
         </CardContent>
       </Card>
 
       <div className="flex items-center gap-3">
+        <Select value={sourceFilter} onValueChange={setSourceFilter}>
+          <SelectTrigger className="w-36"><SelectValue /></SelectTrigger>
+          <SelectContent><SelectItem value="all">全部源状态</SelectItem>
+            {Object.entries(sourceStatusLabels).map(([value, label]) => <SelectItem key={value} value={value}>{label}</SelectItem>)}
+          </SelectContent>
+        </Select>
         <Select value={level} onValueChange={setLevel}>
           <SelectTrigger className="w-32">
             <SelectValue />
@@ -253,12 +265,12 @@ export function AdminMedia() {
                   <TableHead>媒体名称</TableHead>
                   <TableHead className="w-24">地区</TableHead>
                   <TableHead>数据源状态</TableHead>
-                  <TableHead className="w-20">启用</TableHead>
+                  <TableHead className="w-20">媒体启用</TableHead>
                   <TableHead className="w-28 text-right">数据源配置</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {items.map((m) => (
+                {visibleItems.map((m) => (
                   <TableRow key={m.id}>
                     <TableCell>
                       <Badge variant="secondary" className="text-xs">
@@ -272,10 +284,10 @@ export function AdminMedia() {
                     <TableCell>
                       <div className="flex flex-wrap gap-1">
                         {m.sources.map((s) => {
-                          const st = crawlStatusLabel[s.crawl_status] ?? crawlStatusLabel.untested;
+                          const st = s.source_status === "active" ? crawlStatusLabel.ok : s.source_status === "needs_fix" ? crawlStatusLabel.warning : crawlStatusLabel.untested;
                           return (
                             <Badge key={s.id} className={`text-[10px] ${st.cls}`}>
-                              {s.source_type === "epaper" ? "电子报" : "官网"}·{st.text}
+                              {s.source_type === "epaper" ? "电子报" : "官网"}·{sourceStatusLabels[s.source_status]}
                             </Badge>
                           );
                         })}
@@ -285,7 +297,7 @@ export function AdminMedia() {
                       <Switch checked={m.enabled} onCheckedChange={(v) => toggleMedia(m, v)} />
                     </TableCell>
                     <TableCell className="text-right">
-                      <Button size="sm" variant="ghost" className="h-8" onClick={() => setSourceDialog(m)}>
+                      <Button size="sm" variant="ghost" className="h-8" onClick={() => setSourceDialog(items.find(item => item.id === m.id) ?? m)}>
                         <Settings2 className="w-4 h-4 mr-1" /> 配置
                       </Button>
                     </TableCell>
@@ -390,7 +402,7 @@ function SourceConfigDialog({
   onMock: (sourceId: string) => void;
   mockBusy: boolean;
 }) {
-  const [edits, setEdits] = useState<Record<string, { url: string; enabled: boolean; status: string }>>({});
+  const [edits, setEdits] = useState<Record<string, { url: string; status: SourceStatus }>>({});
   const [testing, setTesting] = useState<string | null>(null);
   const [testResult, setTestResult] = useState<Record<string, { success: boolean; message: string }>>({});
 
@@ -414,10 +426,10 @@ function SourceConfigDialog({
           [sourceId]: { success: false, message: data.error || "测试失败" },
         });
       }
-    } catch (err: any) {
+    } catch (err: unknown) {
       setTestResult({
         ...testResult,
-        [sourceId]: { success: false, message: err.message },
+        [sourceId]: { success: false, message: err instanceof Error ? err.message : "测试失败" },
       });
     } finally {
       setTesting(null);
@@ -426,9 +438,9 @@ function SourceConfigDialog({
 
   useEffect(() => {
     if (!media) return;
-    const map: Record<string, { url: string; enabled: boolean; status: string }> = {};
+    const map: Record<string, { url: string; status: SourceStatus }> = {};
     for (const s of media.sources) {
-      map[s.id] = { url: s.source_url ?? "", enabled: s.enabled, status: s.crawl_status };
+      map[s.id] = { url: s.source_url ?? "", status: s.source_status };
     }
     setEdits(map);
   }, [media]);
@@ -463,14 +475,11 @@ function SourceConfigDialog({
                         </span>
                       )}
                     </div>
-                    <div className="flex items-center gap-2 text-sm">
-                      <span className="text-[var(--muted-foreground)]">参与监测</span>
-                      <Switch
-                        checked={edit.enabled}
-                        onCheckedChange={(v) => setEdits({ ...edits, [s.id]: { ...edit, enabled: v } })}
-                      />
-                    </div>
+                    <Badge variant="secondary">{sourceStatusLabels[s.source_status]}</Badge>
                   </div>
+                  <p className="text-xs break-all text-[var(--muted-foreground)]">source_id：{s.id}</p>
+                  {s.status_reason && <p className="text-xs">状态原因：{s.status_reason}</p>}
+                  {s.duplicate_of && <p className="text-xs break-all">保留源：{s.duplicate_of}</p>}
                   {s.last_error && (
                     <p className="text-xs text-[var(--brand)] break-all">最近错误：{s.last_error}</p>
                   )}
@@ -489,19 +498,18 @@ function SourceConfigDialog({
                   </div>
                   <div className="grid grid-cols-2 gap-3">
                     <div className="space-y-1.5">
-                      <Label className="text-xs">PoC 状态</Label>
+                      <Label className="text-xs">数据源状态</Label>
                       <Select
                         value={edit.status}
-                        onValueChange={(v) => setEdits({ ...edits, [s.id]: { ...edit, status: v } })}
+                        onValueChange={(v) => setEdits({ ...edits, [s.id]: { ...edit, status: v as SourceStatus } })}
                       >
                         <SelectTrigger>
                           <SelectValue />
                         </SelectTrigger>
                         <SelectContent>
-                          <SelectItem value="untested">未接入/待测</SelectItem>
-                          <SelectItem value="ok">正常</SelectItem>
-                          <SelectItem value="warning">警告（偶发失败）</SelectItem>
-                          <SelectItem value="error">失败（连续 ≥3 次）</SelectItem>
+                          {Object.entries(sourceStatusLabels).map(([value, label]) => (
+                            <SelectItem key={value} value={value} disabled={(value === "active" && (!s.verified_at || !!s.duplicate_of)) || (value === "duplicate" && !s.duplicate_of)}>{label}</SelectItem>
+                          ))}
                         </SelectContent>
                       </Select>
                     </div>
@@ -545,8 +553,7 @@ function SourceConfigDialog({
                       onClick={() =>
                         onSave(s.id, {
                           source_url: edit.url || null,
-                          enabled: edit.enabled,
-                          crawl_status: edit.status,
+                          source_status: edit.status,
                         })
                       }
                     >

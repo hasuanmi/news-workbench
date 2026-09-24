@@ -1,21 +1,22 @@
 import { NextRequest, NextResponse } from "next/server";
 import { supabase } from "@/lib/db";
 import { getEnrichConfig, maybeAutoRetryEnrich } from "@/lib/calendar-enrich";
+import { loadCalendarRecords } from "@/lib/calendar-data";
+import { computeOccurrence } from "@/lib/calendar-engine";
+import { calendarToday } from "@/lib/calendar-policy";
 
 export async function GET(_req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
+  const today = calendarToday();
+  const year = Number(_req.nextUrl.searchParams.get("year") ?? today.getUTCFullYear());
+  if (!Number.isInteger(year) || year < 1900 || year > 2100) return NextResponse.json({ error: "年份无效" }, { status: 400 });
 
   // Supabase 外键嵌套关联查询不可用，改为「主查询 + 按 category_id 二次查询 + 代码组装」
-  const { data: ev, error } = await supabase()
-    .schema("public")
-    .from("calendar_event")
-    .select("*")
-    .eq("id", id)
-    .eq("enabled", true)
-    .is("deleted_at", null)
-    .maybeSingle();
-  if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+  const { records } = await loadCalendarRecords();
+  const ev = records.find(event => event.id === id && event.enabled && !event.deleted_at);
   if (!ev) return NextResponse.json({ error: "节点不存在" }, { status: 404 });
+  if (ev.information_status === "needs_completion") return NextResponse.json({ information_status: "needs_completion", error: "信息待补全，该记录暂不作为正式日历节点展示" }, { status: 422 });
+  const occurrence = computeOccurrence(ev, year, today);
 
   // 补全失败时：未达自动重试上限则立即触发自动重试（不阻塞本次响应展示）
   const maxRetries = (await getEnrichConfig()).max_retries;
@@ -26,12 +27,12 @@ export async function GET(_req: NextRequest, { params }: { params: Promise<{ id:
   // 已达重试上限 → 仅此时才允许用户「重新生成」（后台管理的异常恢复，不作为正常流程）
   const canManualRegen = ev.enrich_status === "failed" && failCount >= maxRetries;
 
-  let category: { code: string; category_name: string; color: string } | null = null;
+  let category: { id: string; code: string; category_name: string; color: string } | null = null;
   if (ev.category_id) {
     const { data: cat } = await supabase()
       .schema("public")
       .from("calendar_category")
-      .select("code, category_name, color")
+      .select("id, code, category_name, color")
       .eq("id", ev.category_id)
       .maybeSingle();
     category = cat ?? null;
@@ -44,7 +45,10 @@ export async function GET(_req: NextRequest, { params }: { params: Promise<{ id:
     original_date: ev.original_date,
     event_date: ev.event_date,
     anniversary_base_year: ev.anniversary_base_year,
-    anniversary: ev.anniversary,
+    anniversary: occurrence?.anniversary ?? null,
+    occurrence_date: occurrence?.date ?? null,
+    display_year: year,
+    read_only: ev.read_only || (ev.event_type === "dynamic" && ev.calendar_year !== year),
     region: ev.region,
     importance: ev.importance,
     review_status: ev.review_status,

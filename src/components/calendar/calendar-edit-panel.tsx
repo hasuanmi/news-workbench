@@ -14,8 +14,10 @@ import {
 } from "@/components/ui/select";
 import { X } from "lucide-react";
 import type { CalCategory } from "./calendar-types";
+import { isValidCalendarDate, isVagueName } from "@/lib/calendar-policy";
 
 interface Props {
+  year: number;
   categories: CalCategory[];
   /** null = 新增；对象 = 编辑已有 */
   editing: {
@@ -28,21 +30,25 @@ interface Props {
     description?: string | null;
     original_date?: string | null;
     event_date?: string | null;
+    date_status?: string | null;
+    event_month?: number | null;
     enabled?: boolean;
   } | null;
   onClose: () => void;
   onSaved: () => void;
 }
 
-export function CalendarEditPanel({ categories, editing, onClose, onSaved }: Props) {
+export function CalendarEditPanel({ year, categories, editing, onClose, onSaved }: Props) {
   const isEdit = Boolean(editing && editing.id);
 
   const [eventName, setEventName] = useState("");
-  const [eventType, setEventType] = useState<string>("fixed");
+  const [eventType, setEventType] = useState<string>("dynamic");
   const [importance, setImportance] = useState<string>("B");
   const [region, setRegion] = useState<string>("national");
   const [categoryId, setCategoryId] = useState<string>("");
   const [date, setDate] = useState("");
+  const [dateStatus, setDateStatus] = useState("confirmed");
+  const [eventMonth, setEventMonth] = useState("");
   const [background, setBackground] = useState("");
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -50,7 +56,9 @@ export function CalendarEditPanel({ categories, editing, onClose, onSaved }: Pro
   useEffect(() => {
     if (!editing) return;
     setEventName(editing.event_name ?? "");
-    setEventType(editing.event_type ?? "fixed");
+    setEventType(editing.event_type ?? "dynamic");
+    setDateStatus(editing.date_status ?? "confirmed");
+    setEventMonth(editing.event_month ? String(editing.event_month) : "");
     setImportance(editing.importance ?? "B");
     setRegion(editing.region ?? "national");
     setCategoryId(editing.category_id ?? "");
@@ -68,9 +76,17 @@ export function CalendarEditPanel({ categories, editing, onClose, onSaved }: Pro
       setError("节点名称必填");
       return;
     }
-    if (!/^\d{4}-\d{2}-\d{2}$/.test(date)) {
+    if (isVagueName(eventName)) {
+      setError("信息待补全：时间可以待定，请先补充具体事件名称");
+      return;
+    }
+    const effectiveStatus = eventType === "fixed" ? "confirmed" : dateStatus;
+    if (effectiveStatus === "confirmed" && !isValidCalendarDate(date)) {
       setError("请提供有效日期 (YYYY-MM-DD)");
       return;
+    }
+    if (effectiveStatus === "month_known" && (!eventMonth || Number(eventMonth) < 1 || Number(eventMonth) > 12)) {
+      setError("请选择月份"); return;
     }
     setSaving(true);
     try {
@@ -82,9 +98,12 @@ export function CalendarEditPanel({ categories, editing, onClose, onSaved }: Pro
         category_id: categoryId || null,
         background,
         enabled: editing?.enabled ?? true,
+        date_status: effectiveStatus,
+        calendar_year: year,
+        event_month: effectiveStatus === "month_known" ? Number(eventMonth) : null,
       };
       if (eventType === "fixed") payload.original_date = date;
-      else payload.event_date = date;
+      else payload.event_date = effectiveStatus === "confirmed" ? date : null;
 
       const url = isEdit
         ? `/api/admin/calendar/${editing!.id}`
@@ -144,14 +163,19 @@ export function CalendarEditPanel({ categories, editing, onClose, onSaved }: Pro
             </Select>
           </div>
           <div className="space-y-1.5">
-            <Label>日期</Label>
-            <Input
-              type="date"
-              value={date}
-              onChange={(e) => setDate(e.target.value)}
-            />
+            <Label>时间状态</Label>
+            <Select value={eventType === "fixed" ? "confirmed" : dateStatus} onValueChange={setDateStatus} disabled={eventType === "fixed"}>
+              <SelectTrigger aria-label="时间状态"><SelectValue /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="confirmed">日期明确</SelectItem>
+                <SelectItem value="month_known">月份明确</SelectItem>
+                <SelectItem value="unknown">时间待定</SelectItem>
+              </SelectContent>
+            </Select>
           </div>
         </div>
+
+        {eventType === "fixed" || dateStatus === "confirmed" ? <div className="space-y-1.5"><Label>日期</Label><Input aria-label="节点日期" type="date" value={date} onChange={e => setDate(e.target.value)} /></div> : <div className="space-y-1.5"><Label>所属年度：{year} 年</Label>{dateStatus === "month_known" && <Select value={eventMonth} onValueChange={setEventMonth}><SelectTrigger aria-label="节点月份"><SelectValue placeholder="选择月份" /></SelectTrigger><SelectContent>{Array.from({ length: 12 }, (_, i) => <SelectItem key={i + 1} value={String(i + 1)}>{i + 1}月</SelectItem>)}</SelectContent></Select>}<p className="text-xs text-[var(--muted-foreground)]">时间可以不确定，但事件必须有明确名称和依据。</p></div>}
 
         <div className="grid grid-cols-2 gap-3">
           <div className="space-y-1.5">

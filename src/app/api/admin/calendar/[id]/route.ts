@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { supabase } from "@/lib/db";
 import { requireAdmin } from "@/lib/require-admin";
 import { enqueueEnrich } from "@/lib/calendar-enrich";
+import { isVagueName, isValidCalendarDate } from "@/lib/calendar-policy";
 
 export async function DELETE(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
@@ -77,6 +78,12 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
   if ("delete_reason" in body) {
     return softDelete(req, id, body);
   }
+  if ("event_name" in body && isVagueName(String(body.event_name ?? ""))) {
+    return NextResponse.json({ information_status: "needs_completion", error: "信息待补全：请填写具体事件名称" }, { status: 422 });
+  }
+  for (const key of ["event_date", "original_date"]) {
+    if (body[key] && !isValidCalendarDate(String(body[key]))) return NextResponse.json({ error: "日期无效" }, { status: 400 });
+  }
 
   const allowed = [
     "event_name",
@@ -100,6 +107,22 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
   for (const k of allowed) {
     if (k in body) update[k] = body[k] === "" ? null : body[k];
   }
+  if ("date_status" in body) {
+    if (!["confirmed", "month_known", "unknown"].includes(body.date_status)) return NextResponse.json({ error: "时间状态无效" }, { status: 400 });
+    if (body.event_type === "fixed" && body.date_status !== "confirmed") return NextResponse.json({ error: "固定节点需要明确日期" }, { status: 400 });
+    if (body.date_status === "confirmed" && !isValidCalendarDate(String(body.event_type === "fixed" ? body.original_date : body.event_date))) return NextResponse.json({ error: "日期无效" }, { status: 400 });
+    if (body.date_status !== "confirmed") {
+      const year = Number(body.calendar_year), month = Number(body.event_month);
+      if (!Number.isInteger(year) || year < 1900 || year > 2100 || (body.date_status === "month_known" && (!Number.isInteger(month) || month < 1 || month > 12))) return NextResponse.json({ error: "请提供有效所属年份和月份" }, { status: 400 });
+      const { data: prior, error: readError } = await supabase().from("calendar_event").select("tags").eq("id", id).single();
+      if (readError) return NextResponse.json({ error: "无法读取原节点" }, { status: 503 });
+      update.tags = [...(Array.isArray(prior.tags) ? prior.tags.filter((tag: unknown) => typeof tag !== "string" || !tag.startsWith("calendar-year:")) : []), `calendar-year:${year}`];
+      update.event_type = "dynamic";
+      update.event_date = null;
+      update.original_date = null;
+      update.event_month = body.date_status === "month_known" ? month : null;
+    }
+  }
   if ("background" in body) update.description = String(body.background ?? "").trim() || null;
   update.updated_at = new Date().toISOString();
   if ("source_type" in body || "source" in body) {
@@ -114,7 +137,7 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
     update.original_date = body.original_date;
     update.event_date = null;
   }
-  if (body.event_type === "dynamic" && body.event_date) {
+  if (body.event_type === "dynamic" && body.event_date && (!body.date_status || body.date_status === "confirmed")) {
     update.event_type = "dynamic";
     update.event_date = body.event_date;
     update.original_date = null;

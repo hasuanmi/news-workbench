@@ -4,10 +4,12 @@ import type { DateStatus } from "./calendar-history";
 import { deepseekWebSearch } from "./deepseek-search";
 import { unifiedInvoke } from "./llm-client";
 import { flagDuplicatesForNew } from "./calendar-dedup";
+import { calendarToday, isVagueName, isValidCalendarDate, recurringOccurrence } from "./calendar-policy";
+export { isVagueName } from "./calendar-policy";
 
 /**
  * 候选生成：把历史日历节点（资料库）迁移到目标年度，落候选池。
- * 纯逻辑、不调 AI —— 时间字段只是"年份滚动"，AI 判断已在上传解析阶段完成。
+ * 纯逻辑、不调 AI：保留原年度事项，跨年只推导明确固定日期与周年。
  */
 
 export interface HistoryNodeLike {
@@ -43,23 +45,25 @@ export interface CandidateSeed {
   source_url: string | null;
 }
 
-/** 单个历史节点 → 候选（年份滚动） */
+/** 单个历史节点 → 候选（跨年必须有明确规则） */
 export function migrateHistoryNodeToCandidate(
   node: HistoryNodeLike,
   targetYear: number,
-): CandidateSeed {
+): CandidateSeed | null {
   let candidate_date: string | null = null;
   let candidate_month: number | null = null;
   let base_year: number | null = null;
 
   if (node.date_status === "confirmed" && node.event_date) {
-    const mmdd = node.event_date.slice(5, 10); // MM-DD
-    candidate_date = `${targetYear}-${mmdd}`;
-    // 周年基准年 = 历史节点的原始发生年（而非滚动后的 target_year）
-    const origYear = parseInt(node.event_date.slice(0, 4), 10);
-    base_year = Number.isFinite(origYear) ? origYear : targetYear;
+    const recurring = recurringOccurrence({ event_name: node.node_name, event_type: "dynamic", event_date: node.event_date }, targetYear);
+    if (targetYear !== node.year && !recurring) return null;
+    candidate_date = targetYear === node.year ? node.event_date : recurring!.date;
+    base_year = recurring?.baseYear ?? null;
   } else if (node.date_status === "month_known") {
+    if (targetYear !== node.year) return null;
     candidate_month = node.candidate_month ?? null;
+  } else if (targetYear !== node.year) {
+    return null;
   }
   // unknown：candidate_date / candidate_month 均为 null
 
@@ -132,6 +136,7 @@ export async function generateCandidatesFromHistory(
       .from("calendar_candidate")
       .select("source_detail")
       .eq("source_type", "historical_migration")
+      .eq("target_year", targetYear)
       .in(
         "source_detail",
         rows.map((n) => `history_node:${n.id}`),
@@ -148,7 +153,9 @@ export async function generateCandidatesFromHistory(
       skipped++;
       continue;
     }
-    seeds.push(migrateHistoryNodeToCandidate(n, targetYear));
+    const seed = migrateHistoryNodeToCandidate(n, targetYear);
+    if (seed) seeds.push(seed);
+    else skipped++;
   }
 
   if (seeds.length === 0) {
@@ -193,15 +200,7 @@ export async function generateCandidatesFromHistory(
 
 /** 读取目标年度配置（calendar.target_year） */
 export async function getTargetYear(): Promise<number> {
-  const { data } = await supabase()
-    .schema("public")
-    .from("app_config")
-    .select("value")
-    .eq("key", "calendar.target_year")
-    .single();
-  const v = data?.value;
-  const n = typeof v === "number" ? v : Number(v);
-  return Number.isFinite(n) && n > 0 ? n : new Date().getUTCFullYear() + 1;
+  return calendarToday().getUTCFullYear();
 }
 
 /* ============================================================
@@ -236,14 +235,6 @@ export const REGION_LABEL: Record<string, string> = {
 /**
  * 模糊占位名护栏：AI 无法确认具体事件名时（含"某"、纯泛化词）不允许进入候选池。
  */
-export function isVagueName(name: string): boolean {
-  const n = (name ?? "").trim();
-  if (n.length < 3) return true;
-  if (/某/.test(n)) return true;
-  if (/待定|未知(事项|事件)?|暂未(确定|公布|发布)/.test(n)) return true;
-  if (/^(重大|重要|相关)?(会议|活动|政策|发布会|节点|论坛|展览|赛事)$/.test(n)) return true;
-  return false;
-}
 
 function normalizeUrl(s: string | null | undefined): string | null {
   if (!s) return null;
@@ -267,7 +258,7 @@ function matchCategory(
   return null;
 }
 
-function extractJsonArray(text: string): any[] {
+function extractJsonArray(text: string): Record<string, unknown>[] {
   const fence = text.match(/```(?:json)?\s*([\s\S]*?)```/i);
   const candidate = fence ? fence[1] : text;
   const start = candidate.indexOf("[");
@@ -275,20 +266,21 @@ function extractJsonArray(text: string): any[] {
   if (start === -1 || end === -1 || end < start) return [];
   try {
     const arr = JSON.parse(candidate.slice(start, end + 1));
-    return Array.isArray(arr) ? arr : [];
+    return Array.isArray(arr) ? arr.filter((item): item is Record<string, unknown> => !!item && typeof item === "object" && !Array.isArray(item)) : [];
   } catch {
     return [];
   }
 }
 
-function extractJsonObject(text: string): any | null {
+function extractJsonObject(text: string): Record<string, unknown> | null {
   const fence = text.match(/```(?:json)?\s*([\s\S]*?)```/i);
   const candidate = fence ? fence[1] : text;
   const start = candidate.indexOf("{");
   const end = candidate.lastIndexOf("}");
   if (start === -1 || end === -1) return null;
   try {
-    return JSON.parse(candidate.slice(start, end + 1));
+    const parsed: unknown = JSON.parse(candidate.slice(start, end + 1));
+    return parsed && typeof parsed === "object" && !Array.isArray(parsed) ? parsed as Record<string, unknown> : null;
   } catch {
     return null;
   }
@@ -326,6 +318,7 @@ export async function recommendCandidatesFromWeb(
   targetYear: number,
   opts: RecommendOptions = {},
 ): Promise<{ candidates: RecommendedCandidate[]; searched: boolean }> {
+  if (targetYear !== calendarToday().getUTCFullYear()) throw new Error("AI推荐仅补充当前年度动态事件；下一年度请预览固定或可推导节点");
   const cats = await listCalendarCategories();
   const catLines = cats.map((c) => `- ${c.category_name}（code: ${c.code}）`).join("\n");
   const focus =
@@ -348,7 +341,7 @@ export async function recommendCandidatesFromWeb(
   const keywordsText = opts.keywords?.trim() ? opts.keywords.trim() : "不限关键词";
   const extraText = opts.extraRequirements?.trim() ? opts.extraRequirements.trim() : "无";
 
-  const instructions = `你是新闻日历编辑助手。请基于联网检索，为 ${targetYear} 年补充「历史日历里还没有的」新会议、新活动、新政策、新纪念节点。
+  const instructions = `你是新闻日历编辑助手。请基于联网检索，为当前 ${targetYear} 年补充有具体名称的动态会议、政策、活动、行业事件。不要重复推荐固定节日，不要复制上年度会议届次或推测下一年度活动。
 可归入的关注类型（必须取下列之一，并用其 code 填 category_code）：
 ${catLines}
 
@@ -363,6 +356,7 @@ ${catLines}
 严格要求：
 1. 只列你通过联网检索确认、且有官方/权威来源链接的具体事件；无法确认具体名称的事件一律不要列出（禁止"某重要会议""某重大政策发布"等模糊占位）。
 2. 每个事件必须带 source_url（官方或权威来源链接）与 source_basis（一句来源依据，说明是哪类官方/权威出处，如"XX官网会议通知"）。
+时间可以待定，但事件必须明确且属于 ${targetYear} 年。信息不足不得猜测名称，无法确认具体事件则不输出；日期不得落到其它年度。
 3. 输出严格为 JSON 数组，不要任何额外说明文字。每条结构：
 {"node_name":"具体事件名","date_status":"confirmed|month_known|unknown","candidate_date":"YYYY-MM-DD 或 null","candidate_month":1-12 或 null,"category_code":"上述 code 之一","region":"national|guangdong|guangzhou|other","importance":"S|A|B","ai_reason":"1-2 句：为何它是当年值得关注的新闻节点","source_basis":"来源依据（官方/权威出处简述）","source_url":"官方来源链接"}`;
 
@@ -375,41 +369,42 @@ ${catLines}
   });
 
   const parsed = extractJsonArray(text);
-  const sourcePool = sources.map((s) => s.url);
   const candidates: RecommendedCandidate[] = [];
 
   for (const raw of parsed) {
     const name = String(raw.node_name ?? "").trim();
     if (!name || isVagueName(name)) continue;
-    const ds: DateStatus = (["confirmed", "month_known", "unknown"] as string[]).includes(
-      raw.date_status,
+    let ds: DateStatus = (["confirmed", "month_known", "unknown"] as string[]).includes(
+      String(raw.date_status),
     )
       ? (raw.date_status as DateStatus)
       : "unknown";
     let candDate: string | null = null;
     let candMonth: number | null = null;
     if (ds === "confirmed") {
-      candDate = /^\d{4}-\d{2}-\d{2}$/.test(String(raw.candidate_date ?? ""))
+      candDate = isValidCalendarDate(String(raw.candidate_date ?? "")) && String(raw.candidate_date).startsWith(`${targetYear}-`)
         ? String(raw.candidate_date)
         : null;
     } else if (ds === "month_known") {
       const m = Number(raw.candidate_month);
       candMonth = m >= 1 && m <= 12 ? m : null;
     }
-    const region = (REGION_CODES as readonly string[]).includes(raw.region)
-      ? raw.region
+    const region = (REGION_CODES as readonly string[]).includes(String(raw.region))
+      ? String(raw.region)
       : "national";
-    const importance = ["S", "A", "B"].includes(raw.importance) ? raw.importance : "B";
+    const importance = ["S", "A", "B"].includes(String(raw.importance)) ? String(raw.importance) : "B";
     const cat = matchCategory(cats, raw.category_code ?? raw.category);
-    let sourceUrl = normalizeUrl(String(raw.source_url ?? "").trim());
-    if (!sourceUrl && sourcePool.length) sourceUrl = sourcePool[0];
+    if (ds === "confirmed" && !candDate) continue;
+    if (ds === "month_known" && !candMonth) ds = "unknown";
+    const sourceUrl = normalizeUrl(String(raw.source_url ?? "").trim());
     // 没有具体来源依据的 AI 推荐，不允许进入候选池
-    if (!sourceUrl) continue;
+    if (!sourceUrl || !sources.some(source => source.url === sourceUrl)) continue;
     const basis = String(raw.source_basis ?? "").trim() || null;
+    if (!basis) continue;
 
     candidates.push({
       node_name: name,
-      date_status: ds,
+      date_status: ds === "confirmed" && !candDate || ds === "month_known" && !candMonth ? "unknown" : ds,
       candidate_date: candDate,
       candidate_month: candMonth,
       category_id: cat?.id ?? null,
@@ -444,7 +439,7 @@ export interface ParsedPastedCandidate {
  */
 export async function recognizePastedText(
   rawText: string,
-  _targetYear: number,
+  targetYear: number,
 ): Promise<{ candidate: ParsedPastedCandidate | null }> {
   const cats = await listCalendarCategories();
   const catLines = cats.map((c) => `- ${c.category_name}（code: ${c.code}）`).join("\n");
@@ -453,7 +448,7 @@ export async function recognizePastedText(
 ${catLines}
 仅输出严格 JSON 对象（不要任何说明）：
 {"node_name":"具体事件名","date_status":"confirmed|month_known|unknown","candidate_date":"YYYY-MM-DD 或 null","candidate_month":1-12 或 null,"category_code":"上述 code 之一或 null","region":"national|guangdong|guangzhou|other","importance":"S|A|B","ai_reason":"抽取依据简述","source_url":"若文本中含链接则填，否则 null"}
-node_name 必须是具体名称（禁止"某"等占位）；信息不足时仍给出最佳猜测。`;
+node_name 必须来自原文明确的具体事件名称（禁止"某"等占位）。时间可不确定，但事件必须明确。信息不足时返回 null，绝不猜测或编造名称；所属年度为 ${targetYear} 年；原文年份不明确时不得擅自填写具体日期。`;
 
   const input = `请抽取以下文本中的新闻节点：\n"""\n${rawText.slice(0, 4000)}\n"""`;
 
@@ -471,28 +466,28 @@ node_name 必须是具体名称（禁止"某"等占位）；信息不足时仍�
   if (!name || isVagueName(name)) return { candidate: null };
 
   const ds: DateStatus = (["confirmed", "month_known", "unknown"] as string[]).includes(
-    obj.date_status,
+    String(obj.date_status),
   )
     ? (obj.date_status as DateStatus)
     : "unknown";
   let candDate: string | null = null;
   let candMonth: number | null = null;
   if (ds === "confirmed") {
-    candDate = /^\d{4}-\d{2}-\d{2}$/.test(String(obj.candidate_date ?? ""))
+    candDate = isValidCalendarDate(String(obj.candidate_date ?? "")) && String(obj.candidate_date).startsWith(`${targetYear}-`)
       ? String(obj.candidate_date)
       : null;
   } else if (ds === "month_known") {
     const m = Number(obj.candidate_month);
     candMonth = m >= 1 && m <= 12 ? m : null;
   }
-  const region = (REGION_CODES as readonly string[]).includes(obj.region) ? obj.region : "national";
-  const importance = ["S", "A", "B"].includes(obj.importance) ? obj.importance : "B";
+  const region = (REGION_CODES as readonly string[]).includes(String(obj.region)) ? String(obj.region) : "national";
+  const importance = ["S", "A", "B"].includes(String(obj.importance)) ? String(obj.importance) : "B";
   const cat = matchCategory(cats, obj.category_code ?? obj.category);
 
   return {
     candidate: {
       node_name: name,
-      date_status: ds,
+      date_status: (ds === "confirmed" && !candDate) || (ds === "month_known" && !candMonth) ? "unknown" : ds,
       candidate_date: candDate,
       candidate_month: candMonth,
       category_id: cat?.id ?? null,
@@ -528,7 +523,7 @@ export interface InsertCandidateResult {
 
 /**
  * 统一入库：手动 / 粘贴识别 / AI 推荐 三类候选都走这里。
- * 护栏：模糊名直接拒绝；AI推荐与粘贴识别必须带来源依据或原始文本。
+ * 护栏：模糊名留待补全，不得进入正式日历；AI推荐与粘贴识别必须带来源依据或原始文本。
  * 入库后自动增量去重（flagDuplicatesForNew）。
  */
 export async function insertCandidateFromSource(
@@ -536,14 +531,14 @@ export async function insertCandidateFromSource(
   username: string,
 ): Promise<InsertCandidateResult> {
   if (isVagueName(input.node_name)) {
-    throw new Error("节点名称过于模糊，不允许进入候选池（需具体名称）");
+    // 原始线索可留在候选池补全；确认入口会阻止其进入正式日历。
+    input = { ...input, ai_reason: "信息待补全：请补充具体事件名称及来源依据" };
   }
   if (input.source_type !== "manual") {
     const hasSource = !!(
       input.source_url ||
       input.source_detail ||
-      input.raw_text ||
-      input.ai_reason
+      input.raw_text
     );
     if (!hasSource) {
       throw new Error("AI推荐 / 粘贴识别 必须带来源依据或原始文本");

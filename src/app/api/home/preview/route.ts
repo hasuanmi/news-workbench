@@ -1,5 +1,9 @@
-import { NextRequest, NextResponse } from "next/server";
+import { NextResponse } from "next/server";
 import { supabase } from "@/lib/db";
+import { loadCalendarRecords } from "@/lib/calendar-data";
+import { buildCalendar, normalizeEventName } from "@/lib/calendar-engine";
+import { calendarToday, isVagueName, isValidCalendarDate } from "@/lib/calendar-policy";
+import { getWorkbenchTasks } from "@/lib/workbench-status";
 
 /**
  * GET /api/home/preview — 首页「工作内容预览」
@@ -10,10 +14,13 @@ import { supabase } from "@/lib/db";
  *   home.show_leads     —— 最新线索条数（默认3）
  *   calendar.home_days  —— 首页节点天数（默认7）
  *
- * 统计/待办不再放首页（移至系统管理）。
+ * 附带轻量待办及实际执行状态。
  */
-export async function GET(req: NextRequest) {
+export async function GET() {
   const db = supabase();
+  const taskPromise = getWorkbenchTasks();
+  const pendingPromise = db.from("news_clue").select("id", { count: "exact", head: true })
+    .eq("is_test", false).eq("review_status", "pending");
 
   // 读取可配数值
   const readNum = async (key: string, fallback: number): Promise<number> => {
@@ -27,74 +34,27 @@ export async function GET(req: NextRequest) {
   const homeDays = await readNum("calendar.home_days", 7);
 
   // ===== 1. 未来 N 天新闻节点 =====
-  const today = new Date();
-  today.setUTCHours(0, 0, 0, 0);
-  const todayIso = today.toISOString().split("T")[0];
-  const horizonIso = new Date(today.getTime() + homeDays * 86400000)
-    .toISOString()
-    .split("T")[0];
-
-  // 已启用、非软删除、日期已确定（confirmed）的节点，落在 [today, today+homeDays]
-  const { data: events, error: evErr } = await db
-    .schema("public")
-    .from("calendar_event")
-    .select("id, event_name, event_type, original_date, event_date, event_year, anniversary_base_year, importance, date_status, event_month, review_status")
-    .eq("enabled", true)
-    .is("deleted_at", null);
-
-  const upcoming: {
-    id: string;
-    name: string;
-    date: string;
-    importance: string;
-    anniversary: number | null;
-  }[] = [];
-
-  if (evErr) {
-    // 表结构/权限异常时不阻断（首页降级为空节点块）
-  } else {
-    for (const ev of events ?? []) {
-      if (ev.date_status !== "confirmed") continue;
-      let occDate: string | null = null;
-      let anniversary: number | null = null;
-
-      if (ev.event_type === "fixed" && ev.original_date) {
-        const md = ev.original_date.slice(5);
-        const m = Number(md.slice(0, 2));
-        const d = Number(md.slice(3, 5));
-        const y = today.getUTCFullYear();
-        // 取下一个 >= today 的当月日，跨年滚动到下一年
-        let year = y;
-        let dt = new Date(Date.UTC(year, m - 1, d));
-        if (dt.getTime() < today.getTime()) {
-          year += 1;
-          dt = new Date(Date.UTC(year, m - 1, d));
-        }
-        if (dt.getTime() > new Date(horizonIso + "T00:00:00Z").getTime()) continue;
-        const baseYear = ev.event_year ?? ev.anniversary_base_year ?? null;
-        const anv = baseYear != null ? year - baseYear : null;
-        occDate = `${year}-${String(m).padStart(2, "0")}-${String(d).padStart(2, "0")}`;
-        anniversary = anv != null && anv > 0 ? anv : null;
-      } else if (ev.event_type === "dynamic" && ev.event_date) {
-        if (ev.event_date < todayIso || ev.event_date > horizonIso) continue;
-        occDate = ev.event_date;
-        const baseYear = ev.event_year ?? null;
-        const anv = baseYear != null
-          ? Number(ev.event_date.slice(0, 4)) - baseYear
-          : null;
-        anniversary = anv != null && anv > 0 ? anv : null;
-      }
-      if (!occDate) continue;
-      upcoming.push({
-        id: ev.id,
-        name: ev.event_name,
-        date: occDate,
-        importance: ev.importance || "B",
-        anniversary,
-      });
-    }
-    // 按日期升序
-    upcoming.sort((a, b) => (a.date < b.date ? -1 : a.date > b.date ? 1 : 0));
+  const today = calendarToday();
+  let calendarWarning: string | null = null;
+  let needsCompletion: number | null = null;
+  let upcoming: { id: string; name: string; date: string; importance: string; anniversary: number | null; source: string | null; source_type: string | null }[] = [];
+  try {
+    const { records } = await loadCalendarRecords();
+    needsCompletion = new Set(records.filter(event => event.enabled && !event.deleted_at && event.calendar_year === today.getUTCFullYear() && (
+      event.information_status === "needs_completion" || isVagueName(event.event_name) ||
+      (event.date_status === "confirmed" && !isValidCalendarDate(event.event_date || event.original_date || ""))
+    )).map(event => event.event_name)).size;
+    const seen = new Set<string>();
+    upcoming = buildCalendar(records, today, "next14", homeDays).filter(({ event, date }) => {
+      const key = `${normalizeEventName(event.event_name)}|${date}|${event.region}`;
+      if (seen.has(key)) return false;
+      seen.add(key); return true;
+    }).slice(0, showUpcoming).map(({ event, date, anniversary }) => ({
+      id: event.id, name: event.event_name, date, importance: event.importance || "B", anniversary,
+      source: event.source ?? null, source_type: event.source_type ?? null,
+    }));
+  } catch {
+    calendarWarning = "新闻节点暂时无法加载，请检查新闻日历数据连接。";
   }
 
   // ===== 2. 最新新闻线索（新栏目，已确认/待确认均可，取最新发现） =====
@@ -135,13 +95,15 @@ export async function GET(req: NextRequest) {
     }
   }
 
+  const [tasks, pending] = await Promise.all([taskPromise, pendingPromise]);
   return NextResponse.json({
+    work_status: { pending_clues: pending.error ? null : pending.count, needs_completion: needsCompletion, ...tasks },
     success: true,
     show_upcoming: showUpcoming,
     show_leads: showLeads,
     home_days: homeDays,
     upcoming,
-    calendar_warning: evErr ? "新闻节点暂时无法加载，请检查新闻日历数据连接。" : null,
+    calendar_warning: calendarWarning,
     latest_leads: latestLeads,
   });
 }

@@ -8,48 +8,18 @@ import {
   ChevronRight,
   CalendarClock,
   CalendarX,
-  MapPin,
-  Star,
 } from "lucide-react";
 import { normalizeEventName } from "@/lib/calendar-engine";
+import { calendarSourceLabel } from "@/lib/calendar-policy";
 import { getMonthExtras } from "@/lib/lunar-calendar";
-import type { CalEvent, FloatingEvent, CalCategory } from "./calendar-types";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import type { CalEvent, FloatingEvent } from "./calendar-types";
 
 const WEEKDAY_HEADER = ["一", "二", "三", "四", "五", "六", "日"];
 const WEEKEND_INDEX = new Set([5, 6]); // 周六（下标5）、周日（6）
 
-// —— 事件标签颜色体系（浅底色 + 深色文字，胶囊标签）——
-// 依据：事件类型（分类）为主色调；本地/重要级用辅助标记叠加。
-type TagPalette = { bg: string; text: string; dot: string };
-const defaultPalette: TagPalette = { bg: "#f0ece4", text: "#5a534a", dot: "#9a948a" };
-
-function paletteForCategory(cat?: CalCategory | null): TagPalette {
-  const name = cat?.category_name ?? "";
-  if (/纪念日|节日/.test(name)) return { bg: "#efe9f3", text: "#6b4a8a", dot: "#8f6cb0" }; // 纪念日/周年 偏紫灰
-  if (/党史|历史/.test(name)) return { bg: "#f3e4e2", text: "#a03a2f", dot: "#c0584b" }; // 重大历史 深红
-  if (/总书记|讲话|论述/.test(name)) return { bg: "#f4e2e3", text: "#8f2f33", dot: "var(--brand)" }; // 政治/讲话 紫红深红
-  if (/重大会议|政策/.test(name)) return { bg: "#f0e6ef", text: "#7a3d88", dot: "#9a5aa8" }; // 重大会议/政策 紫红
-  if (/国家战略|区域发展/.test(name)) return { bg: "#e4ebf4", text: "#2d5a8a", dot: "#3d7fbf" }; // 区域战略 蓝
-  if (/展会|会议|活动|行业/.test(name)) return { bg: "#e3eef7", text: "#1f6f9e", dot: "#2d8fc4" }; // 经济/产业/展会 蓝
-  if (/广东|广州/.test(name)) return { bg: "#f4e6d8", text: "#a05c22", dot: "var(--gold)" }; // 广东/广州本地 橙棕
-  return defaultPalette;
-}
-
-/** 标签完整样式：底色按分类类型，本地节点叠加橙棕、S/A 级叠加强调点 */
-function tagStyle(ev: CalEvent): { bg: string; text: string; dot: string; isLocal: boolean; isImportant: boolean } {
-  const p = paletteForCategory(ev.category);
-  const isLocal = ev.region === "local";
-  const isImportant = ev.importance === "S" || ev.importance === "A";
-  let bg = p.bg;
-  // 本地节点：橙棕强调
-  if (isLocal) bg = "#f4e6d8";
-  // S 级节点：朱砂红作强调（浅底色版本保持克制）
-  const text = isImportant && ev.importance === "S" ? "var(--brand)" : p.text;
-  const dot = isImportant && ev.importance === "S" ? "var(--brand)" : isLocal ? "var(--gold)" : p.dot;
-  return { bg, text, dot, isLocal, isImportant };
-}
-
 interface Props {
+  todayStr: string;
   items: CalEvent[];
   floating: FloatingEvent[];
   viewDate: { y: number; m: number }; // 当前查看的年月（1-12）
@@ -59,6 +29,7 @@ interface Props {
   onNextMonth: () => void;
   onToday: () => void;
   onSelect: (e: CalEvent) => void;
+  onSelectFloating: (e: FloatingEvent) => void;
 }
 
 // 某单元格展开的"more"（date 键）
@@ -72,7 +43,7 @@ interface Cell {
   inMonth: boolean;
 }
 
-const MAX_PER_CELL = 3;
+const MAX_PER_CELL = 2;
 
 function buildGrid(y: number, m: number, daysInMonth: number, daysInPrev: number, leading: number): Cell[] {
   const cells: Cell[] = [];
@@ -95,6 +66,7 @@ function buildGrid(y: number, m: number, daysInMonth: number, daysInPrev: number
 }
 
 export function CalendarMonthView({
+  todayStr,
   items,
   floating,
   viewDate,
@@ -104,11 +76,10 @@ export function CalendarMonthView({
   onNextMonth,
   onToday,
   onSelect,
+  onSelectFloating,
 }: Props) {
   const [more, setMore] = useState<MoreState>({});
 
-  const today = new Date();
-  const todayStr = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, "0")}-${String(today.getDate()).padStart(2, "0")}`;
 
   const firstDay = new Date(viewDate.y, viewDate.m - 1, 1);
   const daysInMonth = new Date(viewDate.y, viewDate.m, 0).getDate();
@@ -146,7 +117,7 @@ export function CalendarMonthView({
   }, [monthExtras]);
 
   // "本月待定"（月份已知）+ 完全未知
-  const monthFloating = floating.filter((f) => f.date_status === "month_known");
+  const monthFloating = floating.filter((f) => f.date_status === "month_known" && f.candidate_month === viewDate.m);
   const timeUnknown = floating.filter((f) => f.date_status === "unknown");
 
   const pad = (n: number) => String(n).padStart(2, "0");
@@ -162,231 +133,67 @@ export function CalendarMonthView({
   const monthLabel = `${viewDate.y} 年 ${viewDate.m} 月`;
 
   return (
-    <div className="pb-4">
-      {/* 月历头部：年月标题（强存在感） + 翻页 + 回到本月/今天 */}
-      <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
-        <div className="flex items-center gap-1">
-          <Button
-            size="icon"
-            variant="ghost"
-            className="h-8 w-8 text-[var(--muted-foreground)] hover:bg-[var(--muted)]"
-            onClick={onPrevMonth}
-            aria-label="上个月"
-          >
-            <ChevronLeft className="h-4 w-4" />
-          </Button>
-          <h2 className="text-2xl font-bold tracking-tight text-[var(--foreground)]">
-            {monthLabel}
-          </h2>
-          <Button
-            size="icon"
-            variant="ghost"
-            className="h-8 w-8 text-[var(--muted-foreground)] hover:bg-[var(--muted)]"
-            onClick={onNextMonth}
-            aria-label="下个月"
-          >
-            <ChevronRight className="h-4 w-4" />
-          </Button>
-        </div>
-        <div className="flex items-center gap-2">
-          <Button size="sm" variant="ghost" onClick={onToday}>
-            今天
-          </Button>
-          <Button size="sm" variant="outline" onClick={onToday}>
-            回到本月
-          </Button>
-        </div>
-      </div>
-
-      {/* 星期栏：独立一行，周末用浅朱砂文字 */}
-      <div className="mb-1 grid grid-cols-7 pb-2 text-center">
-        {WEEKDAY_HEADER.map((w, i) => (
-          <div
-            key={w}
-            className={`text-sm font-semibold ${
-              WEEKEND_INDEX.has(i) ? "text-[var(--brand)]/70" : "text-[var(--muted-foreground)]"
-            }`}
-          >
-            {w}
+    <div className="space-y-5">
+      <section className="rounded-2xl bg-white/80 p-3 shadow-[0_4px_24px_rgba(75,50,30,0.035)] ring-1 ring-black/[0.035] sm:p-5">
+        <header className="mb-6 flex flex-wrap items-center justify-between gap-3">
+          <div>
+            <p className="mb-1 text-[10px] font-medium tracking-[0.2em] text-[var(--muted-foreground)]">新闻日历 · 全年工作底图</p>
+            <h2 className="font-serif text-3xl font-bold tracking-tight" aria-label={monthLabel}>{viewDate.y}<span className="mx-2 text-base font-normal text-[var(--muted-foreground)]">年</span>{viewDate.m}<span className="ml-2 text-base font-normal text-[var(--muted-foreground)]">月</span></h2>
           </div>
-        ))}
-      </div>
-
-      {/* 日期网格：弱化方形网格感，用极浅细线分隔；日期自然撑开，页面滚动 */}
-      <div className="grid grid-cols-7 gap-px overflow-hidden rounded-lg border border-[var(--border)]/60 bg-[#ece7dc]">
-        {cells.map((c, idx) => {
-          const dateStr = fmt(c);
-          const dayEvents = byDay.get(dateStr) ?? [];
-          const isToday = !c.inMonth ? false : dateStr === todayStr;
-          const anchored = isAnchor(c);
-          const hasSelectedHere = dayEvents.some((e) => e.id === selectedId);
-          const selectedCell = (anchored || hasSelectedHere) && !isToday;
-          const showAll = more[dateStr] ?? false;
-          const visible = showAll ? dayEvents : dayEvents.slice(0, MAX_PER_CELL);
-          const hidden = dayEvents.length - visible.length;
-          const extra = extraMap.get(dateStr);
-
-          return (
-            <div
-              key={`${dateStr}-${idx}`}
-              className={`flex min-h-[118px] flex-col px-2 pb-2 pt-1.5 transition-colors ${
-                c.inMonth ? "bg-white" : "bg-[#faf8f3]"
-              } ${selectedCell ? "bg-[#fdf4f1]" : ""} ${
-                !c.inMonth ? "opacity-45" : ""
-              } hover:bg-[#fcf8f3]`}
-            >
-              {/* 日期主视觉：大号粗体公历 + 农历小字 */}
-              <div className="flex items-baseline justify-between">
-                <div className="flex flex-col items-start">
-                  <span
-                    className={`inline-flex h-7 min-w-7 items-center justify-center rounded-full px-1 text-[21px] font-semibold leading-none ${
-                      isToday
-                        ? "bg-[#f5ddd8] text-[var(--primary)]"
-                        : "text-[var(--foreground)]"
-                    }`}
-                  >
-                    {c.d}
-                  </span>
-                  {c.inMonth && extra?.lunar && (
-                    <span className="mt-0.5 text-[11px] leading-none text-[var(--muted-foreground)]/75">
-                      {extra.lunar}
-                    </span>
-                  )}
-                </div>
-                {c.inMonth && dayEvents.length > 0 && !showAll && (
-                  <span className="mt-0.5 text-[10px] font-medium tabular-nums text-[var(--muted-foreground)]/60">
-                    {dayEvents.length}
-                  </span>
-                )}
-              </div>
-
-              {/* 节气 / 节日小标签（紫底，自然嵌在日期下） */}
-              {c.inMonth && (extra?.solarTerm || (extra?.festivals ?? []).length > 0) && (
-                <div className="mt-1 flex flex-wrap gap-1">
-                  {extra!.solarTerm && (
-                    <span className="inline-flex items-center gap-0.5 rounded bg-[#efe9f3] px-1 py-px text-[10px] font-medium text-[#6b4a8a]">
-                      <Star className="h-2.5 w-2.5" />
-                      {extra!.solarTerm}
-                    </span>
-                  )}
-                  {(extra!.festivals ?? []).slice(0, 2).map((f) => (
-                    <span
-                      key={f}
-                      className="inline-flex items-center rounded bg-[#f4ead6] px-1 py-px text-[10px] font-medium text-[#a05c22]"
-                    >
-                      {f}
-                    </span>
-                  ))}
-                  {(extra!.festivals ?? []).length > 2 && (
-                    <span className="text-[10px] text-[var(--muted-foreground)]/60">
-                      +{(extra!.festivals ?? []).length - 2}
-                    </span>
-                  )}
-                </div>
-              )}
-
-              {/* 事件胶囊平铺 */}
-              {dayEvents.length > 0 && (
-                <div className="mt-1.5 flex flex-col gap-1">
-                  {visible.map((ev) => {
-                    const selected = ev.id === selectedId;
-                    const t = tagStyle(ev);
-                    return (
-                      <button
-                        key={ev.id}
-                        onClick={() => onSelect(ev)}
-                        title={ev.event_name}
-                        className={`group flex items-center gap-1.5 rounded-md px-1.5 py-1 text-left text-[11px] leading-tight transition-shadow ${
-                          selected ? "ring-1 ring-inset ring-[var(--primary)] bg-white/70" : ""
-                        } hover:shadow-sm`}
-                        style={{ backgroundColor: t.bg, color: t.text }}
-                      >
-                        <span
-                          className="h-1.5 w-1.5 shrink-0 rounded-full"
-                          style={{ backgroundColor: t.dot }}
-                        />
-                        <span className="min-w-0 flex-1 truncate font-medium">
-                          {normalizeEventName(ev.event_name)}
-                          {ev.anniversary != null && (
-                            <span className="opacity-75"> {ev.anniversary}周年</span>
-                          )}
-                        </span>
-                        {t.isImportant && (
-                          <Badge className="shrink-0 bg-white/40 px-1 text-[9px] text-inherit" variant="outline">
-                            {ev.importance}
-                          </Badge>
-                        )}
-                      </button>
-                    );
-                  })}
-
-                  {hidden > 0 && (
-                    <button
-                      onClick={() => setMore((s) => ({ ...s, [dateStr]: !showAll }))}
-                      className="w-fit rounded px-1.5 py-0.5 text-[11px] font-medium text-[var(--muted-foreground)] hover:bg-[var(--muted)]"
-                    >
-                      {showAll ? "收起" : `+${hidden} 更多`}
-                    </button>
-                  )}
-                </div>
-              )}
-            </div>
-          );
-        })}
-      </div>
-
-      {/* 本月待定 + 时间待定 */}
-      <div className="mt-4 flex flex-col gap-4 md:flex-row">
-        {monthFloating.length > 0 && (
-          <div className="flex-1 rounded-lg border border-[var(--border)]/70 bg-white p-3">
-            <div className="mb-2 flex items-center gap-1.5 text-sm font-semibold text-[var(--foreground)]">
-              <CalendarClock className="h-4 w-4 text-[var(--muted-foreground)]" />
-              {viewDate.m} 月待定事项
-            </div>
-            <div className="flex flex-wrap gap-1.5">
-              {monthFloating.map((f) => (
-                <FloatingChip key={f.id} f={f} />
-              ))}
-            </div>
+          <div className="flex items-center gap-1 rounded-full bg-[var(--muted)]/60 p-1">
+            <Button size="icon" variant="ghost" className="h-8 w-8 rounded-full" onClick={onPrevMonth} aria-label="上个月"><ChevronLeft className="h-4 w-4" /></Button>
+            <Button size="sm" variant="ghost" className="rounded-full text-xs" onClick={onToday}>回到本月</Button>
+            <Button size="icon" variant="ghost" className="h-8 w-8 rounded-full" onClick={onNextMonth} aria-label="下个月"><ChevronRight className="h-4 w-4" /></Button>
           </div>
-        )}
-
-        {timeUnknown.length > 0 && (
-          <div className="flex-1 rounded-lg border border-[var(--border)]/70 bg-white p-3">
-            <div className="mb-2 flex items-center gap-1.5 text-sm font-semibold text-[var(--foreground)]">
-              <CalendarX className="h-4 w-4 text-[var(--muted-foreground)]" />
-              时间待定
-            </div>
-            <div className="flex flex-wrap gap-1.5">
-              {timeUnknown.map((f) => (
-                <FloatingChip key={f.id} f={f} />
-              ))}
-            </div>
+        </header>
+        <div className="overflow-x-auto pb-1"><div className="min-w-[560px]">
+          <div className="mb-2 grid grid-cols-7 text-center">{WEEKDAY_HEADER.map((w, i) => <div key={w} className={`py-2 text-[11px] font-medium ${WEEKEND_INDEX.has(i) ? "text-[var(--brand)]/65" : "text-[var(--muted-foreground)]"}`}>周{w}</div>)}</div>
+          <div className="grid grid-cols-7 gap-1.5" aria-label={monthLabel + "节点"}>
+            {cells.map(c => {
+              const dateStr = fmt(c), dayEvents = byDay.get(dateStr) ?? [];
+              const isToday = c.inMonth && dateStr === todayStr;
+              const selected = isAnchor(c) || dayEvents.some(e => e.id === selectedId);
+              const extra = extraMap.get(dateStr), hidden = dayEvents.length - MAX_PER_CELL;
+              return <div key={dateStr} className={`min-h-[142px] min-w-0 rounded-xl p-2 transition-colors ${!c.inMonth ? "bg-[#f8f6f2]/60 opacity-40" : selected ? "bg-[#fbf0ed] ring-1 ring-[var(--brand)]/15" : "bg-[#faf9f6] hover:bg-[#f5f2ec]"}`}>
+                <div className="flex items-center justify-between"><span className={`inline-flex h-9 min-w-9 items-center justify-center rounded-full text-[26px] font-semibold leading-none tabular-nums ${isToday ? "bg-[var(--brand)] text-white" : "text-[var(--foreground)]"}`}>{c.d}</span>{isToday && <span className="text-[9px] text-[var(--brand)]">今天</span>}</div>
+                <div className="mt-1 mb-2 h-4 truncate text-[10px] leading-4 text-[var(--muted-foreground)]/65" title={[extra?.lunar, extra?.solarTerm, ...(extra?.festivals ?? [])].filter(Boolean).join(" · ")}>{c.inMonth && [extra?.lunar, extra?.solarTerm, ...(extra?.festivals ?? [])].filter(Boolean).join(" · ")}</div>
+                <div className="space-y-1">
+                  {dayEvents.slice(0, MAX_PER_CELL).map(ev => <EventPill key={ev.id} event={ev} selected={ev.id === selectedId} onSelect={() => onSelect(ev)} />)}
+                  {hidden > 0 && <Popover open={more[dateStr] ?? false} onOpenChange={open => setMore(previous => ({ ...previous, [dateStr]: open }))}>
+                    <PopoverTrigger asChild><button className="rounded-md px-1 py-1 text-[10px] font-medium text-[var(--brand)] hover:bg-white" aria-label={dateStr + " 查看另外" + hidden + "个节点"}>+{hidden} 更多</button></PopoverTrigger>
+                    <PopoverContent className="w-80 rounded-xl border-[var(--border)]/60 bg-[#fffdfa] p-4 shadow-lg">
+                      <p className="mb-3 text-sm font-semibold">{dateStr} · {dayEvents.length} 个节点</p>
+                      <div className="max-h-72 space-y-2 overflow-auto">{dayEvents.map(ev => <EventPill key={ev.id} event={ev} expanded selected={ev.id === selectedId} onSelect={() => { onSelect(ev); setMore(previous => ({ ...previous, [dateStr]: false })); }} />)}</div>
+                    </PopoverContent>
+                  </Popover>}
+                </div>
+              </div>;
+            })}
           </div>
-        )}
+        </div></div>
+      </section>
+      <div className="grid gap-4 md:grid-cols-2">
+        <FloatingSection title="本月待定" note={viewDate.m + "月 · 日期尚未确定"} items={monthFloating} onSelect={onSelectFloating} icon="month" />
+        <FloatingSection title="时间待定" note={viewDate.y + "年 · 事件明确，时间待核实"} items={timeUnknown} onSelect={onSelectFloating} icon="unknown" />
       </div>
     </div>
   );
 }
 
-function FloatingChip({ f }: { f: FloatingEvent }) {
-  const p = paletteForCategory(f.category);
-  const isLocal = f.region === "local";
-  const bg = isLocal ? "#f4e6d8" : p.bg;
-  const dot = isLocal ? "var(--gold)" : p.dot;
-  return (
-    <span
-      className="inline-flex items-center gap-1 rounded-md px-2 py-1 text-xs font-medium"
-      style={{ backgroundColor: bg, color: p.text }}
-    >
-      <span className="h-1.5 w-1.5 rounded-full" style={{ backgroundColor: dot }} />
-      {normalizeEventName(f.event_name)}
-      {isLocal && <MapPin className="ml-0.5 h-3 w-3 opacity-70" />}
-      {f.importance && (
-        <Badge variant="outline" className="ml-0.5 text-[10px]">
-          {f.importance}
-        </Badge>
-      )}
-    </span>
-  );
+function EventPill({ event, selected, onSelect, expanded = false }: { event: CalEvent; selected: boolean; onSelect: () => void; expanded?: boolean }) {
+  const label = event.anniversary != null ? normalizeEventName(event.event_name) + " " + event.anniversary + "周年" : event.event_name;
+  return <button onClick={onSelect} title={label + " · " + calendarSourceLabel(event.source, event.source_type)} className={`flex w-full items-start gap-1 rounded-md px-1.5 py-1.5 text-left transition-colors ${selected ? "bg-white ring-1 ring-[var(--brand)]/30" : "bg-white/70 hover:bg-white hover:shadow-sm"}`}>
+    <span className={`mt-1.5 h-1 w-1 shrink-0 rounded-full ${event.importance === "S" ? "bg-[var(--brand)]" : "bg-[#b6a18b]"}`} />
+    <span className="min-w-0 flex-1"><span className={`text-[11px] leading-[1.45] text-[#554e47] ${expanded ? "block" : "line-clamp-2"}`}>{label}</span>{expanded && <span className="mt-1 block text-[10px] text-[var(--muted-foreground)]">{calendarSourceLabel(event.source, event.source_type)}</span>}</span>
+    {event.importance && <span className={`mt-0.5 shrink-0 rounded border px-0.5 text-[8px] leading-3 ${event.importance === "S" ? "border-[var(--brand)]/20 text-[var(--brand)]" : "border-[#d8d1c8]/60 text-[#9b8e7e]"}`}>{event.importance}</span>}
+  </button>;
+}
+
+function FloatingSection({ title, note, items, onSelect, icon }: { title: string; note: string; items: FloatingEvent[]; onSelect: (event: FloatingEvent) => void; icon: "month" | "unknown" }) {
+  const Icon = icon === "month" ? CalendarClock : CalendarX;
+  return <section className="rounded-2xl bg-white/70 p-4 ring-1 ring-black/[0.035]">
+    <h3 className="flex items-center gap-2 text-sm font-semibold"><Icon className="h-4 w-4 text-[var(--brand)]/70" />{title}<span className="ml-auto text-xs font-normal text-[var(--muted-foreground)]">{items.length} 项</span></h3>
+    <p className="mt-1 mb-3 text-[11px] text-[var(--muted-foreground)]">{note}</p>
+    {items.length ? <div className="space-y-2">{items.map(event => <button key={event.id} onClick={() => onSelect(event)} className="flex w-full items-start gap-2 rounded-lg bg-[#f7f4ef] px-3 py-2 text-left hover:bg-[#f2ece4]"><span className="min-w-0 flex-1 text-xs leading-relaxed">{event.event_name}<span className="mt-1 block text-[10px] text-[var(--muted-foreground)]">{calendarSourceLabel(event.source, event.source_type)}</span></span><Badge variant="outline" className="rounded px-1 text-[9px] font-normal">{event.importance}</Badge></button>)}</div> : <p className="py-2 text-xs text-[var(--muted-foreground)]/70">暂无待定事项</p>}
+  </section>;
 }

@@ -5,7 +5,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { Pencil, Power, Trash2, RefreshCw, ExternalLink, Clock } from "lucide-react";
+import { Pencil, Power, Trash2, RefreshCw, ExternalLink, Clock, CalendarDays } from "lucide-react";
 import { normalizeEventName } from "@/lib/calendar-engine";
 import type { CalDetail } from "./calendar-types";
 
@@ -13,13 +13,13 @@ const regionLabel = (r?: string) => (r === "local" ? "广东/广州" : "国内/�
 
 const SOURCE_LABEL: Record<string, string> = {
   historical_migration: "历史迁移",
-  ai_supplement: "AI 推荐",
+  ai_supplement: "AI推荐",
   manual: "用户新增",
-  pasted_text: "用户粘贴",
-  ai_recommend: "AI 推荐",
+  pasted_text: "用户粘贴识别",
+  ai_recommend: "AI推荐",
   history_migrate: "历史迁移",
   user_add: "用户新增",
-  user_paste: "用户粘贴",
+  user_paste: "用户粘贴识别",
 };
 
 const EVENT_TYPE_LABEL: Record<string, string> = {
@@ -29,6 +29,9 @@ const EVENT_TYPE_LABEL: Record<string, string> = {
 
 // 详情字段名：数据库列 description 承载背景信息
 type DetailEntry = {
+  read_only?: boolean;
+  occurrence_date?: string | null;
+  display_year?: number;
   id: string;
   event_name: string;
   event_type: string;
@@ -57,6 +60,7 @@ type DetailEntry = {
 >;
 
 interface Props {
+  year?: number;
   eventId: string | null;
   onEdit: (e: DetailEntry) => void;
   onToggleEnabled: (id: string, enabled: boolean) => void;
@@ -65,11 +69,11 @@ interface Props {
 }
 
 export function CalendarDetailPanel({
+  year,
   eventId,
   onEdit,
   onToggleEnabled,
   onRequestDelete,
-  onSaved,
 }: Props) {
   const [detail, setDetail] = useState<DetailEntry | null>(null);
   const [loading, setLoading] = useState(false);
@@ -82,7 +86,7 @@ export function CalendarDetailPanel({
     setLoading(true);
     setNotFound(false);
     try {
-      const d = await fetch(`/api/calendar/${eventId}`).then(async (r) => {
+      const d = await fetch(`/api/calendar/${eventId}${year ? `?year=${year}` : ""}`).then(async (r) => {
         const j = await r.json();
         return r.ok ? (j.item ?? null) : null;
       });
@@ -93,7 +97,7 @@ export function CalendarDetailPanel({
     } finally {
       setLoading(false);
     }
-  }, [eventId]);
+  }, [eventId, year]);
 
   useEffect(() => {
     if (!eventId) return;
@@ -131,7 +135,7 @@ export function CalendarDetailPanel({
     }
   };
 
-  const tags: string[] = detail?.tags ?? [];
+  const tags: string[] = (detail?.tags ?? []).filter(tag => !tag.startsWith("calendar-year:"));
   const source = detail?.source_type ?? detail?.source ?? null;
   const sourceLabel = source ? SOURCE_LABEL[source] ?? source : null;
 
@@ -149,10 +153,12 @@ export function CalendarDetailPanel({
   const displayBackground = enrich?.background || detail?.description || "";
 
   return (
-    <div className="flex h-full flex-col">
+    <div className="flex max-h-[calc(100vh-3rem)] flex-col">
+      <div className="flex items-center gap-2 border-b border-black/[0.04] px-5 py-4 text-xs font-medium tracking-wider"><span className="h-1.5 w-1.5 rounded-full bg-[var(--brand)]" />节点详情<span className="ml-auto text-[10px] font-normal text-[var(--muted-foreground)]">新闻日历</span></div>
       {!eventId ? (
-        <div className="flex flex-1 items-center justify-center p-8 text-center text-sm text-[var(--muted-foreground)]">
-          选择一个新闻节点查看详情
+        <div className="flex min-h-[280px] flex-col items-center justify-center gap-4 p-8 text-center text-sm text-[var(--muted-foreground)]">
+          <span className="flex h-12 w-12 items-center justify-center rounded-2xl bg-[#f5eee7]"><CalendarDays className="h-6 w-6 text-[var(--brand)]/65" /></span>
+          <p className="font-medium text-[var(--foreground)]">选择一个新闻节点</p><p className="text-xs leading-relaxed">查看事件背景、选题方向<br />与参考来源</p>
         </div>
       ) : loading ? (
         <div className="space-y-3 p-4">
@@ -167,12 +173,12 @@ export function CalendarDetailPanel({
       ) : (
         <>
           <ScrollArea className="min-h-0 flex-1">
-            <div className="space-y-4 p-4">
+            <div className="space-y-5 p-5">
               {/* 标题 */}
               <div>
                 <div className="flex items-center gap-2 flex-wrap">
-                  <h2 className="font-serif text-lg leading-snug">
-                    {normalizeEventName(detail.event_name)}
+                  <h2 className="w-full font-serif text-xl font-semibold leading-relaxed">
+                    {detail.anniversary != null ? normalizeEventName(detail.event_name) : detail.event_name}
                   </h2>
                   <Badge variant="outline" className="shrink-0">
                     {EVENT_TYPE_LABEL[detail.event_type] ?? detail.event_type}
@@ -182,16 +188,16 @@ export function CalendarDetailPanel({
 
               {/* 元信息 */}
               <div className="flex flex-wrap gap-2 text-sm">
-                <Badge variant="secondary">重要度 {detail.importance} 级</Badge>
-                <Badge variant="secondary">{regionLabel(detail.region)}</Badge>
+                <Badge variant="outline" className="border-[var(--brand)]/20 text-[var(--brand)]">{detail.importance} 级</Badge>
+                <Badge variant="outline" className="font-normal">{regionLabel(detail.region)}</Badge>
                 {detail.category && (
-                  <Badge variant="secondary" style={{ color: detail.category.color }}>
+                  <Badge variant="outline" className="font-normal text-[var(--muted-foreground)]">
                     {detail.category.category_name}
                   </Badge>
                 )}
                 {detail.anniversary != null && (
                   <Badge variant="secondary">
-                    今年 {detail.anniversary} 周年
+                    {detail.display_year ?? year} 年 {detail.anniversary} 周年
                     {detail.event_year
                       ? `（${detail.event_year} 年起）`
                       : detail.anniversary_base_year
@@ -207,6 +213,8 @@ export function CalendarDetailPanel({
               </div>
 
               {/* 来源 */}
+              <p className="flex items-center gap-2 rounded-xl bg-[#f6f2ec] px-3 py-3 text-sm font-medium tabular-nums"><CalendarDays className="h-4 w-4 shrink-0 text-[var(--brand)]/70" />{detail.occurrence_date || (detail.event_month ? `${detail.display_year}年${detail.event_month}月 · 日期待定` : `${detail.display_year}年 · 时间待定`)}</p>
+              {detail.read_only && <p className="text-xs text-[var(--muted-foreground)]">历史资料 / 跨年推导预览，保留原始记录。</p>}
               {(sourceLabel || detail.source_name) && (
                 <div className="flex flex-wrap items-center gap-2 text-xs">
                   {sourceLabel && (
@@ -214,7 +222,7 @@ export function CalendarDetailPanel({
                   )}
                   {detail.source_name && (
                     <span className="text-[var(--muted-foreground)]">
-                      {detail.source_name}
+                      {detail.source_name.startsWith("history_node:") ? "历史日历导入" : detail.source_name}
                     </span>
                   )}
                 </div>
@@ -232,7 +240,7 @@ export function CalendarDetailPanel({
               )}
 
               {/* 自动补全：后台生成，前台直接展示（无需人工点击） */}
-              <section className="rounded-md border border-[var(--border)] bg-[var(--muted)]/30 p-3">
+              <section className="rounded-xl bg-[#faf8f4] p-4">
                 {/* 状态条 */}
                 {isEnrichBusy && (
                   <div className="flex items-center gap-1.5 text-xs text-[var(--muted-foreground)] mb-2">
@@ -354,7 +362,7 @@ export function CalendarDetailPanel({
           </ScrollArea>
 
           {/* 操作条 */}
-          <div className="flex items-center gap-2 border-t border-[var(--border)] p-3">
+          {!detail.read_only && <div className="flex flex-wrap items-center gap-2 border-t border-black/[0.04] bg-[#fcfaf6] p-4">
             <Button size="sm" variant="outline" onClick={() => onEdit(detail)}>
               <Pencil className="h-4 w-4 mr-1" /> 编辑
             </Button>
@@ -374,7 +382,7 @@ export function CalendarDetailPanel({
             >
               <Trash2 className="h-4 w-4 mr-1" /> 删除
             </Button>
-          </div>
+          </div>}
         </>
       )}
     </div>

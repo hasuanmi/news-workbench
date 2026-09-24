@@ -1,0 +1,115 @@
+{
+  "run_id": "c9bd4035-ce72-4c85-b7cd-3c3891bb1d80",
+  "website_inventory": 284,
+  "website_media": 135,
+  "success_execution_steps": 51,
+  "success_reported_unique_source_ids": 49,
+  "success_media": 23,
+  "unsuccessful_inventory_sources": 233,
+  "unsuccessful_media": 112,
+  "failed_reported_source_ids": 39,
+  "missing_config_sources": 134,
+  "missing_config_media": 73,
+  "configured_but_not_individually_verified_sources": 70,
+  "categories_media_entry_impact": [
+    {
+      "category": "URL/入口错误",
+      "affected_queue_sources": 2,
+      "media_count": 1,
+      "reported_source_ids": 1,
+      "reported_website_source_ids": 0,
+      "reported_epaper_source_ids": 1
+    },
+    {
+      "category": "列表页解析失败",
+      "affected_queue_sources": 43,
+      "media_count": 16,
+      "reported_source_ids": 16,
+      "reported_website_source_ids": 12,
+      "reported_epaper_source_ids": 4
+    },
+    {
+      "category": "详情页解析失败",
+      "affected_queue_sources": 0,
+      "media_count": 0,
+      "reported_source_ids": 0,
+      "reported_website_source_ids": 0,
+      "reported_epaper_source_ids": 0
+    },
+    {
+      "category": "JS/SPA，需要 Playwright",
+      "affected_queue_sources": 0,
+      "media_count": 0,
+      "reported_source_ids": 0,
+      "reported_website_source_ids": 0,
+      "reported_epaper_source_ids": 0
+    },
+    {
+      "category": "WAF/403/412/反爬",
+      "affected_queue_sources": 5,
+      "media_count": 2,
+      "reported_source_ids": 2,
+      "reported_website_source_ids": 1,
+      "reported_epaper_source_ids": 1
+    },
+    {
+      "category": "网络/TLS/超时",
+      "affected_queue_sources": 42,
+      "media_count": 17,
+      "reported_source_ids": 17,
+      "reported_website_source_ids": 14,
+      "reported_epaper_source_ids": 3
+    },
+    {
+      "category": "站点服务端 5xx",
+      "affected_queue_sources": 0,
+      "media_count": 0,
+      "reported_source_ids": 0,
+      "reported_website_source_ids": 0,
+      "reported_epaper_source_ids": 0
+    },
+    {
+      "category": "无文章/当天无更新",
+      "affected_queue_sources": 0,
+      "media_count": 0,
+      "reported_source_ids": 0,
+      "reported_website_source_ids": 0,
+      "reported_epaper_source_ids": 0
+    },
+    {
+      "category": "数据格式/无效文章",
+      "affected_queue_sources": 5,
+      "media_count": 2,
+      "reported_source_ids": 2,
+      "reported_website_source_ids": 1,
+      "reported_epaper_source_ids": 1
+    },
+    {
+      "category": "其他",
+      "affected_queue_sources": 136,
+      "media_count": 74,
+      "reported_source_ids": 1,
+      "reported_website_source_ids": 1,
+      "reported_epaper_source_ids": 0
+    }
+  ],
+  "strict_direct_source_categories": {
+    "其他：未注册抓取配置": 134,
+    "其他：同媒体重复执行，本 source 未独立验证": 70,
+    "列表页解析失败": 12,
+    "网络/TLS/超时": 14,
+    "数据格式/无效文章": 1,
+    "WAF/403/412/反爬": 1,
+    "其他：HTTP 405，原因未定": 1
+  },
+  "note": "主分类表按媒体入口故障影响范围连接生产 source 清单去重；不是233个URL逐一实测。成功source_id也不代表请求了该source_url。",
+  "success_source_id_types": {
+    "website": 43,
+    "epaper": 6
+  },
+  "failed_source_id_types": {
+    "website": 29,
+    "epaper": 10
+  },
+  "success_media_unverified_website_sources": 8
+}

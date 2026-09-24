@@ -1,5 +1,6 @@
 // Real Windows-task entry: ensure local main app, then invoke authenticated business HTTP.
 import fs from 'node:fs';import path from 'node:path';import {fileURLToPath}from'node:url';
+import {runSource, sourceSnapshot} from './source-runner.mjs';
 import {spawn}from'node:child_process';import{randomUUID}from'node:crypto';import dotenv from'dotenv';
 const root=path.resolve(path.dirname(fileURLToPath(import.meta.url)),'..');process.chdir(root);
 for(const p of ['.env.local','.env'])if(fs.existsSync(p))dotenv.config({path:p,quiet:true});
@@ -25,7 +26,7 @@ try{
   journal.phase='main_health';save();
   if(!await ready()){
     const log=fs.openSync(path.join(folder,'main-server.log'),'a');
-    const child=spawn(process.execPath,['scripts/run-local.mjs','start'],{cwd:root,detached:true,windowsHide:true,stdio:['ignore',log,log],env:cleanEnv()});child.unref();fs.closeSync(log);
+    const child=spawn(process.execPath,['scripts/run-local.mjs','start'],{cwd:root,detached:true,windowsHide:true,stdio:['ignore',log,log],env:{...cleanEnv(),PORT:new URL(base).port || process.env.PORT || '3001'}});child.unref();fs.closeSync(log);
     let healthy=false;for(let i=0;i<30;i++){await new Promise(r=>setTimeout(r,2000));if(await ready()){healthy=true;break;}}
     if(!healthy)throw new Error('Local main app not ready; see main-server.log');
   }
@@ -36,11 +37,12 @@ try{
   if((await enabledResponse.json()).enabled===false){journal.status='skipped';}
   else {
   if(job==='media_then_clues'){
+    journal.phase='media_preflight';save();
     const scraper=path.resolve(root,'../media-scraper');const python=path.join(scraper,'.venv/Scripts/python.exe');
     // 抓取子进程必须走代理才能访问外网新闻站；但 localhost:3001 的 ingest 回推要走直连，
     // 故显式注入 HTTP(S)_PROXY 并设 NO_PROXY=localhost,127.0.0.1（主服务本身不代理，避免 502）。
     const SCRAPER_PROXY=process.env.SCRAPER_PROXY||'http://127.0.0.1:7897';
-    const scraperEnv={...process.env,HTTP_PROXY:SCRAPER_PROXY,HTTPS_PROXY:SCRAPER_PROXY,http_proxy:SCRAPER_PROXY,https_proxy:SCRAPER_PROXY,NO_PROXY:'localhost,127.0.0.1'};
+    const scraperEnv={...process.env,MAIN_API_BASE:base,INGEST_API_TOKEN:ingestToken,HTTP_PROXY:SCRAPER_PROXY,HTTPS_PROXY:SCRAPER_PROXY,http_proxy:SCRAPER_PROXY,https_proxy:SCRAPER_PROXY,NO_PROXY:'localhost,127.0.0.1'};
     // 代理预热：抓取前确认代理可用，避免首轮因代理未就绪/冷启动而大规模失败（系统性问题修复）。
     // 历史 run 在启动后前 ~5 分钟出现 code:0/1/-1 集中失败、随后恢复，正是代理冷启动 + 并发突增所致。
     const proxyReachable=(url)=>new Promise((resolve)=>{const c=spawn('curl',['-s','-o','NUL','-w','%{http_code}','--max-time','15','-x',SCRAPER_PROXY,url],{windowsHide:true});let out='';c.stdout.on('data',d=>out+=d);c.on('error',()=>resolve(false));c.on('exit',code=>resolve(code===0&&out.trim()==='200'));});
@@ -48,49 +50,47 @@ try{
     let proxyOk=false;
     for(let i=0;i<6 && !proxyOk;i++){for(const u of PROXY_TEST_URLS){if(await proxyReachable(u)){proxyOk=true;break;}}if(!proxyOk)await new Promise(r=>setTimeout(r,5000));}
     if(!proxyOk)throw new Error('抓取前代理未就绪（'+SCRAPER_PROXY+'）；放弃本次抓取以免浪费额度');
-    // 配置驱动：读取当前启用且类型为 website 的抓取队列（media_source），不再硬编码媒体名单。
+    // 队列和本地 runner 双重校验 active；保留逐源身份和每日实际执行记录。
     // 监测范围由 media.monitor_clue=true 决定；本任务只负责「把队列里该抓的都抓一遍」。
+    journal.phase='queue_read';save();
     const qResp=await fetch(`${base}/api/ingest/queue`,{headers:ingestHeaders,signal:AbortSignal.timeout(60000)});
     if(!qResp.ok)throw new Error(`拉取抓取队列失败 HTTP ${qResp.status}`);
     const queue=(await qResp.json()).sources||[];
-    const targets=queue.filter(s=>(s.sourceType||s.source_type)==='website' && s.enabled!==false);
-    if(!targets.length)throw new Error('抓取队列为空（无启用 website 源）');
-    const perMedia=[]; let pushed=0;
-    const CONC=Math.max(1,Number(process.env.SCRAPE_CONCURRENCY||4));   // 并发上限，避免 135 家无限并发
-    const TIMEOUT_MS=Number(process.env.SCRAPE_PER_SOURCE_MS||600000); // 单源超时（默认 10 分钟）
-    async function runOne(src){
-      const mediaName=src.mediaName||src.media_name;
-      const step={name:'media_fetch',media:mediaName,status:'running',started_at:new Date().toISOString()};journal.steps.push(step);save();
-      const attempt=async()=>{
-        const filesBefore=new Set(fs.readdirSync(path.join(scraper,'logs/real-poc')));
-        const log=fs.openSync(path.join(folder,'media-fetch.log'),'a');
-        let code;
-        try{code=await new Promise((resolve,reject)=>{const child=spawn(python,['poc_ingest_real.py',mediaName,'10','--scheduled'],{cwd:scraper,windowsHide:true,stdio:['ignore',log,log],env:scraperEnv});const timer=setTimeout(()=>{child.kill();reject(new Error(`${mediaName} 超时`));},TIMEOUT_MS);child.on('error',e=>{clearTimeout(timer);reject(e);});child.on('exit',c=>{clearTimeout(timer);resolve(c);});});}finally{fs.closeSync(log);}
-        const added=fs.readdirSync(path.join(scraper,'logs/real-poc')).filter(f=>!filesBefore.has(f)&&f.startsWith(mediaName+'-')).sort().at(-1);
-        const report=added?JSON.parse(fs.readFileSync(path.join(scraper,'logs/real-poc',added),'utf8')):null;
-        const ok=code===0&&report?.ingest?.success===true&&report.ingest.failed===0;
-        return {ok,code,report,added};
-      };
-      // 失败重试：上限 3 次。仅对“非 0 退出 / 超时 / 进程异常”（代理或网络瞬断）做重试；
-      // 解析类 0 文章（code:0 但无正文）属稳定失败，不重试以免浪费时间。
-      let res; const MAX_ATTEMPTS=3;
-      for(let attemptNo=0; attemptNo<MAX_ATTEMPTS; attemptNo++){
-        res=await attempt();
-        if(res.ok) break;
-        const transient = res.code !== 0 || !!res.error;
-        if(!transient) break;
-        if(attemptNo < MAX_ATTEMPTS-1) await new Promise(r=>setTimeout(r, 4000*(attemptNo+1)));
-      }
-      if(!res) res={ok:false,error:'retry exhausted'};
-      const ok=!!res.ok; const report=res.report;
-      Object.assign(step,{status:ok?'success':'failed',ended_at:new Date().toISOString(),code:res.code,ok,report:res.added,articles:report?.successful_bodies??0,ingest:report?.ingest,failures:report?.failures??[],error:res.error});save();
-      perMedia.push({media:mediaName,ok,articles:report?.successful_bodies??0}); if(ok)pushed++;
+    const targets=[...new Map(queue.filter(s=>s.source_status==='active' && s.enabled===true).map(s=>[s.source_id??s.sourceId, {...sourceSnapshot(s),source_status:'active'}])).values()];
+    if(!targets.length)throw new Error('抓取队列为空（无 active 源）');
+    journal.phase='media_fetch';save();
+    const perSource=[];
+    const CONC=Math.max(1,Number(process.env.SCRAPE_CONCURRENCY||4));
+    const TIMEOUT_MS=Number(process.env.SCRAPE_PER_SOURCE_MS||600000);
+    journal.source_identity_version=1;
+    journal.source_policy_version=1;
+    journal.active_source_count=targets.length;
+    journal.sources=targets;
+    async function runOne(source){
+      const step={name:'media_fetch',...source,media:source.media_name,status:'running',started_at:new Date().toISOString(),attempts:[]};
+      journal.steps.push(step);save();
+      const result=await runSource({source,runId:journal.run_id,scraper,python,env:scraperEnv,
+        folder,timeoutMs:TIMEOUT_MS,onAttempt:attempt=>{step.attempts.push(attempt);save();}});
+      Object.assign(step,result,{status:result.ok?'success':'failed',ended_at:new Date().toISOString()});
+      try {
+        const statusResponse=await fetch(`${base}/api/ingest/source-result`,{method:'POST',headers:ingestHeaders,
+          body:JSON.stringify({...source,...result,run_id:journal.run_id}),signal:AbortSignal.timeout(30000)});
+        if(!statusResponse.ok)throw new Error(`source result HTTP ${statusResponse.status}`);
+        step.lifecycle_recorded=true;
+      } catch(error) { step.lifecycle_recorded=false; step.lifecycle_error=error.message; }
+
+      perSource.push({...source,ok:result.ok,articles:result.articles,error_code:result.error_code,error:result.error});
+      journal.perSource=perSource;
+      journal.scrapedTotal=targets.length;
+      journal.scrapedOk=perSource.filter(s=>s.ok).length;
+      journal.scrapedFailed=perSource.filter(s=>!s.ok).length;
+      journal.successfulMedia=new Set(perSource.filter(s=>s.ok).map(s=>s.media_id)).size;
+      journal.failedMedia=new Set(perSource.filter(s=>!s.ok).map(s=>s.media_id)).size;
+      save();
     }
     // 并发池：每批最多 CONC 个，跑完一批再下一批
     for(let i=0;i<targets.length;i+=CONC){ await Promise.all(targets.slice(i,i+CONC).map(runOne)); }
-    journal.perMedia=perMedia;
-    journal.scrapedTotal=targets.length; journal.scrapedOk=pushed;
-    if(!pushed)throw new Error('没有任何媒体完成成功抓取；未触发线索识别');
+    if(!journal.scrapedOk)throw new Error('没有任何数据源完成成功抓取；未触发线索识别');
     await execute('clue_identify');
   }else await execute('calendar_recommend');
   journal.status='success';

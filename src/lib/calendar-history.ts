@@ -47,6 +47,7 @@ function isHeaderRow(raw: string): boolean {
   if (!r || r.length < 3) return true;
   if (r.includes("星期") && r.includes("事项")) return true;
   if (/^\d{4}$/.test(r)) return true;
+  if (/^(?:\d{4}年?[|｜]?)?(?:0?[1-9]|1[0-2])月$/.test(r)) return true;
   if (/^[一二三四五六七八九十]{1,3}月$/.test(r)) return true;
   if (/^\d{4}[|｜]?[一二三四五六七八九十]{1,3}月$/.test(r)) return true;
   return false;
@@ -174,6 +175,7 @@ const SYSTEM_PROMPT = `你是新闻日历结构化助手。把用户给出的历
    - confirmed：能确定具体日期（输出 event_date，格式 YYYY-MM-DD）
    - month_known：只知道月份（输出 candidate_month 数字 1-12，event_date 留空）
    - unknown：连月份都不确定（两者都留空）
+事件名称必须忠于原文；没有具体名称则保留原始文字供“信息待补全”，不得猜测或编造事件。
 2. 绝不把"时间待定"的节点虚拟设置为某月 1 日。
 3. region 只能是：national（全国）/ guangdong（广东）/ guangzhou（广州）/ other
 4. importance 只能是：S（国家级重大）/ A（重要）/ B（一般）

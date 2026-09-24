@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { supabase } from "@/lib/db";
 import { requireAdmin } from "@/lib/require-admin";
+import { calendarToday, isVagueName, isValidCalendarDate, recurringOccurrence } from "@/lib/calendar-policy";
 
 /**
  * POST /api/admin/calendar/candidates/[id]/review
@@ -47,6 +48,7 @@ export async function POST(
   if (action === "confirm") {
     // 允许前端"修改后加入"：覆盖字段
     const nodeName = String(body.node_name ?? cand.node_name).trim() || cand.node_name;
+    if (isVagueName(nodeName)) return NextResponse.json({ information_status: "needs_completion", error: "信息待补全：请先补齐具体事件名称，不能将模糊事项加入正式日历" }, { status: 422 });
     const dateStatus =
       ["confirmed", "month_known", "unknown"].includes(body.date_status ?? "")
         ? body.date_status
@@ -62,7 +64,7 @@ export async function POST(
     if (dateStatus === "confirmed") {
       candidateDate = String(body.candidate_date ?? cand.candidate_date ?? "");
       candidateMonth = null;
-      if (!/^\d{4}-\d{2}-\d{2}$/.test(candidateDate)) {
+      if (!isValidCalendarDate(candidateDate) || !candidateDate.startsWith(`${cand.target_year}-`)) {
         return NextResponse.json({ error: "confirmed 节点需有效 YYYY-MM-DD 日期" }, { status: 400 });
       }
     } else if (dateStatus === "month_known") {
@@ -77,41 +79,31 @@ export async function POST(
       candidateMonth = null;
     }
 
-    // 映射为 calendar_event
     const targetYear = cand.target_year;
-    let eventRow: Record<string, unknown>;
-    if (dateStatus === "confirmed" && candidateDate) {
-      const mmdd = candidateDate.slice(5, 10); // MM-DD
-      eventRow = {
-        event_name: nodeName,
-        event_type: "fixed",
-        original_date: `${targetYear}-${mmdd}`,
-        event_date: null,
-        anniversary_base_year: cand.base_year ?? targetYear,
-        event_month: Number(mmdd.slice(0, 2)),
-        date_status: "confirmed",
-      };
-    } else if (dateStatus === "month_known") {
-      eventRow = {
-        event_name: nodeName,
-        event_type: "dynamic",
-        original_date: null,
-        event_date: null,
-        anniversary_base_year: null,
-        event_month: candidateMonth,
-        date_status: "month_known",
-      };
-    } else {
-      eventRow = {
-        event_name: nodeName,
-        event_type: "dynamic",
-        original_date: null,
-        event_date: null,
-        anniversary_base_year: null,
-        event_month: null,
-        date_status: "unknown",
-      };
+    let anniversaryBaseYear: number | null = null;
+    if (cand.source_type === "ai_supplement" && targetYear !== calendarToday().getUTCFullYear()) {
+      return NextResponse.json({ error: "AI推荐只补充当前年度动态事件" }, { status: 422 });
     }
+    if (cand.source_type === "historical_migration" && cand.source_detail?.startsWith("history_node:")) {
+      const { data: history, error } = await db.from("calendar_history_node").select("node_name,event_date,year").eq("id", cand.source_detail.slice(13)).maybeSingle();
+      if (error || !history) return NextResponse.json({ error: "无法核验历史来源" }, { status: 422 });
+      const recurring = recurringOccurrence({ event_name: history.node_name, event_type: "dynamic", event_date: history.event_date }, targetYear);
+      anniversaryBaseYear = recurring?.baseYear ?? null;
+      if (history.year !== targetYear) {
+        if (!recurring || recurring.date !== candidateDate) return NextResponse.json({ information_status: "needs_completion", error: "不能将历史动态事件直接复制到其他年度；请提供该年度的具体事件依据" }, { status: 422 });
+      }
+    }
+    // 候选均为指定年度的实际事项；跨年只由明确的固定/可推导规则生成。
+    let eventRow: Record<string, unknown> = {
+      event_name: nodeName, event_type: "dynamic", original_date: null,
+      event_date: dateStatus === "confirmed" ? candidateDate : null,
+      anniversary_base_year: anniversaryBaseYear, event_year: anniversaryBaseYear,
+      event_month: dateStatus === "month_known" ? candidateMonth : null,
+      date_status: dateStatus,
+      tags: [`calendar-year:${targetYear}`],
+      source_type: cand.source_type,
+      source: ({ historical_migration: "history_migrate", ai_supplement: "ai_recommend", manual: "user_add", pasted_text: "user_paste" } as Record<string, string>)[cand.source_type] ?? "user_add",
+    };
 
     eventRow = {
       ...eventRow,

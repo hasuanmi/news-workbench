@@ -1,0 +1,132 @@
+{
+  "scope": "source binding only",
+  "full_queue_run": false,
+  "cases": [
+    {
+      "case": "website",
+      "run_id": "d19d8161-5b5f-40de-8bc6-c06381e016af",
+      "source_id": "8b95aea9-ba61-459f-846c-eac870373dbf",
+      "media_id": "18415fb5-a68b-4781-96f9-84c9d17cf35a",
+      "source_type": "website",
+      "source_url": "http://www.southcn.com",
+      "crawl_method": "html",
+      "attempts": 1,
+      "binding": "PASS",
+      "worker_success": true,
+      "ingest": {
+        "success": true,
+        "schema_version": "article-v1",
+        "sources": 1,
+        "successSources": 1,
+        "failedSources": 0,
+        "inserted": 1,
+        "updated": 0,
+        "duplicated": 2,
+        "invalid": 0,
+        "failed": 0,
+        "perSource": [
+          {
+            "sourceId": "8b95aea9-ba61-459f-846c-eac870373dbf",
+            "ok": true,
+            "inserted": 1,
+            "updated": 0,
+            "duplicated": 2,
+            "invalid": 0,
+            "failed": 0,
+            "warnings": []
+          }
+        ]
+      },
+      "report": "d19d8161-5b5f-40de-8bc6-c06381e016af-8b95aea9-ba61-459f-846c-eac870373dbf-6ad5f043-2d9b-4070-bdbd-bfdbd0548809.json",
+      "log": "d19d8161-5b5f-40de-8bc6-c06381e016af-8b95aea9-ba61-459f-846c-eac870373dbf-6ad5f043-2d9b-4070-bdbd-bfdbd0548809.log",
+      "content_acceptance": "PASS"
+    },
+    {
+      "case": "epaper",
+      "run_id": "d19d8161-5b5f-40de-8bc6-c06381e016af",
+      "source_id": "0407a3e1-3357-4131-9ddf-867f2b0a450e",
+      "media_id": "92a14871-1203-468e-994c-f3fcb9f947eb",
+      "source_type": "epaper",
+      "source_url": "http://paper.people.com.cn/rmrb",
+      "crawl_method": "epaper",
+      "attempts": 1,
+      "binding": "PASS",
+      "worker_success": true,
+      "ingest": {
+        "success": true,
+        "schema_version": "article-v1",
+        "sources": 1,
+        "successSources": 1,
+        "failedSources": 0,
+        "inserted": 0,
+        "updated": 0,
+        "duplicated": 2,
+        "invalid": 0,
+        "failed": 0,
+        "perSource": [
+          {
+            "sourceId": "0407a3e1-3357-4131-9ddf-867f2b0a450e",
+            "ok": true,
+            "inserted": 0,
+            "updated": 0,
+            "duplicated": 2,
+            "invalid": 0,
+            "failed": 0,
+            "warnings": []
+          }
+        ]
+      },
+      "report": "d19d8161-5b5f-40de-8bc6-c06381e016af-0407a3e1-3357-4131-9ddf-867f2b0a450e-68f5d884-6001-4801-b494-3d0d73d6023c.json",
+      "log": "d19d8161-5b5f-40de-8bc6-c06381e016af-0407a3e1-3357-4131-9ddf-867f2b0a450e-68f5d884-6001-4801-b494-3d0d73d6023c.log",
+      "content_acceptance": "NOT_PASSED_EXISTING_PARSER"
+    },
+    {
+      "case": "no_scraper",
+      "run_id": "d19d8161-5b5f-40de-8bc6-c06381e016af",
+      "source_id": "651abe46-e60e-47dd-8e64-28c0eec1b596",
+      "media_id": "90de8b1a-a9c1-4a66-b124-368ad3f8044b",
+      "source_type": "website",
+      "source_url": "http://www.xinhuanet.com",
+      "crawl_method": "html",
+      "attempts": 1,
+      "binding": "PASS",
+      "worker_success": false,
+      "error_code": "configuration_missing",
+      "report": "d19d8161-5b5f-40de-8bc6-c06381e016af-651abe46-e60e-47dd-8e64-28c0eec1b596-a3af47d1-aa4a-4012-8856-76182683f144.json",
+      "log": "d19d8161-5b5f-40de-8bc6-c06381e016af-651abe46-e60e-47dd-8e64-28c0eec1b596-a3af47d1-aa4a-4012-8856-76182683f144.log",
+      "content_acceptance": "EXPECTED_FAILURE"
+    },
+    {
+      "case": "invalid_url_controlled_fixture",
+      "run_id": "d19d8161-5b5f-40de-8bc6-c06381e016af",
+      "source_id": "d396c7e5-2b82-4ea8-99ed-81f60aa6d577",
+      "media_id": "18415fb5-a68b-4781-96f9-84c9d17cf35a",
+      "source_type": "website",
+      "source_url": "invalid://source-binding-regression",
+      "crawl_method": "html",
+      "attempts": 1,
+      "binding": "PASS",
+      "worker_success": false,
+      "error_code": "invalid_source_url",
+      "report": "d19d8161-5b5f-40de-8bc6-c06381e016af-d396c7e5-2b82-4ea8-99ed-81f60aa6d577-95b7a65d-3c72-42c2-ba0a-42d434f4d0dc.json",
+      "log": "d19d8161-5b5f-40de-8bc6-c06381e016af-d396c7e5-2b82-4ea8-99ed-81f60aa6d577-95b7a65d-3c72-42c2-ba0a-42d434f4d0dc.log",
+      "content_acceptance": "EXPECTED_FAILURE"
+    },
+    {
+      "case": "epaper_content_check",
+      "run_id": "018893c4-d59d-4790-bdc0-5c13d2db752d",
+      "source_id": "89518fc7-1fca-49f6-9125-506ebc5be8d4",
+      "media_id": "51fd9095-83ce-4f49-a663-660f174800f8",
+      "source_type": "epaper",
+      "source_url": "http://zqb.cyol.com",
+      "crawl_method": "epaper",
+      "attempts": 1,
+      "binding": "PASS",
+      "worker_success": false,
+      "error_code": "no_valid_articles",
+      "report": "018893c4-d59d-4790-bdc0-5c13d2db752d-89518fc7-1fca-49f6-9125-506ebc5be8d4-986774b4-e274-4755-a62f-9de7da8fe3b5.json",
+      "log": "018893c4-d59d-4790-bdc0-5c13d2db752d-89518fc7-1fca-49f6-9125-506ebc5be8d4-986774b4-e274-4755-a62f-9de7da8fe3b5.log",
+      "content_acceptance": "NOT_PASSED_EXISTING_PARSER"
+    }
+  ]
+}

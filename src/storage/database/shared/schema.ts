@@ -11,6 +11,8 @@ import {
   real,
   index,
   uniqueIndex,
+  check,
+  foreignKey,
 } from "drizzle-orm/pg-core";
 
 // 系统表，禁止删除
@@ -172,13 +174,23 @@ export const mediaSource = pgTable(
     last_ingest_at: timestamp("last_ingest_at", { withTimezone: true }), // 外部抓取服务最近一次成功推送时间
     last_error: text("last_error"),
     fail_count: integer("fail_count").notNull().default(0),
-    enabled: boolean("enabled").notNull().default(true),
+    source_status: varchar("source_status", { length: 24 }).notNull().default("needs_fix"),
+    status_reason: text("status_reason"),
+    duplicate_of: varchar("duplicate_of", { length: 36 }),
+    verified_at: timestamp("verified_at", { withTimezone: true }),
+    enabled: boolean("enabled").notNull().default(false),
     created_at: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
     updated_at: timestamp("updated_at", { withTimezone: true }),
   },
   (table) => [
     index("media_source_media_idx").on(table.media_id),
     index("media_source_status_idx").on(table.crawl_status),
+    index("media_source_lifecycle_idx").on(table.source_status),
+    foreignKey({ name: "media_source_duplicate_of_fkey", columns: [table.duplicate_of], foreignColumns: [table.id] }),
+    check("media_source_lifecycle_valid", sql`${table.source_status} IN ('active','needs_fix','duplicate','manual_disabled')`),
+    check("media_source_lifecycle_enabled", sql`${table.enabled} = (${table.source_status} = 'active')`),
+    check("media_source_active_verified", sql`${table.source_status} <> 'active' OR (${table.verified_at} IS NOT NULL AND ${table.duplicate_of} IS NULL AND ((${table.source_type} = 'website' AND ${table.crawl_method} = 'html') OR (${table.source_type} = 'epaper' AND ${table.crawl_method} = 'epaper')))`),
+    check("media_source_duplicate_target", sql`${table.source_status} <> 'duplicate' OR (${table.duplicate_of} IS NOT NULL AND ${table.duplicate_of} <> ${table.id})`),
   ]
 );
 

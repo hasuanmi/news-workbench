@@ -1,3 +1,4 @@
+import { getSourceDailyActivity } from "@/lib/source-activity";
 import { NextRequest, NextResponse } from "next/server";
 import { supabase } from "@/lib/db";
 import { requireAdmin } from "@/lib/require-admin";
@@ -25,11 +26,13 @@ export async function GET(req: NextRequest) {
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
 
   const mediaIds = (mediaList ?? []).map((m) => m.id as string);
-  const { data: sources } = await supabase()
+  const { data: sources, error: sourceError } = await supabase()
     .schema("public")
     .from("media_source")
-    .select("id, media_id, source_type, source_url, enabled, crawl_status, last_success_at, last_ingest_at, last_ingest_count, last_error, fail_count")
-    .in("media_id", mediaIds.length ? mediaIds : ["__none__"]);
+    .select("id, media_id, source_type, source_url, enabled, source_status, status_reason, duplicate_of, verified_at, crawl_method, crawl_status, last_success_at, last_ingest_at, last_ingest_count, last_error, fail_count")
+    .in("media_id", mediaIds.length ? mediaIds : ["00000000-0000-0000-0000-000000000000"]);
+
+  if (sourceError) return NextResponse.json({ error: sourceError.message }, { status: 500 });
 
   const sourceMap = new Map<string, typeof sources>();
   for (const s of sources ?? []) {
@@ -46,6 +49,11 @@ export async function GET(req: NextRequest) {
       source_type: s.source_type,
       source_url: s.source_url,
       enabled: s.enabled,
+      source_status: s.source_status,
+      status_reason: s.status_reason,
+      duplicate_of: s.duplicate_of,
+      verified_at: s.verified_at,
+      crawl_method: s.crawl_method,
       crawl_status: s.crawl_status,
       last_crawl_at: s.last_success_at,
       last_ingest_at: s.last_ingest_at,
@@ -54,7 +62,8 @@ export async function GET(req: NextRequest) {
       last_error: s.last_error,
     })),
   }));
-  return NextResponse.json({ items });
+  try { return NextResponse.json({ items, dailyActivity: await getSourceDailyActivity() }); }
+  catch { return NextResponse.json({ items, dailyActivity: null, activityError: "实际抓取日志暂时无法读取" }); }
 }
 
 export async function POST(req: NextRequest) {

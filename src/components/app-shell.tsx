@@ -116,7 +116,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
       </aside>
 
       {/* 主内容 */}
-      <main className="flex-1 min-w-0 overflow-x-hidden">
+      <main className="flex-1 min-w-0 overflow-x-clip">
         <div className="max-w-[1400px] mx-auto px-8 py-6">
           <PageTransition contentKey={pathname}>{children}</PageTransition>
         </div>

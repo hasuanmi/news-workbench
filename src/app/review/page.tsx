@@ -13,6 +13,7 @@ import type { DraftPayload } from "@/lib/review-draft";
 import { TaskProgress, type TaskStage } from "@/components/common/task-progress";
 import { EmptyState } from "@/components/common/empty-state";
 import { PageHeader } from "@/components/common/page-header";
+import { format } from "date-fns";
 
 /** 评报生成的真实阶段（由后端 SSE 驱动，前端不伪造步骤） */
 const GENERATE_STAGES: TaskStage[] = [
@@ -75,7 +76,7 @@ export default function ReviewPage() {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          date: filter.date.toISOString(),
+          date: format(filter.date, "yyyy-MM-dd"),
           topics: filter.topics,
           customRequirement: filter.customRequirement,
         }),
@@ -274,7 +275,7 @@ export default function ReviewPage() {
         )}
 
         {/* 条件区 */}
-        <ReviewFilter onGenerate={handleCreateDraft} loading={loading} />
+        <ReviewFilter onGenerate={handleCreateDraft} loading={loading || draftLoading} onDateChange={() => { setError(null); setDraft(null); setPhase(""); }} />
 
         {/* 阶段1 选稿结果 */}
         {!loading && draft && phase === "draft" && (

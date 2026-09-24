@@ -8,6 +8,8 @@ import { PageSkeleton } from "@/components/common/page-skeleton";
 import { EmptyState } from "@/components/common/empty-state";
 import { ErrorState } from "@/components/common/error-state";
 import { BrandLogo } from "@/components/brand-logo";
+import { calendarSourceLabel } from "@/lib/calendar-policy";
+import { normalizeEventName } from "@/lib/calendar-engine";
 
 interface UpcomingNode {
   id: string;
@@ -15,6 +17,8 @@ interface UpcomingNode {
   date: string; // YYYY-MM-DD
   importance: string;
   anniversary: number | null;
+  source?: string | null;
+  source_type?: string | null;
 }
 
 interface LeadsItem {
@@ -25,6 +29,12 @@ interface LeadsItem {
 }
 
 interface HomePreview {
+  work_status?: {
+    pending_clues: number | null;
+    needs_completion: number | null;
+    media: { time: string | null; status: string; detail: string };
+    calendar: { time: string | null; status: string; detail: string };
+  };
   show_upcoming: number;
   show_leads: number;
   home_days: number;
@@ -44,7 +54,12 @@ function formatDate(iso: string): string {
   const d = new Date(iso);
   if (Number.isNaN(d.getTime())) return iso;
   const pad = (n: number) => String(n).padStart(2, "0");
-  return `${pad(d.getMonth() + 1)}月${pad(d.getDate())}日`;
+  return `${pad(d.getUTCMonth() + 1)}月${pad(d.getUTCDate())}日`;
+}
+
+function formatWeekday(iso: string): string {
+  const d = new Date(iso);
+  return Number.isNaN(d.getTime()) ? "" : `周${"日一二三四五六"[d.getUTCDay()]}`;
 }
 
 function formatDateTime(iso: string): string {
@@ -105,6 +120,25 @@ export function DashboardHome() {
 
       {error && <p className="text-xs text-[var(--destructive)] -mt-2">{error}</p>}
 
+      {preview?.work_status && <section aria-label="工作状态" className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+        {[
+          { label: "待确认线索", value: preview.work_status.pending_clues, href: "/leads" },
+          { label: "本年信息待补全节点", value: preview.work_status.needs_completion, href: "/calendar" },
+        ].map(item => <Link key={item.label} href={item.href} className="rounded-xl border border-[var(--border)] bg-[var(--card)] px-4 py-3">
+          <p className="text-xs text-[var(--muted-foreground)]">{item.label}</p>
+          <p className="mt-2 text-xl font-semibold tabular-nums">{item.value ?? "暂不可用"}<span className="ml-1 text-xs font-normal">{item.value !== null ? "项" : ""}</span></p>
+        </Link>)}
+        {(["media", "calendar"] as const).map(kind => {
+          const task = preview.work_status![kind];
+          const labels: Record<string, string> = { success: "成功", failed: "失败", partial: "部分成功", running: "执行中", unknown: "待核实", none: "暂无记录", skipped: "已跳过", interrupted: "已中断" };
+          return <div key={kind} className="rounded-xl border border-[var(--border)] bg-[var(--card)] px-4 py-3">
+            <p className="text-xs text-[var(--muted-foreground)]">最近一次{kind === "media" ? "媒体抓取" : "AI 日历推荐"}</p>
+            <p className="mt-2 text-sm font-medium">{task.time ? formatDateTime(task.time) : "—"}<span className="ml-2 text-xs text-[var(--brand)]">{labels[task.status] ?? "待核实"}</span></p>
+            <p className="mt-1 text-[11px] text-[var(--muted-foreground)]">{task.detail}</p>
+          </div>;
+        })}
+      </section>}
+
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* ===== 未来新闻节点 ===== */}
         <Card>
@@ -131,20 +165,22 @@ export function DashboardHome() {
                 <Link
                   key={n.id}
                   href="/calendar"
-                  className="flex items-center justify-between gap-3 px-1 py-2 rounded hover:bg-[var(--accent)] group"
+                  className="group flex items-center gap-3 rounded-lg px-2 py-3 hover:bg-[var(--accent)]"
                 >
-                  <div className="flex items-center gap-2 min-w-0">
-                    <span className="w-10 shrink-0 text-xs text-[var(--muted-foreground)]">
-                      {formatDate(n.date)}
-                    </span>
-                    <span className="text-sm font-medium truncate group-hover:text-[var(--brand)]">
-                      {n.name}
+                  <time dateTime={n.date} className="flex w-[72px] shrink-0 flex-col gap-1 border-r border-[var(--border)] pr-3 text-left whitespace-nowrap tabular-nums">
+                    <span className="text-xs font-semibold leading-4 text-[var(--foreground)]">{formatDate(n.date)}</span>
+                    <span className="text-[11px] leading-4 text-[var(--muted-foreground)]">{formatWeekday(n.date)}</span>
+                  </time>
+                  <div className="min-w-0 flex-1 space-y-1">
+                    <div className="truncate text-sm font-medium leading-5 group-hover:text-[var(--brand)]">
+                      {n.anniversary ? normalizeEventName(n.name) : n.name}
                       {n.anniversary ? (
                         <span className="text-[var(--muted-foreground)] text-xs ml-1">
                           {n.anniversary}周年
                         </span>
                       ) : null}
-                    </span>
+                    </div>
+                    <div className="text-[11px] leading-4 text-[var(--muted-foreground)]">{calendarSourceLabel(n.source, n.source_type)}</div>
                   </div>
                   <span
                     className={`w-5 h-5 shrink-0 rounded text-[11px] flex items-center justify-center ${

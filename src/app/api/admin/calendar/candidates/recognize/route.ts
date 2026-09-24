@@ -22,7 +22,7 @@ export async function POST(request: NextRequest) {
     const { candidate } = await recognizePastedText(rawText, targetYear);
     if (!candidate) {
       return NextResponse.json(
-        { error: "未能从文本中识别出具体节点，请检查内容或改用直接填写" },
+        { information_status: "needs_completion", error: "信息待补全：原文不足以确认具体事件，请补充正式名称或来源通知；系统不会猜测名称" },
         { status: 422 },
       );
     }

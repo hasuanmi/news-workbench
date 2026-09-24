@@ -1,7 +1,9 @@
 "use client";
 
 import { Badge } from "@/components/ui/badge";
+import { useEffect, useRef } from "react";
 import { normalizeEventName } from "@/lib/calendar-engine";
+import { calendarSourceLabel } from "@/lib/calendar-policy";
 import type { CalEvent, CalCategory } from "./calendar-types";
 
 type TagPalette = { bg: string; text: string; dot: string };
@@ -42,11 +44,21 @@ const regionMark = (region: string | null) =>
 interface Props {
   items: CalEvent[];
   todayStr: string; // YYYY-MM-DD
+  year: number;
   selectedId: string | null;
   onSelect: (e: CalEvent) => void;
 }
 
-export function CalendarListView({ items, todayStr, selectedId, onSelect }: Props) {
+export function CalendarListView({ items, todayStr, year, selectedId, onSelect }: Props) {
+  const viewport = useRef<HTMLDivElement>(null);
+  const focusToday = year === Number(todayStr.slice(0, 4));
+  const datesKey = items.map(event => event.date).join(",");
+  useEffect(() => {
+    const container = viewport.current;
+    if (!container) return;
+    const target = container.querySelector<HTMLElement>("[data-today-anchor]");
+    container.scrollTop = focusToday && target ? target.offsetTop : 0;
+  }, [focusToday, todayStr, year, datesKey]);
   // 按日期分组
   const groups: { date: string; events: CalEvent[] }[] = [];
   const todayHasEvent = items.some((e) => e.date === todayStr);
@@ -56,16 +68,22 @@ export function CalendarListView({ items, todayStr, selectedId, onSelect }: Prop
     if (last && last.date === ev.date) last.events.push(ev);
     else groups.push({ date: ev.date, events: [ev] });
   }
+  if (focusToday && !todayHasEvent) {
+    groups.push({ date: todayStr, events: [] });
+    groups.sort((a, b) => a.date.localeCompare(b.date));
+  }
 
   return (
-    <div className="relative">
+    <div>
+    {focusToday && <p className="mb-3 text-xs text-[var(--muted-foreground)]">从今天面向未来安排工作 · 向上滚动回看今年过去节点</p>}
+    <div ref={viewport} role="region" aria-label="全年新闻节点时间轴" tabIndex={0} className="relative h-[65vh] min-h-80 overflow-y-auto overscroll-contain pr-2">
       {groups.map((g) => {
         const isToday = g.date === todayStr;
         const [y, m, d] = g.date.split("-").map(Number);
         const dateObj = new Date(y, m - 1, d);
         const wd = dateObj.getDay();
         return (
-          <div key={g.date} className="relative pl-5 pb-4">
+          <div key={g.date} data-today-anchor={isToday ? "true" : undefined} className="relative pl-5 pb-4">
             {/* 时间轴 */}
             <div className="absolute left-0 top-1.5 h-2.5 w-2.5 rounded-full border border-[var(--border)] bg-white" />
             {g !== groups[groups.length - 1] && (
@@ -75,9 +93,9 @@ export function CalendarListView({ items, todayStr, selectedId, onSelect }: Prop
             {/* 日期组头 */}
             <div className="mb-1.5 flex items-center gap-2">
               <span className="text-[13px] font-medium text-[var(--foreground)]">
-                {m}月{d}日 <span className="text-[var(--muted-foreground)]">周{WEEKDAYS[wd]}</span>
+                {y}年{m}月{d}日 <span className="text-[var(--muted-foreground)]">周{WEEKDAYS[wd]}</span>
               </span>
-              {isToday && todayHasEvent && (
+              {isToday && (
                 <Badge variant="secondary" className="text-[11px]">
                   今天
                 </Badge>
@@ -86,6 +104,7 @@ export function CalendarListView({ items, todayStr, selectedId, onSelect }: Prop
 
             {/* 当天节点（紧凑） */}
             <div className="space-y-0.5">
+              {g.events.length === 0 && <p className="py-2 text-xs text-[var(--muted-foreground)]">今天暂无节点，以下为未来安排</p>}
               {g.events.map((ev) => {
                 const selected = ev.id === selectedId;
                 const dist =
@@ -94,7 +113,7 @@ export function CalendarListView({ items, todayStr, selectedId, onSelect }: Prop
                   <button
                     key={ev.id}
                     onClick={() => onSelect(ev)}
-                    className={`flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-left text-sm transition-shadow ${
+                    className={`flex w-full flex-wrap items-center gap-x-2 gap-y-1 rounded-md px-2 py-1.5 text-left text-sm transition-shadow ${
                       selected
                         ? "ring-1 ring-inset ring-[var(--primary)]"
                         : "hover:ring-1 hover:ring-inset hover:ring-[var(--border)]"
@@ -106,16 +125,17 @@ export function CalendarListView({ items, todayStr, selectedId, onSelect }: Prop
                       style={{ backgroundColor: tagStyle(ev).dot }}
                     />
                     <span
-                      className="min-w-0 flex-1 truncate font-medium"
+                      className="min-w-0 flex-1 basis-[calc(100%-1rem)] truncate font-medium"
                       style={{ color: tagStyle(ev).text }}
                     >
-                      {normalizeEventName(ev.event_name)}
+                      {ev.anniversary != null ? normalizeEventName(ev.event_name) : ev.event_name}
                       {ev.anniversary != null && (
                         <span className="ml-1 text-xs opacity-75">
                           {ev.anniversary}周年
                         </span>
                       )}
                     </span>
+                    <Badge variant="outline" className="shrink-0 text-[10px]">{calendarSourceLabel(ev.source, ev.source_type)}</Badge>
                     {ev.category && (
                       <span
                         className="shrink-0 rounded-full px-1.5 py-0.5 text-[11px] font-medium"
@@ -147,9 +167,10 @@ export function CalendarListView({ items, todayStr, selectedId, onSelect }: Prop
 
       {groups.length === 0 && (
         <div className="py-16 text-center text-sm text-[var(--muted-foreground)]">
-          未来 30 天暂无新闻节点
+          所选年份与筛选条件下暂无新闻节点
         </div>
       )}
+    </div>
     </div>
   );
 }

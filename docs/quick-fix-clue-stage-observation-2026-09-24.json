@@ -1,0 +1,38 @@
+{
+  "checked_at": "2026-09-24T08:48:51.190Z",
+  "pending_near_3_days": 1,
+  "task_logs": [
+    {
+      "id": "8c0444d7-4b0a-4cf8-a5fb-17eca9acd9bf",
+      "workflow_name": "clue_identify",
+      "status": "with_errors",
+      "source_count": 674,
+      "success_count": 673,
+      "failure_count": 1,
+      "new_data_count": 10,
+      "start_time": "2026-09-24T08:34:53.235+00:00",
+      "end_time": "2026-09-24T08:47:58.675+00:00",
+      "error_message": "拾光纪·跨越太平洋的历史性握手！感受接机现场热烈氛围 - 三峡宜昌网: 线索识别 AI JSON 解析或格式校验失败"
+    },
+    {
+      "id": "5eed90a7-09ea-452a-8f98-eb21fff4bb5c",
+      "workflow_name": "clue_identify",
+      "status": "failed",
+      "source_count": 674,
+      "success_count": 673,
+      "failure_count": 1,
+      "new_data_count": 10,
+      "start_time": "2026-09-24T08:34:52.891+00:00",
+      "end_time": "2026-09-24T08:47:59.102+00:00",
+      "error_message": "拾光纪·跨越太平洋的历史性握手！感受接机现场热烈氛围 - 三峡宜昌网: 线索识别 AI JSON 解析或格式校验失败"
+    }
+  ],
+  "scheduler_run_id": "e3f6940c-52f7-44b8-8566-f4fdc2ad4aa0",
+  "scheduler_error": "fetch failed",
+  "observed_server_error": {
+    "code": "23505",
+    "constraint": "news_clue_series_key_idx",
+    "series_key": "人民日报-一见"
+  },
+  "note": "Server log observation; exact transport failure code was not retained by scheduler. No new AI run triggered."
+}

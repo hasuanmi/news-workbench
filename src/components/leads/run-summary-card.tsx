@@ -12,7 +12,14 @@ type RunSummaryData = {
     articles: number;
     successfulMedia: number;
     failedMedia: number;
+    successfulSources: number | null;
+    failedSources: number | null;
+    successfulTasks: number;
+    failedTasks: number;
+    sourceIdentityVerified: boolean;
     error: string | null;
+    diagnosis?: { stage: string; reason: string; aiEntered: boolean };
+    runId?: string | null;
   };
   pendingArticles: number | null;
   pendingWindow?: string;
@@ -109,14 +116,19 @@ export function RunSummaryCard({ data }: { data: RunSummaryData }) {
 
       <div className="flex flex-wrap items-baseline gap-x-5 gap-y-2 text-sm">
         <Stat label="监测媒体总数" value={connectedMediaCount} />
-        <Stat label="本轮成功抓取" value={scrape.successfulMedia} />
-        <Stat label="异常 / 未成功" value={scrape.failedMedia} />
+        <Stat label={scrape.sourceIdentityVerified ? "成功数据源" : "成功任务（旧记录）"} value={scrape.successfulSources ?? scrape.successfulTasks} />
+        <Stat label={scrape.sourceIdentityVerified ? "未成功数据源" : "未成功任务（旧记录）"} value={scrape.failedSources ?? scrape.failedTasks} />
         <Stat label="抓取文章" value={scrape.articles} />
         <Stat label="待识别文章" value={pendingArticles ?? "—"} suffix={pendingWindowLabel ? `（${pendingWindowLabel}）` : ""} />
-        <Stat label="本轮处理" value={identification?.totalFetched ?? identification?.totalProcessed ?? "—"} suffix="篇" />
-        <Stat label="识别批次" value={identification?.batchCount ?? "—"} suffix="批" />
-        <Stat label="DeepSeek 调用" value={identification?.deepseekCalls ?? "—"} suffix="次" />
+        <Stat label="本轮处理" value={scrape.diagnosis?.aiEntered === false ? 0 : identification?.totalFetched ?? identification?.totalProcessed ?? "—"} suffix="篇" />
+        <Stat label="识别批次" value={scrape.diagnosis?.aiEntered === false ? 0 : identification?.batchCount ?? "—"} suffix="批" />
+        <Stat label="AI 调用" value={scrape.diagnosis?.aiEntered === false ? 0 : identification?.deepseekCalls ?? "—"} suffix="次" />
       </div>
+      {scrape.diagnosis && <div className="mt-2 space-y-1 text-xs" aria-label="运行阶段诊断">
+        <p className="font-medium">{scrape.diagnosis.stage}</p>
+        <p className="text-[var(--muted-foreground)]">{scrape.diagnosis.reason}</p>
+        <p className="text-[var(--muted-foreground)]">{scrape.sourceIdentityVerified ? "抓取数量按 source_id 去重，同一家媒体可能有多个源。" : "旧记录缺少 source_id，任务次数不能视为独立数据源覆盖数。"}</p>
+      </div>}
 
       <div className="mt-2.5 flex flex-wrap items-center gap-2 border-t border-[#f0ece3] pt-2.5 text-xs text-[var(--muted-foreground)]">
         <span>最近运行：{formatRunTime(scrape)}</span>
@@ -125,7 +137,7 @@ export function RunSummaryCard({ data }: { data: RunSummaryData }) {
       </div>
       {pendingMediaScope !== undefined && (
         <div className="mt-1.5 text-[11px] text-[#9a9183]">
-          待识别口径：{pendingWindowLabel} · 媒体范围 {pendingMediaScope} 家监测媒体 · is_test=false · clue_processed=false
+          待识别范围：{pendingWindowLabel} · {pendingMediaScope} 家监测媒体 · 仅统计尚未识别的正式文章
         </div>
       )}
     </div>

@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { supabase } from "@/lib/db";
 import { requireAdmin } from "@/lib/require-admin";
 import { getTargetYear, insertCandidateFromSource } from "@/lib/calendar-candidate";
+import { isVagueName, isValidCalendarDate } from "@/lib/calendar-policy";
 
 /**
  * GET /api/admin/calendar/candidates
@@ -47,6 +48,7 @@ export async function GET(request: NextRequest) {
 
   const items = (data ?? []).map((c: Record<string, unknown>) => ({
     ...c,
+    information_status: (isVagueName(String(c.node_name ?? "")) || String(c.ai_reason ?? "").startsWith("信息待补全")) ? "needs_completion" : "complete",
     category: c.category_id ? categoryMap.get(c.category_id as string) ?? null : null,
   }));
 
@@ -88,7 +90,7 @@ export async function POST(request: NextRequest) {
   let candidateMonth: number | null = null;
   if (dateStatus === "confirmed") {
     candidateDate = String(body.candidate_date ?? "");
-    if (!/^\d{4}-\d{2}-\d{2}$/.test(candidateDate)) {
+    if (!isValidCalendarDate(candidateDate) || !candidateDate.startsWith(`${targetYear}-`)) {
       return NextResponse.json({ error: "confirmed 节点需提供 YYYY-MM-DD 日期" }, { status: 400 });
     }
   } else if (dateStatus === "month_known") {

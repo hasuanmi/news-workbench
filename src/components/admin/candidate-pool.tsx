@@ -42,6 +42,9 @@ import {
 } from "lucide-react";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
+import { isVagueName, calendarToday } from "@/lib/calendar-policy";
+
+type CandidatePreview = Pick<Candidate, "node_name" | "candidate_date" | "candidate_month" | "date_status" | "category_id" | "region" | "importance" | "ai_reason" | "source_url"> & { source_basis?: string | null };
 
 interface Category {
   id: string;
@@ -76,8 +79,8 @@ interface Candidate {
 const SOURCE_LABEL: Record<string, string> = {
   historical_migration: "历史迁移",
   ai_supplement: "AI推荐",
-  pasted_text: "粘贴识别",
-  manual: "手动新增",
+  pasted_text: "用户粘贴识别",
+  manual: "用户新增",
 };
 const SOURCE_COLOR: Record<string, { fg: string; bg: string }> = {
   historical_migration: { fg: "#5F5E5A", bg: "#F1EFE8" },
@@ -109,7 +112,7 @@ function dateLabel(c: Candidate): string {
 export function CandidatePool() {
   const [categories, setCategories] = useState<Category[]>([]);
   const [items, setItems] = useState<Candidate[]>([]);
-  const [targetYear, setTargetYear] = useState<number>(new Date().getUTCFullYear() + 1);
+  const [targetYear, setTargetYear] = useState<number>(calendarToday().getUTCFullYear());
   const [loading, setLoading] = useState(false);
   const [busy, setBusy] = useState(false);
 
@@ -145,7 +148,7 @@ export function CandidatePool() {
   const [addOpen, setAddOpen] = useState(false);
   const [addMode, setAddMode] = useState<"paste" | "fill">("paste");
   const [pasteText, setPasteText] = useState("");
-  const [pastePreview, setPastePreview] = useState<Record<string, any> | null>(null);
+  const [pastePreview, setPastePreview] = useState<CandidatePreview | null>(null);
   const [pasteLoading, setPasteLoading] = useState(false);
   const [fill, setFill] = useState({
     node_name: "",
@@ -168,7 +171,7 @@ export function CandidatePool() {
   const [recoKeywords, setRecoKeywords] = useState<string>("");
   const [recoExtra, setRecoExtra] = useState<string>("");
   const [recoLoading, setRecoLoading] = useState(false);
-  const [recoList, setRecoList] = useState<Record<string, any>[]>([]);
+  const [recoList, setRecoList] = useState<CandidatePreview[]>([]);
   const [recoSel, setRecoSel] = useState<boolean[]>([]);
 
   // 查看对比
@@ -571,7 +574,7 @@ export function CandidatePool() {
         <Button
           size="sm"
           onClick={() => {
-            setRecoYear(targetYear);
+            setRecoYear(calendarToday().getUTCFullYear());
             setRecoList([]);
             setRecoSel([]);
             setRecommendOpen(true);
@@ -686,6 +689,7 @@ export function CandidatePool() {
                       <TableCell className="align-top pt-3">
                         <div className="font-medium flex items-center gap-2 flex-wrap">
                           {c.node_name}
+                          {(isVagueName(c.node_name) || c.ai_reason?.startsWith("信息待补全")) && <Badge variant="outline">信息待补全</Badge>}
                           {isDup && (
                             <span className="text-[10px] text-[#854F0B] bg-[#FAEEDA] px-1.5 py-0.5 rounded">
                               疑似重复
@@ -1133,13 +1137,13 @@ export function CandidatePool() {
           {recoList.length === 0 ? (
             <div className="space-y-4">
               <p className="text-sm text-[var(--muted-foreground)]">
-                结合历史日历的关注类型与当年联网公开信息，补充历史里没有的新会议 / 新活动 / 新政策 / 新纪念节点。每条均带来源依据、推荐理由与官方来源链接，模糊无来源的节点不会进入候选池。
+                结合历史日历的关注类型与当年联网公开信息，补充当前年度的动态会议 / 活动 / 政策 / 行业事件。每条均带来源依据、推荐理由与官方来源链接，模糊无来源的节点不会进入候选池。
               </p>
 
               <div className="grid grid-cols-2 gap-3">
                 <div className="space-y-1.5">
                   <Label>目标年份</Label>
-                  <Select value={String(recoYear)} onValueChange={(v) => setRecoYear(Number(v))}>
+                  <Select value={String(recoYear)} onValueChange={(v) => setRecoYear(Number(v))} disabled>
                     <SelectTrigger>
                       <SelectValue />
                     </SelectTrigger>

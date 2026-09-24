@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { requireAdmin } from "@/lib/require-admin";
 import { fetchReviewArticles } from "@/lib/review-engine";
+import { reviewDate, emptyReviewMessage } from "@/lib/review-date";
 import {
   buildDraft,
   saveDraft,
@@ -18,28 +19,34 @@ export async function POST(req: NextRequest) {
   if ("error" in auth) return auth.error;
 
   const body = await req.json().catch(() => ({}));
-  const dateStr = new Date(
-    typeof body.date === "string" ? body.date : new Date().toISOString(),
-  )
-    .toISOString()
-    .split("T")[0];
+  let dateStr: string;
+  try { dateStr = reviewDate(body.date === undefined ? new Date() : typeof body.date === "string" ? body.date : "invalid"); }
+  catch { return NextResponse.json({ error: "请选择有效的评报日期" }, { status: 400 }); }
 
-  const conditions = await buildConditionsFromRules({
-    date: body.date || new Date().toISOString(),
-    topics: Array.isArray(body.topics) ? body.topics : [],
-    customRequirement: body.customRequirement,
-  });
-
+  let stage = "读取评报规则";
+  let aiEntered = false;
   try {
-    const { articles, gzMediaNames } = await fetchReviewArticles(conditions);
+    const conditions = await buildConditionsFromRules({
+      date: dateStr,
+      topics: Array.isArray(body.topics) ? body.topics : [],
+      customRequirement: body.customRequirement,
+    });
+
+    stage = "读取与筛选候选文章";
+    const { articles, gzMediaNames, diagnostics } = await fetchReviewArticles(conditions);
     if (articles.length === 0) {
       return NextResponse.json(
-        { error: `${dateStr} 没有符合条件的文章，请放宽字数阈值或检查媒体数据源` },
+        { error: emptyReviewMessage(dateStr, diagnostics.total, diagnostics.selected, conditions.minWordCount), diagnostics, report_date: dateStr, stage, aiEntered },
         { status: 400 },
       );
     }
 
-    const draft = await buildDraft(conditions, dateStr, articles, gzMediaNames);
+    stage = "核对广州日报覆盖范围";
+    const draft = await buildDraft(conditions, dateStr, articles, gzMediaNames, () => {
+      stage = "AI 选稿聚类、转载判断与同行分析";
+      aiEntered = true;
+    });
+    stage = "保存选稿";
     const row = await saveDraft({
       report_date: dateStr,
       draft,
@@ -58,7 +65,7 @@ export async function POST(req: NextRequest) {
     });
   } catch (err) {
     return NextResponse.json(
-      { error: err instanceof Error ? err.message : String(err) },
+      { error: `${stage}失败：${err instanceof Error ? err.message : String(err)}`, stage, aiEntered },
       { status: 500 },
     );
   }

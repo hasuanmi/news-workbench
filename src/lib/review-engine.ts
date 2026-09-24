@@ -12,6 +12,8 @@
  */
 
 import { supabase } from "@/lib/db";
+import { reviewDayBounds } from "@/lib/review-date";
+import { reviewDayInventory } from "@/lib/review-availability";
 import { unifiedInvoke, unifiedStream } from "@/lib/llm-client";
 import type { ChatMessage } from "@/lib/llm-adapter";
 import type { ReviewModule } from "@/lib/review-types";
@@ -118,28 +120,29 @@ export async function fetchReviewArticles(conditions: ReviewConditions): Promise
   dateStr: string;
   articles: ReviewArticle[];
   gzMediaNames: string[];
+  diagnostics: { total: number; mediaCount: number; selected: number; afterWords: number; eligible: number };
 }> {
   const db = supabase();
-  const dateStr = new Date(conditions.date).toISOString().split("T")[0];
-  const start = `${dateStr}T00:00:00+08:00`;
-  const end = `${dateStr}T23:59:59+08:00`;
+  const { date: dateStr, start, end } = reviewDayBounds(conditions.date);
 
   // 目标媒体：显式传入优先；为空则取 monitor_review 启用媒体
   let mediaIds = conditions.mediaIds.filter(Boolean);
   let mediaMap = new Map<string, string>();
   if (mediaIds.length === 0) {
-    const { data: mediaRows } = await db
+    const { data: mediaRows, error: mediaError } = await db
       .from("media")
       .select("id, media_name")
       .eq("monitor_review", true)
       .eq("enabled", true);
+    if (mediaError) throw new Error("评报媒体范围暂时无法读取");
     mediaIds = (mediaRows ?? []).map((m) => m.id);
     mediaMap = new Map((mediaRows ?? []).map((m) => [m.id, m.media_name]));
   } else {
-    const { data: mediaRows } = await db
+    const { data: mediaRows, error: mediaError } = await db
       .from("media")
       .select("id, media_name")
       .in("id", mediaIds);
+    if (mediaError) throw new Error("评报媒体范围暂时无法读取");
     mediaMap = new Map((mediaRows ?? []).map((m) => [m.id, m.media_name]));
   }
 
@@ -150,17 +153,23 @@ export async function fetchReviewArticles(conditions: ReviewConditions): Promise
   // 广州日报系媒体名称（用于同行遗漏扫描）
   const gzMediaNames = [...mediaMap.values()].filter((n) => n.includes("广州日报"));
 
-  let query = db
+  const query = db
     .from("article")
     .select("*")
     .eq("is_test", false)
     .in("media_id", mediaIds)
     .gte("publish_time", start)
-    .lte("publish_time", end)
-    .order("publish_time", { ascending: false });
+    .lt("publish_time", end)
+    .order("publish_time", { ascending: false }).order("id");
 
-  const { data: rows, error } = await query;
-  if (error) throw new Error(`查询文章失败: ${error.message}`);
+  const inventory = await reviewDayInventory(dateStr);
+  const rows = [];
+  for (let offset = 0; ; offset += 500) {
+    const { data, error } = await query.range(offset, offset + 499);
+    if (error) throw new Error(`查询文章失败: ${error.message}`);
+    rows.push(...(data ?? []));
+    if (!data || data.length < 500) break;
+  }
 
   // 真实选稿严格遵守后台字数阈值，不因样本不足自动放宽。
   const threshold = conditions.minWordCount;
@@ -188,7 +197,7 @@ export async function fetchReviewArticles(conditions: ReviewConditions): Promise
     });
   }
 
-  return { dateStr, articles, gzMediaNames };
+  return { dateStr, articles, gzMediaNames, diagnostics: { ...inventory, selected: rows.length, afterWords: filtered.length, eligible: articles.length } };
 }
 
 // ============ AI 结构化分析（非流式） ============

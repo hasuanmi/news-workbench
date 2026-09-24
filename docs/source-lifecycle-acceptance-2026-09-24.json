@@ -1,0 +1,72 @@
+{
+  "checked_at": "2026-09-24T09:33:46.864Z",
+  "checks": [
+    {
+      "name": "existing login",
+      "status": "PASS"
+    },
+    {
+      "name": "admin API",
+      "status": "PASS"
+    },
+    {
+      "name": "all statuses and retained sources",
+      "status": "PASS",
+      "details": {
+        "active": 101,
+        "needs_fix": 120,
+        "duplicate": 101,
+        "manual_disabled": 0
+      }
+    },
+    {
+      "name": "queue only unique active sources",
+      "status": "PASS",
+      "details": {
+        "count": 101
+      }
+    },
+    {
+      "name": "reject unverified activation duplicate",
+      "status": "PASS",
+      "details": {
+        "http": 409
+      }
+    },
+    {
+      "name": "reject unverified activation needs_fix",
+      "status": "PASS",
+      "details": {
+        "http": 409
+      }
+    },
+    {
+      "name": "reject invalid status",
+      "status": "PASS"
+    },
+    {
+      "name": "reject success without article and ingest receipt",
+      "status": "PASS"
+    },
+    {
+      "name": "daily actual count is available",
+      "status": "PASS",
+      "details": [
+        {
+          "date": "2026-09-24",
+          "actualSources": 0
+        }
+      ]
+    },
+    {
+      "name": "manual disable / restore verified active roundtrip",
+      "status": "PASS",
+      "details": {
+        "source_id": "d8e67302-4188-4b62-a70d-d9e999c4bf5b",
+        "before": 101,
+        "during": 100,
+        "after": 101
+      }
+    }
+  ]
+}
