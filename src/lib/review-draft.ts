@@ -13,6 +13,7 @@ import { reviewDayBounds } from "@/lib/review-date";
  */
 
 import { supabase } from "@/lib/db";
+import { ReviewDataError, parseReviewConfig } from "@/lib/review-data-error";
 import { unifiedInvoke } from "@/lib/llm-client";
 import type { ChatMessage } from "@/lib/llm-adapter";
 import {
@@ -76,17 +77,13 @@ export const DEFAULT_COMPARISON_MEDIA = [
 ];
 
 async function getConfigRaw<T>(key: string, fallback: T): Promise<T> {
-  const { data } = await supabase()
+  const { data, error } = await supabase()
     .from("app_config")
     .select("value")
     .eq("key", key)
-    .single();
-  if (!data?.value) return fallback;
-  try {
-    return typeof data.value === "string" ? JSON.parse(data.value) : (data.value as T);
-  } catch {
-    return fallback;
-  }
+    .maybeSingle();
+  if (error) throw new ReviewDataError("读取评报规则", `app_config.value (${key})`, error);
+  return parseReviewConfig(key, data?.value, fallback);
 }
 
 /** 目标比较媒体（按名称解析为 media_id）；缺省用固定六家。 */
@@ -100,7 +97,7 @@ export async function resolveComparisonMedia(mediaIds?: string[]): Promise<{
   // 显式传入的 mediaIds 优先；否则用固定六家按名称匹配
   if (Array.isArray(mediaIds) && mediaIds.length > 0) {
     const { data: m2, error } = await supabase().from("media").select("id, media_name").in("id", mediaIds);
-    if (error) throw new Error("评报媒体范围暂时无法读取");
+    if (error) throw new ReviewDataError("读取评报媒体范围", "media.id,media_name", error);
     return {
       mediaIds: (m2 ?? []).map((x) => x.id),
       mediaNames: (m2 ?? []).map((x) => x.media_name),
@@ -112,7 +109,7 @@ export async function resolveComparisonMedia(mediaIds?: string[]): Promise<{
     .select("id, media_name")
     .eq("enabled", true)
     .in("media_name", names.flatMap(name => name === "广州日报" ? [name, "广州日报报业集团"] : [name]));
-  if (error) throw new Error("评报媒体范围暂时无法读取");
+  if (error) throw new ReviewDataError("读取评报媒体范围", "media.id,media_name,enabled", error);
   return {
     mediaIds: (rows ?? []).map((m) => m.id),
     mediaNames: (rows ?? []).map((m) => m.media_name),

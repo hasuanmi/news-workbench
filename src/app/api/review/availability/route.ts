@@ -4,6 +4,7 @@ import { reviewDate } from "@/lib/review-date";
 import { buildConditionsFromRules } from "@/lib/review-draft";
 import { fetchReviewArticles } from "@/lib/review-engine";
 import { latestReviewDataDate, reviewDayInventory } from "@/lib/review-availability";
+import { reviewErrorResponse } from "@/lib/review-data-error";
 
 export const dynamic = "force-dynamic";
 export async function GET(req: NextRequest) {
@@ -19,7 +20,8 @@ export async function GET(req: NextRequest) {
     ]);
     const latest = latestDate ? { date: latestDate, ...(latestDate === date ? diagnostics : await reviewDayInventory(latestDate)) } : null;
     return NextResponse.json({ date, ...diagnostics, minWordCount: conditions.minWordCount, latest, aiEntered: false });
-  } catch {
-    return NextResponse.json({ error: "评报数据诊断暂时无法读取，请重试；未将查询失败当作零篇文章。" }, { status: 503 });
+  } catch (error) {
+    console.error("[review/availability]", { date }, error);
+    return NextResponse.json({ ...reviewErrorResponse(error), aiEntered: false }, { status: 503 });
   }
 }

@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { requireAdmin } from "@/lib/require-admin";
 import { fetchReviewArticles } from "@/lib/review-engine";
 import { reviewDate, emptyReviewMessage } from "@/lib/review-date";
+import { reviewErrorResponse } from "@/lib/review-data-error";
 import {
   buildDraft,
   saveDraft,
@@ -64,8 +65,10 @@ export async function POST(req: NextRequest) {
       conditions,
     });
   } catch (err) {
+    console.error("[review/draft]", { date: dateStr, stage, aiEntered }, err);
+    const failure = reviewErrorResponse(err);
     return NextResponse.json(
-      { error: `${stage}失败：${err instanceof Error ? err.message : String(err)}`, stage, aiEntered },
+      { ...failure, error: `${stage}失败：${failure.error}`, stage, aiEntered },
       { status: 500 },
     );
   }

@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { supabase } from "@/lib/db";
 import { requireAdmin } from "@/lib/require-admin";
 import { GENERAL_CONFIG_KEYS, getAppConfig, invalidateConfigCache } from "@/lib/config";
+import { ReviewDataError, reviewErrorResponse } from "@/lib/review-data-error";
 
 export async function GET(request: NextRequest) {
   const auth = await requireAdmin(request);
@@ -42,9 +43,14 @@ export async function GET(request: NextRequest) {
     .from("app_config")
     .select("key, value, description")
     .eq("key", key)
-    .single();
+    .maybeSingle();
 
   if (error) {
+    const failure = new ReviewDataError("读取配置", `app_config.value (${key})`, error);
+    console.error("[admin/config]", failure);
+    return NextResponse.json(reviewErrorResponse(failure), { status: 503 });
+  }
+  if (!data) {
     return NextResponse.json({ error: "配置不存在" }, { status: 404 });
   }
 

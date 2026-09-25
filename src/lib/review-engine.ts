@@ -12,6 +12,7 @@
  */
 
 import { supabase } from "@/lib/db";
+import { ReviewDataError, parseReviewConfig } from "@/lib/review-data-error";
 import { reviewDayBounds } from "@/lib/review-date";
 import { reviewDayInventory } from "@/lib/review-availability";
 import { unifiedInvoke, unifiedStream } from "@/lib/llm-client";
@@ -95,17 +96,13 @@ export interface ReviewArticle {
 // ============ 配置读取 ============
 
 async function getConfig<T>(key: string, fallback: T): Promise<T> {
-  const { data } = await supabase()
+  const { data, error } = await supabase()
     .from("app_config")
     .select("value")
     .eq("key", key)
-    .single();
-  if (!data?.value) return fallback;
-  try {
-    return typeof data.value === "string" ? JSON.parse(data.value) : (data.value as T);
-  } catch {
-    return fallback;
-  }
+    .maybeSingle();
+  if (error) throw new ReviewDataError("读取评报规则", `app_config.value (${key})`, error);
+  return parseReviewConfig(key, data?.value, fallback);
 }
 
 export async function getReviewRules(): Promise<{ gen: GenerationRules; display: DisplayRules }> {
@@ -134,7 +131,7 @@ export async function fetchReviewArticles(conditions: ReviewConditions): Promise
       .select("id, media_name")
       .eq("monitor_review", true)
       .eq("enabled", true);
-    if (mediaError) throw new Error("评报媒体范围暂时无法读取");
+    if (mediaError) throw new ReviewDataError("读取评报媒体范围", "media.id,media_name,monitor_review,enabled", mediaError);
     mediaIds = (mediaRows ?? []).map((m) => m.id);
     mediaMap = new Map((mediaRows ?? []).map((m) => [m.id, m.media_name]));
   } else {
@@ -142,7 +139,7 @@ export async function fetchReviewArticles(conditions: ReviewConditions): Promise
       .from("media")
       .select("id, media_name")
       .in("id", mediaIds);
-    if (mediaError) throw new Error("评报媒体范围暂时无法读取");
+    if (mediaError) throw new ReviewDataError("读取评报媒体范围", "media.id,media_name", mediaError);
     mediaMap = new Map((mediaRows ?? []).map((m) => [m.id, m.media_name]));
   }
 
@@ -166,7 +163,7 @@ export async function fetchReviewArticles(conditions: ReviewConditions): Promise
   const rows = [];
   for (let offset = 0; ; offset += 500) {
     const { data, error } = await query.range(offset, offset + 499);
-    if (error) throw new Error(`查询文章失败: ${error.message}`);
+    if (error) throw new ReviewDataError("读取候选文章", "article.is_test,media_id,publish_time", error);
     rows.push(...(data ?? []));
     if (!data || data.length < 500) break;
   }
